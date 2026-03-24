@@ -16,7 +16,6 @@ on:
 jobs:
   deploy:
     runs-on: [self-hosted, ARM64]
-    needs: build_and_push
     steps:
       - name: Stop existing container
         run: |
