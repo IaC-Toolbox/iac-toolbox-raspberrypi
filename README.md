@@ -20,7 +20,7 @@ cp .env.example .env
 # Edit .env with your Raspberry Pi connection details and GitHub runner token
 ```
 
-2. **Configure services** (edit `ansible-configurations/group_vars/all.yml`):
+2. **Configure services** (edit `ansible-configurations/inventory/group_vars/all.yml`):
    - Set Cloudflare tunnel name and domains
    - Enable/disable features as needed
 
@@ -50,7 +50,7 @@ cloudflared tunnel login
 Configuration is split across three layers:
 
 1. **`.env`** - Connection details (RPI_HOST, RPI_USER, GITHUB_RUNNER_TOKEN)
-2. **`group_vars/all.yml`** - Application settings (domains, ports, feature flags)
+2. **`inventory/group_vars/all.yml`** - Application settings (domains, ports, feature flags)
 3. **`secrets.yml`** - Encrypted secrets (API keys, passwords)
 
 ## Usage

@@ -42,6 +42,11 @@
           Architecture: {{ ansible_architecture }}
       tags: always
 
+    - name: Debug variables
+      debug:
+        var: hostvars[inventory_hostname]
+      tags: always
+
   roles:
     # - role: setup
     #   tags: [setup, base]
@@ -51,8 +56,8 @@
     #   tags: [docker]
     #   when: docker is not defined or docker.enabled
 
-    - role: inject_secrets
-      tags: [secrets]
+    # - role: inject_secrets
+    #   tags: [secrets]
 
     # - role: cloudflare-tunnel
     #   tags: [cloudflare, tunnel]
@@ -78,7 +83,7 @@
           - Verify GitHub runner: sudo systemctl status actions.runner.*
           {% endif %}
           - Check Docker: docker --version
-          - View secrets: cat {{ secrets.env_file }}
+          - View secrets: cat /etc/raspberrypi.env
 
           Your Raspberry Pi is ready for deployment!
       tags: always

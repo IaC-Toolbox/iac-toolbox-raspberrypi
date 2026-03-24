@@ -34,7 +34,7 @@ RUNNER_VERSION=2.315.0
 ### 2. Configure Application Settings
 
 ```yaml
-# ansible-configurations/group_vars/all.yml
+# ansible-configurations/inventory/group_vars/all.yml
 cloudflare:
   enabled: true
   tunnel_name: my-rpi-tunnel

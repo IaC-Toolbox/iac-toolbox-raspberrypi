@@ -23,7 +23,7 @@ jobs:
           docker rm my-app || true
       - name: Pull and run new container
         run: |
-          TAG=${{ needs.build_and_push.outputs.tag }}
+          TAG=latest
           docker pull ${{ secrets.DOCKER_USERNAME }}/vvasylkovskyi-bark-gpt-api:$TAG
           docker run -d \
             --name my-app \
