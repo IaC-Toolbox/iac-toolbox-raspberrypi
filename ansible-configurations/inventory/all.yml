@@ -1,0 +1,17 @@
+---
+# ============================================
+# Ansible Inventory - Environment Variable Based
+# ============================================
+# Configure connection via .env file:
+#   RPI_HOST=raspberrypi.local
+#   RPI_USER=pi
+#   RPI_SSH_KEY=~/.ssh/id_ed25519
+
+all:
+  hosts:
+    raspberrypi:
+      ansible_host: "{{ lookup('env', 'RPI_HOST') | default('raspberrypi.local', true) }}"
+      ansible_user: "{{ lookup('env', 'RPI_USER') | default('pi', true) }}"
+      ansible_ssh_private_key_file: "{{ lookup('env', 'RPI_SSH_KEY') | default('~/.ssh/id_ed25519', true) }}"
+      ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+      ansible_python_interpreter: /usr/bin/python3

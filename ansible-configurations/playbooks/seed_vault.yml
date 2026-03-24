@@ -1,0 +1,11 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create a secrets file from environment variables
+      template:
+        src: ../secrets.yml.j2
+        dest: ../secrets.yml
+
+    - name: Encrypt the secrets file with Ansible Vault
+      ansible.builtin.command:
+        cmd: ansible-vault encrypt ../secrets.yml --vault-password-file ../.vault_pass.txt

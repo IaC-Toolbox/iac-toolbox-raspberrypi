@@ -1,0 +1,82 @@
+---
+- name: Install required packages for GitHub runner
+  apt:
+    name:
+      - curl
+      - jq
+      - tar
+    state: present
+    update_cache: yes
+
+- name: Create runner directory
+  file:
+    path: "{{ github_runner.work_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Download GitHub Actions runner tarball
+  become_user: "{{ ansible_user }}"
+  get_url:
+    url: "https://github.com/actions/runner/releases/download/v{{ github_runner.version }}/actions-runner-linux-arm64-{{ github_runner.version }}.tar.gz"
+    dest: "{{ github_runner.work_dir }}/actions-runner.tar.gz"
+    mode: '0644'
+
+- name: Extract GitHub Actions runner
+  become_user: "{{ ansible_user }}"
+  unarchive:
+    src: "{{ github_runner.work_dir }}/actions-runner.tar.gz"
+    dest: "{{ github_runner.work_dir }}"
+    remote_src: yes
+    creates: "{{ github_runner.work_dir }}/config.sh"
+
+- name: Check if runner is already configured
+  stat:
+    path: "{{ github_runner.work_dir }}/.runner"
+  register: runner_configured
+
+- name: Configure GitHub Actions runner
+  become_user: "{{ ansible_user }}"
+  shell: |
+    ./config.sh --unattended \
+      --url {{ github_runner.repo_url }} \
+      --token {{ github_runner.token }} \
+      --labels {{ github_runner.labels }} \
+      --work _work
+  args:
+    chdir: "{{ github_runner.work_dir }}"
+  when: not runner_configured.stat.exists
+  register: config_output
+
+- name: Display runner configuration result
+  debug:
+    msg: "Runner configured successfully"
+  when: config_output is changed
+
+- name: Install runner as a service
+  shell: |
+    ./svc.sh install {{ ansible_user }}
+  args:
+    chdir: "{{ github_runner.work_dir }}"
+  when: not runner_configured.stat.exists
+
+- name: Start runner service
+  shell: |
+    ./svc.sh start
+  args:
+    chdir: "{{ github_runner.work_dir }}"
+  when: not runner_configured.stat.exists
+
+- name: Find GitHub Actions runner service file
+  find:
+    paths: /etc/systemd/system
+    patterns: "actions.runner.*.service"
+  register: runner_service
+
+- name: Enable runner service
+  systemd:
+    name: "{{ runner_service.files[0].path | basename }}"
+    enabled: yes
+    state: started
+  when: runner_service.files | length > 0

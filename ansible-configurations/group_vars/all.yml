@@ -1,0 +1,34 @@
+---
+# ============================================
+# Raspberry Pi Infrastructure Configuration
+# ============================================
+# This file contains all non-sensitive configuration.
+# Sensitive data (API keys, passwords) belongs in secrets.yml
+
+# Docker Configuration
+docker:
+  enabled: true
+
+# Cloudflare Tunnel Configuration
+cloudflare:
+  enabled: true
+  user: "{{ ansible_user }}" # User running cloudflared service
+  tunnel_name: main-backend-tunnel # Name of the tunnel in Cloudflare
+  domains:
+    - hostname: api.example.com # Public domain
+      service_port: 4000 # Local port to expose
+    - hostname: app.example.com
+      service_port: 4001
+
+# GitHub Actions Runner Configuration
+github_runner:
+  enabled: true
+  repo_url: "{{ lookup('env', 'GITHUB_REPO_URL') }}"
+  token: "{{ lookup('env', 'GITHUB_RUNNER_TOKEN') }}"
+  version: "{{ lookup('env', 'RUNNER_VERSION') | default('2.315.0', true) }}"
+  labels: "{{ lookup('env', 'RUNNER_LABELS') | default('rpi,arm64,docker', true) }}"
+  work_dir: "/home/{{ ansible_user }}/actions-runner"
+
+# Secrets Configuration
+secrets:
+  env_file: /etc/raspberrypi.env # Location where secrets are stored

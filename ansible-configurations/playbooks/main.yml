@@ -1,0 +1,84 @@
+---
+- name: Setup Raspberry Pi Infrastructure
+  hosts: all
+  become: true
+  vars_files:
+    - ../secrets.yml
+
+  pre_tasks:
+    - name: Validate connection to Raspberry Pi
+      ping:
+      tags: always
+
+    - name: Check Python installation
+      command: python3 --version
+      register: python_version
+      changed_when: false
+      tags: always
+
+    - name: Display Python version
+      debug:
+        msg: "Python {{ python_version.stdout }} is installed"
+      tags: always
+
+    - name: Verify required variables are defined
+      assert:
+        that:
+          - ansible_host is defined
+          - ansible_user is defined
+        fail_msg: "Required connection variables are missing. Check inventory configuration."
+      tags: always
+
+    - name: Gather system facts
+      setup:
+      tags: always
+
+    - name: Display target system information
+      debug:
+        msg: |
+          Target: {{ ansible_host }}
+          User: {{ ansible_user }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          Architecture: {{ ansible_architecture }}
+      tags: always
+
+  roles:
+    # - role: setup
+    #   tags: [setup, base]
+    #   when: setup is not defined or setup
+
+    # - role: docker
+    #   tags: [docker]
+    #   when: docker is not defined or docker.enabled
+
+    - role: inject_secrets
+      tags: [secrets]
+
+    # - role: cloudflare-tunnel
+    #   tags: [cloudflare, tunnel]
+    #   when: cloudflare is defined and cloudflare.enabled
+
+    - role: promote_to_github_runner
+      tags: [github-runner, runner]
+      when: github_runner is defined and github_runner.enabled
+
+  post_tasks:
+    - name: Display completion message
+      debug:
+        msg: |
+          ========================================
+          Raspberry Pi setup completed successfully!
+          ========================================
+
+          Next steps:
+          {% if cloudflare is defined and cloudflare.enabled %}
+          - Verify Cloudflare tunnel: sudo systemctl status cloudflared
+          {% endif %}
+          {% if github_runner is defined and github_runner.enabled %}
+          - Verify GitHub runner: sudo systemctl status actions.runner.*
+          {% endif %}
+          - Check Docker: docker --version
+          - View secrets: cat {{ secrets.env_file }}
+
+          Your Raspberry Pi is ready for deployment!
+      tags: always

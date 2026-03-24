@@ -1,0 +1,3 @@
+---
+# Cloudflare tunnel role defaults
+cloudflare_enabled: true
