@@ -1,0 +1,216 @@
+---
+- name: Create vault base directory
+  file:
+    path: "{{ vault.base_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Create vault config and scripts directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  loop:
+    - "{{ vault.base_dir }}/config"
+    - "{{ vault.base_dir }}/scripts"
+
+- name: Create vault logs directory with vault user ownership
+  file:
+    path: "{{ vault.base_dir }}/logs"
+    state: directory
+    owner: "100"
+    group: "1000"
+    mode: '0755'
+
+- name: Create vault data directory with restricted permissions
+  file:
+    path: "{{ vault.base_dir }}/data"
+    state: directory
+    owner: "100"
+    group: "1000"
+    mode: '0755'
+
+- name: Deploy vault configuration
+  template:
+    src: vault.hcl.j2
+    dest: "{{ vault.base_dir }}/config/vault.hcl"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Deploy docker-compose configuration
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ vault.base_dir }}/docker-compose.yml"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Deploy auto-unseal script
+  template:
+    src: auto-unseal.sh.j2
+    dest: "{{ vault.base_dir }}/scripts/auto-unseal.sh"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Start vault container
+  community.docker.docker_compose_v2:
+    project_src: "{{ vault.base_dir }}"
+    state: present
+    pull: always
+  become_user: "{{ ansible_user }}"
+
+- name: Wait for vault health check
+  shell: docker inspect --format='{% raw %}{{.State.Health.Status}}{% endraw %}' vault
+  register: vault_health
+  retries: 30
+  delay: 2
+  until: vault_health.stdout == "healthy"
+  changed_when: false
+
+- name: Run vault initialization
+  shell: |
+    cd {{ vault.base_dir }}
+    docker compose --profile unseal run --rm vault-unsealer
+  become_user: "{{ ansible_user }}"
+  register: unseal_output
+  failed_when: unseal_output.rc != 0 and unseal_output.rc != 2
+  changed_when: "'Initializing Vault' in unseal_output.stdout"
+
+- name: Display vault initialization output
+  debug:
+    msg: "{{ unseal_output.stdout_lines }}"
+  when: unseal_output is changed
+
+- name: Check if vault-init.json exists and get info
+  stat:
+    path: "{{ vault.base_dir }}/data/vault-init.json"
+  register: vault_init_file
+
+- name: Read vault-init.json file
+  slurp:
+    src: "{{ vault.base_dir }}/data/vault-init.json"
+  register: vault_init_content
+  when:
+    - vault_init_file.stat.exists
+    - vault_init_file.stat.size > 0
+
+- name: Parse vault initialization data
+  set_fact:
+    vault_init_data: "{{ vault_init_content.content | b64decode | from_json }}"
+    vault_root_token: "{{ (vault_init_content.content | b64decode | from_json).root_token }}"
+    vault_unseal_key: "{{ (vault_init_content.content | b64decode | from_json).unseal_keys_b64[0] }}"
+  when: vault_init_content.content is defined
+
+- name: Display Vault access information
+  debug:
+    msg:
+      - "=========================================="
+      - "HashiCorp Vault has been successfully deployed!"
+      - "=========================================="
+      - "Access URL: https://vault.iac-toolbox.com"
+      - "Root Token: {{ vault_root_token }}"
+      - ""
+      - "IMPORTANT: Save these credentials securely!"
+      - "Unseal Key: {{ vault_unseal_key }}"
+      - ""
+      - "Vault initialization details saved to: {{ vault.base_dir }}/data/vault-init.json"
+  when: vault_root_token is defined
+
+- name: Set vault-init.json permissions
+  file:
+    path: "{{ vault.base_dir }}/data/vault-init.json"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0600'
+  when:
+    - vault_init_file.stat.exists
+    - vault_init_file.stat.size > 0
+
+- name: Check if Vault is sealed
+  shell: docker exec vault vault status -format=json
+  register: vault_status_check
+  failed_when: false
+  changed_when: false
+
+- name: Parse vault status
+  set_fact:
+    vault_is_sealed: "{{ (vault_status_check.stdout | from_json).sealed }}"
+  when: vault_status_check.rc == 0 or vault_status_check.rc == 2
+
+- name: Unseal Vault if sealed
+  shell: docker exec vault vault operator unseal "{{ vault_unseal_key }}"
+  when:
+    - vault_unseal_key is defined
+    - vault_is_sealed is defined
+    - vault_is_sealed | bool
+  register: unseal_result
+
+- name: Display unseal result
+  debug:
+    msg: "Vault has been unsealed"
+  when: unseal_result is changed
+
+- name: Verify vault status
+  shell: docker exec vault vault status
+  register: vault_status
+  failed_when: false
+  changed_when: false
+
+- name: Display vault status
+  debug:
+    msg: "{{ vault_status.stdout_lines }}"
+
+- name: Enable KV secrets engine
+  shell: |
+    docker exec -e VAULT_TOKEN={{ vault_root_token }} vault \
+      vault secrets enable -version=2 -path=kv kv
+  register: kv_enable
+  failed_when:
+    - kv_enable.rc != 0
+    - "'path is already in use' not in kv_enable.stderr"
+  changed_when: "'path is already in use' not in kv_enable.stderr"
+  when:
+    - vault.enable_kv
+    - vault_root_token is defined
+
+- name: Enable audit logging
+  shell: |
+    docker exec -e VAULT_TOKEN={{ vault_root_token }} vault \
+      vault audit enable file file_path=/vault/logs/audit.log
+  register: audit_enable
+  failed_when:
+    - audit_enable.rc != 0
+    - "'path already in use' not in audit_enable.stderr"
+  changed_when: "'path already in use' not in audit_enable.stderr"
+  when:
+    - vault.enable_audit
+    - vault_root_token is defined
+
+- name: Create vault systemd service
+  template:
+    src: vault.service.j2
+    dest: /etc/systemd/system/vault.service
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Create vault-unseal systemd service
+  template:
+    src: vault-unseal.service.j2
+    dest: /etc/systemd/system/vault-unseal.service
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Enable vault systemd services
+  systemd:
+    name: "{{ item }}"
+    enabled: yes
+    daemon_reload: yes
+  loop:
+    - vault
+    - vault-unseal

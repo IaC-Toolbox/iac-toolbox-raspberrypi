@@ -15,10 +15,10 @@ cloudflare:
   user: "{{ ansible_user }}" # User running cloudflared service
   tunnel_name: main-backend-tunnel # Name of the tunnel in Cloudflare
   domains:
-    - hostname: api.example.com # Public domain
-      service_port: 4000 # Local port to expose
-    - hostname: app.example.com
-      service_port: 4001
+    - hostname: api.iac-toolbox.com # Public domain
+      service_port: 80 # Local port to expose
+    - hostname: vault.iac-toolbox.com # Vault UI
+      service_port: 8200 # Vault port
 
 # GitHub Actions Runner Configuration
 github_runner:
@@ -32,3 +32,12 @@ github_runner:
 # Secrets Configuration
 secrets:
   env_file: /etc/raspberrypi.env # Location where secrets are stored
+
+# Vault Configuration
+vault:
+  enabled: true
+  version: "latest"
+  base_dir: "/home/{{ ansible_user }}/vault"
+  port: 8200
+  enable_kv: true
+  enable_audit: true

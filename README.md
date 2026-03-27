@@ -41,9 +41,10 @@ cloudflared tunnel login
 ## What Gets Installed
 
 - **Docker Engine** - Container runtime with Docker Compose
+- **HashiCorp Vault** - Secrets management with auto-unseal
 - **Cloudflare Tunnel** - Secure external access (optional)
 - **GitHub Actions Runner** - Self-hosted ARM64 runner
-- **Secrets** - Deployed to `/etc/raspberrypi.env`
+- **Secrets** - Managed via Vault or deployed to `/etc/raspberrypi.env`
 
 ## Configuration
 
@@ -60,9 +61,33 @@ Run specific components:
 ```bash
 cd ansible-configurations
 ansible-playbook -i inventory/all.yml playbooks/main.yml --tags docker
+ansible-playbook -i inventory/all.yml playbooks/main.yml --tags vault
 ansible-playbook -i inventory/all.yml playbooks/main.yml --tags github-runner
 ansible-playbook -i inventory/all.yml playbooks/main.yml --tags cloudflare
 ```
+
+### Vault Deployment
+
+Deploy HashiCorp Vault for secrets management:
+
+```bash
+cd ansible-configurations
+ansible-playbook -i inventory/all.yml playbooks/main.yml --tags vault
+```
+
+After deployment:
+- Access Vault UI at: `https://vault.iac-toolbox.com`
+- Root token and unseal key are displayed in Ansible output
+- Credentials saved to: `~/vault/data/vault-init.json` on Raspberry Pi
+
+**Cleanup Vault (if needed):**
+
+```bash
+ssh pi@raspberrypi
+cd ~/vault && docker compose down && sudo rm -rf data && mkdir -p data && sudo chown 100:1000 data
+```
+
+Then re-run the Ansible playbook to redeploy with fresh initialization.
 
 Update secrets:
 
@@ -76,4 +101,5 @@ ansible-playbook -i inventory/all.yml playbooks/main.yml --tags secrets
 
 ## Documentation
 
-See [docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md) for detailed documentation, architecture, and troubleshooting.
+- [docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md) - Project architecture and overview
+- [docs/01-vault-setup.md](docs/01-vault-setup.md) - HashiCorp Vault setup and usage guide
