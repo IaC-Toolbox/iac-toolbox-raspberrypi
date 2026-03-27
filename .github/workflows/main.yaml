@@ -1,32 +1,32 @@
-name: CI
+# name: CI
 
-# 1
-# Controls when the workflow will run
-on:
-  # Triggers the workflow on push events but only for the master branch
-  push:
-    branches: [main]
-    # Allows you to run this workflow manually from the Actions tab
-    workflow_dispatch:
-      inputs:
-      version:
-        description: "Deploy Container"
-        required: true
+# # 1
+# # Controls when the workflow will run
+# on:
+#   # Triggers the workflow on push events but only for the master branch
+#   push:
+#     branches: [main]
+#     # Allows you to run this workflow manually from the Actions tab
+#     workflow_dispatch:
+#       inputs:
+#       version:
+#         description: "Deploy Container"
+#         required: true
 
-jobs:
-  deploy:
-    runs-on: [self-hosted, ARM64]
-    steps:
-      - name: Stop existing container
-        run: |
-          docker stop my-app || true
-          docker rm my-app || true
-      - name: Pull and run new container
-        run: |
-          TAG=33eba33d67996df4935cb58a54943d09fffff244
-          docker pull ${{ secrets.DOCKER_USERNAME }}/vvasylkovskyi-bark-gpt-api:$TAG
-          docker run -d \
-            --name my-app \
-            -p 4000:4000 \
-            --restart unless-stopped \
-            ${{ secrets.DOCKER_USERNAME }}/vvasylkovskyi-bark-gpt-api:$TAG
+# jobs:
+#   deploy:
+#     runs-on: [self-hosted, ARM64]
+#     steps:
+#       - name: Stop existing container
+#         run: |
+#           docker stop my-app || true
+#           docker rm my-app || true
+#       - name: Pull and run new container
+#         run: |
+#           TAG=33eba33d67996df4935cb58a54943d09fffff244
+#           docker pull ${{ secrets.DOCKER_USERNAME }}/vvasylkovskyi-bark-gpt-api:$TAG
+#           docker run -d \
+#             --name my-app \
+#             -p 4000:4000 \
+#             --restart unless-stopped \
+#             ${{ secrets.DOCKER_USERNAME }}/vvasylkovskyi-bark-gpt-api:$TAG
