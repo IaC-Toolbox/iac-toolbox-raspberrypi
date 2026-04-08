@@ -106,13 +106,18 @@ cloudflare_api_token: "{{ lookup('env', 'CLOUDFLARE_API_TOKEN') }}"
 
 Suggested split:
 - non-secret values in `inventory/group_vars/all.yml`
-- `cloudflare_api_token` loaded from an environment variable, following the repo’s existing pattern
+- API token loaded from environment, following the repo’s existing pattern
+
+Recommended environment variable names:
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_ZONE_ID`
 
 ### What you would need to provide
 
-1. **Cloudflare API token** provided via environment variable, for example `CLOUDFLARE_API_TOKEN`
-2. **Cloudflare Account ID**
-3. **Cloudflare Zone ID** for the domain hosting these DNS records
+1. **Cloudflare API token** via `CLOUDFLARE_API_TOKEN`
+2. **Cloudflare Account ID** via `CLOUDFLARE_ACCOUNT_ID`
+3. **Cloudflare Zone ID** via `CLOUDFLARE_ZONE_ID` for the domain hosting these DNS records
 
 ### Where to get them
 
@@ -126,7 +131,10 @@ Likely permissions needed:
 - **Account** → Cloudflare Tunnel / Cloudflare One connectors: **Edit**
 - **Zone** → DNS: **Edit**
 
-The token should be provided to Ansible via an environment variable such as `CLOUDFLARE_API_TOKEN`, not committed into git.
+The token should be provided to Ansible via environment variables, not committed into git. The intended names are:
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_ZONE_ID`
 
 #### 2. Account ID
 In the Cloudflare dashboard:
