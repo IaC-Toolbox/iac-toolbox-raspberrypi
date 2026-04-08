@@ -1,7 +1,0 @@
----
-# Secrets role defaults
-secrets_enabled: true
-
-# Default secrets configuration
-secrets:
-  env_file: /etc/raspberrypi.env

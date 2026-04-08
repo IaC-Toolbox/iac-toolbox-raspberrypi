@@ -48,7 +48,7 @@ cloudflared tunnel login
 - **HashiCorp Vault** - Secrets management with auto-unseal
 - **Cloudflare Tunnel** - Secure external access (optional)
 - **GitHub Actions Runner** - Self-hosted ARM64 runner
-- **Secrets** - Managed via Vault or deployed to `/etc/raspberrypi.env`
+- **Secrets** - Managed via HashiCorp Vault
 
 ## Configuration
 

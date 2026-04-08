@@ -61,9 +61,6 @@
       tags: [docker]
       when: docker is not defined or docker.enabled
 
-    - role: inject_secrets
-      tags: [secrets]
-
     - role: vault
       tags: [vault, secrets]
       when: vault is defined and vault.enabled
