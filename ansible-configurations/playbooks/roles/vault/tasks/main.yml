@@ -73,39 +73,46 @@
   until: vault_health.stdout == "healthy"
   changed_when: false
 
-- name: Run vault initialization
+- name: Run vault initialization helper
   shell: |
     cd {{ vault.base_dir }}
     docker compose --profile unseal run --rm vault-unsealer
   become_user: "{{ ansible_user }}"
-  register: unseal_output
-  failed_when: unseal_output.rc != 0 and unseal_output.rc != 2
-  changed_when: "'Initializing Vault' in unseal_output.stdout"
+  register: vault_init_helper
+  failed_when: vault_init_helper.rc != 0 and vault_init_helper.rc != 2
+  changed_when: "'Initializing Vault' in vault_init_helper.stdout"
 
-- name: Display vault initialization output
+- name: Display vault initialization helper output
   debug:
-    msg: "{{ unseal_output.stdout_lines }}"
-  when: unseal_output is changed
+    msg: "{{ vault_init_helper.stdout_lines }}"
 
-- name: Check if vault-init.json exists and get info
+- name: Wait for vault-init.json to exist
   stat:
     path: "{{ vault.base_dir }}/data/vault-init.json"
   register: vault_init_file
+  retries: 10
+  delay: 2
+  until:
+    - vault_init_file.stat.exists
+    - vault_init_file.stat.size > 0
+
+- name: Set vault-init.json permissions for ansible user
+  file:
+    path: "{{ vault.base_dir }}/data/vault-init.json"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0600'
 
 - name: Read vault-init.json file
   slurp:
     src: "{{ vault.base_dir }}/data/vault-init.json"
   register: vault_init_content
-  when:
-    - vault_init_file.stat.exists
-    - vault_init_file.stat.size > 0
 
 - name: Parse vault initialization data
   set_fact:
     vault_init_data: "{{ vault_init_content.content | b64decode | from_json }}"
     vault_root_token: "{{ (vault_init_content.content | b64decode | from_json).root_token }}"
     vault_unseal_key: "{{ (vault_init_content.content | b64decode | from_json).unseal_keys_b64[0] }}"
-  when: vault_init_content.content is defined
 
 - name: Display Vault access information
   debug:
@@ -120,51 +127,35 @@
       - "Unseal Key: {{ vault_unseal_key }}"
       - ""
       - "Vault initialization details saved to: {{ vault.base_dir }}/data/vault-init.json"
-  when: vault_root_token is defined
 
-- name: Set vault-init.json permissions
-  file:
-    path: "{{ vault.base_dir }}/data/vault-init.json"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    mode: '0600'
-  when:
-    - vault_init_file.stat.exists
-    - vault_init_file.stat.size > 0
-
-- name: Check if Vault is sealed
+- name: Check current Vault status as JSON
   shell: docker exec vault vault status -format=json
   register: vault_status_check
-  failed_when: false
+  failed_when: vault_status_check.rc not in [0, 2]
   changed_when: false
 
 - name: Parse vault status
   set_fact:
+    vault_is_initialized: "{{ (vault_status_check.stdout | from_json).initialized }}"
     vault_is_sealed: "{{ (vault_status_check.stdout | from_json).sealed }}"
-  when: vault_status_check.rc == 0 or vault_status_check.rc == 2
 
 - name: Unseal Vault if sealed
   shell: docker exec vault vault operator unseal "{{ vault_unseal_key }}"
-  when:
-    - vault_unseal_key is defined
-    - vault_is_sealed is defined
-    - vault_is_sealed | bool
   register: unseal_result
+  changed_when: false
+  when: vault_is_sealed | bool
 
-- name: Display unseal result
-  debug:
-    msg: "Vault has been unsealed"
-  when: unseal_result is changed
-
-- name: Verify vault status
-  shell: docker exec vault vault status
-  register: vault_status
-  failed_when: false
+- name: Wait until Vault is unsealed
+  shell: docker exec vault vault status -format=json
+  register: vault_status_after_unseal
+  retries: 10
+  delay: 2
+  until: not ((vault_status_after_unseal.stdout | from_json).sealed)
   changed_when: false
 
 - name: Display vault status
   debug:
-    msg: "{{ vault_status.stdout_lines }}"
+    msg: "{{ vault_status_after_unseal.stdout | from_json }}"
 
 - name: Enable KV secrets engine
   shell: |
@@ -175,9 +166,7 @@
     - kv_enable.rc != 0
     - "'path is already in use' not in kv_enable.stderr"
   changed_when: "'path is already in use' not in kv_enable.stderr"
-  when:
-    - vault.enable_kv
-    - vault_root_token is defined
+  when: vault.enable_kv
 
 - name: Enable audit logging
   shell: |
@@ -188,9 +177,7 @@
     - audit_enable.rc != 0
     - "'path already in use' not in audit_enable.stderr"
   changed_when: "'path already in use' not in audit_enable.stderr"
-  when:
-    - vault.enable_audit
-    - vault_root_token is defined
+  when: vault.enable_audit
 
 - name: Create vault systemd service
   template:

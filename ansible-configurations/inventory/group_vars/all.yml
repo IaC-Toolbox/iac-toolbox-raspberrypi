@@ -33,10 +33,6 @@ github_runner:
   labels: "{{ lookup('env', 'RUNNER_LABELS') | default('rpi,arm64,docker', true) }}"
   work_dir: "/home/{{ ansible_user }}/actions-runner"
 
-# Secrets Configuration
-secrets:
-  env_file: /etc/raspberrypi.env # Location where secrets are stored
-
 # Vault Configuration
 vault:
   enabled: true

@@ -42,26 +42,28 @@
           Architecture: {{ ansible_architecture }}
       tags: always
 
-    - name: Debug variables
+    - name: Display selected deployment configuration
       debug:
-        var: hostvars[inventory_hostname]
+        msg:
+          target: "{{ ansible_host | default('local') }}"
+          connection: "{{ ansible_connection | default('ssh') }}"
+          vault_enabled: "{{ vault.enabled | default(false) }}"
+          loki_enabled: "{{ loki.enabled | default(false) }}"
+          openclaw_enabled: "{{ openclaw.enabled | default(false) }}"
       tags: always
 
   roles:
-    # - role: setup
-    #   tags: [setup, base]
-    #   when: setup is not defined or setup
+    - role: setup
+      tags: [setup, base]
+      when: setup is not defined or setup
 
-    # - role: docker
-    #   tags: [docker]
-    #   when: docker is not defined or docker.enabled
+    - role: docker
+      tags: [docker]
+      when: docker is not defined or docker.enabled
 
-    # - role: inject_secrets
-    #   tags: [secrets]
-
-    # - role: vault
-    #   tags: [vault, secrets]
-    #   when: vault is defined and vault.enabled
+    - role: vault
+      tags: [vault, secrets]
+      when: vault is defined and vault.enabled
 
     # - role: grafana
     #   tags: [grafana, monitoring]

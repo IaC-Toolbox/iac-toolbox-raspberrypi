@@ -1,8 +1,32 @@
-# Feature Plan: HashiCorp Vault Setup via Ansible
+# HashiCorp Vault Setup via Ansible
 
 ## Overview
 
-Add automated HashiCorp Vault deployment to the Raspberry Pi infrastructure using a new Ansible role. This replaces the manual secrets management approach (`/etc/raspberrypi.env`) with a production-grade secrets management system accessible via Cloudflare tunnel at `vault.iac-toolbox.com`.
+This repo deploys HashiCorp Vault to the Raspberry Pi using Ansible. It replaces the plain-text `/etc/raspberrypi.env` approach with a more structured secrets system exposed through `vault.iac-toolbox.com`.
+
+Current validated flows:
+
+```bash
+./scripts/install.sh --vault
+./scripts/install.sh --vault --local
+./scripts/uninstall-vault.sh
+./scripts/uninstall-vault.sh --local
+```
+
+`--local` is the self-test mode for running the Ansible vault deployment directly on the same Raspberry Pi instead of SSHing into it.
+
+## What Was Fixed
+
+The original vault role could initialize Vault but still leave it sealed while reporting a mostly successful playbook run. The role now:
+
+- waits for `vault-init.json` to exist
+- fixes file ownership before reading it
+- parses the root token and unseal key reliably
+- unseals Vault explicitly
+- waits until Vault reports `sealed: false`
+- enables KV and audit logging only after Vault is usable
+
+This flow was validated locally on the Raspberry Pi using `./scripts/install.sh --vault --local`.
 
 ## Problem Being Solved
 
