@@ -1,0 +1,161 @@
+---
+- name: Create Prometheus base directory
+  file:
+    path: "{{ prometheus.base_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Deploy docker-compose configuration
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ prometheus.base_dir }}/docker-compose.yml"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Deploy Prometheus configuration
+  template:
+    src: prometheus.yml.j2
+    dest: "{{ prometheus.base_dir }}/prometheus.yml"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Pull Prometheus container image
+  community.docker.docker_image:
+    name: "prom/prometheus:{{ prometheus.version }}"
+    source: pull
+  become_user: "{{ ansible_user }}"
+
+- name: Pull Node Exporter container image
+  community.docker.docker_image:
+    name: "prom/node-exporter:{{ node_exporter.version }}"
+    source: pull
+  become_user: "{{ ansible_user }}"
+
+- name: Deploy Prometheus systemd service
+  template:
+    src: prometheus.service.j2
+    dest: /etc/systemd/system/prometheus.service
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Enable Prometheus systemd service
+  systemd:
+    name: prometheus
+    enabled: yes
+    daemon_reload: yes
+
+- name: Start Prometheus stack via systemd
+  systemd:
+    name: prometheus
+    state: started
+
+- name: Wait for Prometheus to be healthy
+  uri:
+    url: "http://localhost:{{ prometheus.port }}/-/healthy"
+    method: GET
+    status_code: 200
+  register: prometheus_health
+  retries: 30
+  delay: 2
+  until: prometheus_health.status == 200
+
+- name: Wait for Node Exporter to be available
+  uri:
+    url: "http://localhost:{{ node_exporter.port }}/metrics"
+    method: GET
+    status_code: 200
+  register: node_exporter_health
+  retries: 30
+  delay: 2
+  until: node_exporter_health.status == 200
+
+- name: Wait for Prometheus to scrape Node Exporter
+  pause:
+    seconds: 20
+
+- name: Check if Prometheus datasource exists in Grafana
+  uri:
+    url: "http://localhost:{{ grafana.port }}/api/datasources/name/Prometheus"
+    user: "{{ grafana.admin_user }}"
+    password: "{{ grafana.admin_password }}"
+    force_basic_auth: yes
+    status_code: [200, 404]
+  register: datasource_check
+  failed_when: false
+
+- name: Create Prometheus datasource in Grafana
+  uri:
+    url: "http://localhost:{{ grafana.port }}/api/datasources"
+    method: POST
+    user: "{{ grafana.admin_user }}"
+    password: "{{ grafana.admin_password }}"
+    body_format: json
+    body:
+      name: "Prometheus"
+      type: "prometheus"
+      url: "http://prometheus:{{ prometheus.port }}"
+      access: "proxy"
+      isDefault: true
+    force_basic_auth: yes
+    status_code: 200
+  when: datasource_check.status == 404
+  register: datasource_created
+
+- name: Display datasource creation message
+  debug:
+    msg: "Prometheus datasource has been created in Grafana"
+  when: datasource_created is changed
+
+- name: Get dashboard JSON from Grafana.com API
+  uri:
+    url: "https://grafana.com/api/dashboards/1860"
+    method: GET
+    return_content: yes
+  register: dashboard_json
+
+- name: Import Node Exporter Full dashboard
+  uri:
+    url: "http://localhost:{{ grafana.port }}/api/dashboards/import"
+    method: POST
+    user: "{{ grafana.admin_user }}"
+    password: "{{ grafana.admin_password }}"
+    body_format: json
+    body:
+      dashboard: "{{ dashboard_json.json.json }}"
+      overwrite: true
+      inputs:
+        - name: "DS_PROMETHEUS"
+          type: "datasource"
+          pluginId: "prometheus"
+          value: "Prometheus"
+    force_basic_auth: yes
+    status_code: 200
+  register: dashboard_imported
+
+- name: Display dashboard import message
+  debug:
+    msg: "Node Exporter Full dashboard imported at: http://localhost:{{ grafana.port }}{{ dashboard_imported.json.importedUrl }}"
+  when: dashboard_imported is changed
+
+- name: Display Prometheus access information
+  debug:
+    msg:
+      - "=========================================="
+      - "Prometheus stack has been successfully deployed!"
+      - "=========================================="
+      - "Prometheus URL: http://{{ ansible_host }}:{{ prometheus.port }}"
+      - "Node Exporter URL: http://{{ ansible_host }}:{{ node_exporter.port }}/metrics"
+      - ""
+      - "Grafana datasource: Prometheus (auto-configured)"
+      - "Dashboard: Node Exporter Full (auto-imported)"
+      - ""
+      - "Access Prometheus UI via SSH tunnel:"
+      - "  ssh -L {{ prometheus.port }}:localhost:{{ prometheus.port }} {{ ansible_user }}@{{ ansible_host }}"
+      - "  Then visit: http://localhost:{{ prometheus.port }}"
+      - ""
+      - "Metrics retention: {{ prometheus.retention }}"
+      - "Scrape interval: {{ prometheus.scrape_interval }}"

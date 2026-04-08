@@ -19,6 +19,10 @@ cloudflare:
       service_port: 80 # Local port to expose
     - hostname: vault.iac-toolbox.com # Vault UI
       service_port: 8200 # Vault port
+    - hostname: grafana.iac-toolbox.com # Grafana UI
+      service_port: 3000 # Grafana port
+    - hostname: alloy.iac-toolbox.com # Alloy log collector UI
+      service_port: 12345 # Alloy port
 
 # GitHub Actions Runner Configuration
 github_runner:
@@ -41,3 +45,47 @@ vault:
   port: 8200
   enable_kv: true
   enable_audit: true
+
+# Grafana Configuration
+grafana:
+  enabled: true
+  version: "latest"
+  base_dir: "/home/{{ ansible_user }}/grafana"
+  port: 3000
+  admin_user: "admin"
+  admin_password: "{{ lookup('env', 'GRAFANA_ADMIN_PASSWORD') }}"
+  vault_path: "kv/observability/grafana"
+  domain: "grafana.iac-toolbox.com"
+
+# Prometheus Configuration
+prometheus:
+  enabled: true
+  version: "latest"
+  base_dir: "/home/{{ ansible_user }}/observability"
+  port: 9090
+  scrape_interval: "15s"
+  retention: "15d" # Configurable: 7d, 15d, 30d, etc.
+
+# Node Exporter Configuration
+node_exporter:
+  version: "latest"
+  port: 9100
+
+# Loki Log Aggregation Configuration
+loki:
+  enabled: true
+  version: "latest"
+  base_dir: "/home/{{ ansible_user }}/loki"
+  port: 3100
+  retention_hours: 168 # 7 days (72=3d, 168=7d, 336=14d, 720=30d)
+
+# Grafana Alloy Log Collector Configuration
+alloy:
+  enabled: true
+  version: "latest"
+  port: 12345
+  domain: "alloy.iac-toolbox.com"
+
+# OpenClaw AI Assistant Service
+openclaw:
+  enabled: true # Set to true to deploy openclaw as systemd service

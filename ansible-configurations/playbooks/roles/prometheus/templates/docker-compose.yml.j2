@@ -1,0 +1,44 @@
+services:
+  prometheus:
+    image: prom/prometheus:{{ prometheus.version }}
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "{{ prometheus.port }}:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time={{ prometheus.retention }}'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - monitoring
+
+  node-exporter:
+    image: prom/node-exporter:{{ node_exporter.version }}
+    container_name: node-exporter
+    restart: unless-stopped
+    pid: host
+    ports:
+      - "{{ node_exporter.port }}:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - monitoring
+
+volumes:
+  prometheus_data:
+
+networks:
+  monitoring:
+    name: monitoring
+    external: true

@@ -1,0 +1,10 @@
+---
+# Default variables for grafana role
+grafana:
+  enabled: true
+  version: "latest"
+  base_dir: "/home/{{ ansible_user }}/grafana"
+  port: 3000
+  admin_user: "admin"
+  vault_path: "kv/observability/grafana"
+  domain: "grafana.iac-toolbox.com"

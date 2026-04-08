@@ -59,9 +59,25 @@
     # - role: inject_secrets
     #   tags: [secrets]
 
-    - role: vault
-      tags: [vault, secrets]
-      when: vault is defined and vault.enabled
+    # - role: vault
+    #   tags: [vault, secrets]
+    #   when: vault is defined and vault.enabled
+
+    # - role: grafana
+    #   tags: [grafana, monitoring]
+    #   when: grafana is defined and grafana.enabled
+
+    # - role: prometheus
+    #   tags: [prometheus, monitoring]
+    #   when: prometheus is defined and prometheus.enabled
+
+    - role: loki
+      tags: [loki, logs, monitoring]
+      when: loki is defined and loki.enabled
+
+    # - role: openclaw
+    #   tags: [assistant, apps]
+    #   when: openclaw is defined and openclaw.enabled
 
     # - role: cloudflare-tunnel
     #   tags: [cloudflare, tunnel]
@@ -84,6 +100,31 @@
           - Verify Vault: sudo systemctl status vault
           - Access Vault UI: https://vault.iac-toolbox.com
           - Check credentials: cat {{ vault.base_dir }}/data/vault-init.json
+          {% endif %}
+          {% if grafana is defined and grafana.enabled %}
+          - Verify Grafana: sudo systemctl status grafana
+          - Access Grafana UI: https://{{ grafana.domain }}
+          - Username: {{ grafana.admin_user }} / Password: {{ grafana.admin_password }}
+          {% endif %}
+          {% if prometheus is defined and prometheus.enabled %}
+          - Verify Prometheus: sudo systemctl status prometheus
+          - Prometheus UI (via SSH tunnel): ssh -L {{ prometheus.port }}:localhost:{{ prometheus.port }} {{ ansible_user }}@{{ ansible_host }}
+          - Node Exporter metrics: http://{{ ansible_host }}:{{ node_exporter.port }}/metrics
+          - Grafana datasource: Prometheus (auto-configured)
+          - Dashboard: Node Exporter Full (auto-imported)
+          {% endif %}
+          {% if loki is defined and loki.enabled %}
+          - Verify Loki: sudo systemctl status loki
+          - Loki API: http://{{ ansible_host }}:{{ loki.port }}
+          - Alloy UI: https://{{ alloy.domain }}
+          - Grafana datasource: Loki (auto-configured)
+          - Dashboard: Loki Logs (auto-imported)
+          - Query logs: {job="systemd"}, {job="docker"}, {job="auth"}
+          {% endif %}
+          {% if openclaw is defined and openclaw.enabled %}
+          - Verify OpenClaw: sudo systemctl status openclaw
+          - View logs: journalctl -u openclaw -f
+          - Grafana query: {job="systemd"} |~ "openclaw"
           {% endif %}
           {% if cloudflare is defined and cloudflare.enabled %}
           - Verify Cloudflare tunnel: sudo systemctl status cloudflared
