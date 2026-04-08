@@ -12,7 +12,12 @@ That creates `~/.cloudflared/cert.pem`, and the role refuses to continue without
 
 This works, but it makes the deployment only partially automated and awkward to reproduce on a fresh Raspberry Pi. It also blocks self-service bootstrap from Ansible alone.
 
-The goal of this plan is to add a Cloudflare API driven workflow **as a separate role**, without deleting the current role yet. The existing `cloudflare-tunnel` role should remain available during review and migration.
+The goal of this plan is to support **two user-selectable installation methods** for Cloudflare Tunnel:
+
+1. **OAuth / browser login** — the current method
+2. **API token / remotely managed tunnel** — the new automated method
+
+This should be implemented without deleting the current role yet. The existing `cloudflare-tunnel` role should remain available during review and migration.
 
 ## Current Role Problems
 
@@ -47,13 +52,19 @@ This removes the need for `cloudflared tunnel login` and `cert.pem` in the norma
 
 ## Proposed Direction
 
-Add a **new role** for API-managed tunnels alongside the existing role.
+Support two user-selectable Cloudflare installation modes.
 
-- Keep the current `cloudflare-tunnel` role unchanged for now
-- Add a new role, for example `cloudflare-tunnel-api`
-- Let the repo switch between them via config once the new path is validated
+- Keep the current `cloudflare-tunnel` role for **OAuth / browser-login** flow
+- Add a new role, for example `cloudflare-tunnel-api`, for **API token / remotely managed tunnel** flow
+- Let the repo select between them via config, for example a mode flag such as:
 
-This keeps the migration reversible and makes review safer.
+```yaml
+cloudflare:
+  enabled: true
+  mode: oauth # or: api
+```
+
+This keeps the migration reversible, preserves the current working path, and makes review safer.
 
 ### New high-level flow for the new role
 
@@ -130,13 +141,17 @@ Exact permission names should be documented in the implementation PR and mirrore
 
 ## Role Changes to Make in the new role
 
-### 1. Do not depend on manual cert login
+### 1. Preserve OAuth mode, add token mode separately
 
 The new role should not:
 - check for `~/.cloudflared/cert.pem`
 - require `cloudflared tunnel login`
 
-The old role should remain untouched during the migration phase.
+The old role should remain available as the OAuth-based path.
+
+Expected user-facing behavior in the future:
+- `cloudflare.mode: oauth` → current browser-login / `cert.pem` based path
+- `cloudflare.mode: api` → token/API based path
 
 ### 2. Replace CLI tunnel creation with API creation
 
@@ -189,7 +204,7 @@ The role should converge to the desired state instead of failing on re-run.
 
 ## Migration Concerns
 
-Because the old role stays in place, we can avoid a hard cutover at first.
+Because the OAuth role stays in place, we can avoid a hard cutover at first.
 
 If a locally managed tunnel already exists, we need to decide whether to:
 - migrate it in place if possible, or
@@ -197,17 +212,20 @@ If a locally managed tunnel already exists, we need to decide whether to:
 - keep both roles available and let config select which one is active
 
 The safest first implementation is usually:
-- create the new role separately
-- validate it on the Raspberry Pi
-- only later decide whether to retire the old role
+- keep OAuth mode working as-is
+- create the new API role separately
+- validate API mode on the Raspberry Pi
+- let users choose `oauth` or `api`
+- only later decide whether one mode should become the default
 
 ## Suggested Implementation Phases
 
 ### Phase 1 — Documentation / design
-- document required Cloudflare secrets and permissions
+- document both supported installation methods: `oauth` and `api`
+- document required Cloudflare secrets and permissions for `api`
 - define final variable schema
 - decide migration strategy for existing tunnels
-- define how the repo selects old role vs new role
+- define how the repo selects OAuth role vs API role
 
 ### Phase 2 — New API-managed role
 - create a new role such as `cloudflare-tunnel-api`
@@ -228,7 +246,7 @@ The safest first implementation is usually:
 
 ## Open Questions
 
-1. Should the repo select old role vs new role with a simple mode flag, or separate booleans?
+1. Should the repo select OAuth vs API mode with a simple mode flag, or separate booleans?
 2. Where should the Cloudflare API token live in this repo’s final workflow?
 3. Should the token be account-scoped for one account, or do we want a more reusable variable model for multiple zones/accounts later?
 4. Do we want to preserve the current local `config.yml` as a fallback/debug artifact, or rely entirely on API-managed ingress?
@@ -241,6 +259,7 @@ Approve this plan first.
 
 Then implementation should happen in a dedicated PR that:
 - adds the new variables and docs
+- documents both supported modes: OAuth and API token
 - creates a new `cloudflare-tunnel-api` role (or similarly named role)
 - leaves the current `cloudflare-tunnel` role intact
 - validates idempotent behavior on the Raspberry Pi
