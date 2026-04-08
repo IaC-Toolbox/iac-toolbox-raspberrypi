@@ -66,6 +66,13 @@ cloudflare:
 
 This keeps the migration reversible, preserves the current working path, and makes review safer.
 
+## Mode Comparison
+
+| Mode | How it authenticates | Pros | Cons | Best use case |
+| --- | --- | --- | --- | --- |
+| `oauth` | `cloudflared tunnel login` + local `cert.pem` | Matches current workflow, no API token needed, simple when done manually once | Requires browser login, harder to automate, tied to local cert state | Manual setup or small one-off deployments |
+| `api` | Cloudflare API token + account/zone metadata | Fully automatable, reproducible on fresh machines, better for Ansible-first provisioning | Requires Cloudflare token and IDs, more initial setup | Repeatable infrastructure provisioning and unattended installs |
+
 ### New high-level flow for the new role
 
 1. Install `cloudflared`
@@ -94,16 +101,16 @@ cloudflare:
     - hostname: vault.iac-toolbox.com
       service: http://localhost:8200
 
-cloudflare_api_token: "..."
+cloudflare_api_token: "{{ lookup('env', 'CLOUDFLARE_API_TOKEN') }}"
 ```
 
 Suggested split:
 - non-secret values in `inventory/group_vars/all.yml`
-- `cloudflare_api_token` in encrypted `secrets.yml` or another secret-backed input
+- `cloudflare_api_token` loaded from an environment variable, following the repo’s existing pattern
 
 ### What you would need to provide
 
-1. **Cloudflare API token**
+1. **Cloudflare API token** provided via environment variable, for example `CLOUDFLARE_API_TOKEN`
 2. **Cloudflare Account ID**
 3. **Cloudflare Zone ID** for the domain hosting these DNS records
 
@@ -119,7 +126,7 @@ Likely permissions needed:
 - **Account** → Cloudflare Tunnel / Cloudflare One connectors: **Edit**
 - **Zone** → DNS: **Edit**
 
-The token should be provided to Ansible as a secret, not committed into git.
+The token should be provided to Ansible via an environment variable such as `CLOUDFLARE_API_TOKEN`, not committed into git.
 
 #### 2. Account ID
 In the Cloudflare dashboard:
@@ -247,7 +254,7 @@ The safest first implementation is usually:
 ## Open Questions
 
 1. Should the repo select OAuth vs API mode with a simple mode flag, or separate booleans?
-2. Where should the Cloudflare API token live in this repo’s final workflow?
+2. Should the repo standardize on `CLOUDFLARE_API_TOKEN` as the env var name for the API mode?
 3. Should the token be account-scoped for one account, or do we want a more reusable variable model for multiple zones/accounts later?
 4. Do we want to preserve the current local `config.yml` as a fallback/debug artifact, or rely entirely on API-managed ingress?
 5. If an old tunnel already exists under the same name, do we reuse it or replace it?
@@ -264,3 +271,4 @@ Then implementation should happen in a dedicated PR that:
 - leaves the current `cloudflare-tunnel` role intact
 - validates idempotent behavior on the Raspberry Pi
 - documents exactly which Cloudflare token/account/zone values are required
+- uses an environment-variable pattern for the API token, consistent with the repo’s other secret inputs
