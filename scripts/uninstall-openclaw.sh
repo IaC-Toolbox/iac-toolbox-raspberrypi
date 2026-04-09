@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # ============================================
-# OpenClaw AI Assistant Uninstall Script
+# openclaw Uninstall Script
 # ============================================
-# Removes OpenClaw systemd service deployed by Ansible
+# Removes the openclaw systemd service deployed by Ansible
 
 set -e
 
@@ -13,7 +13,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${YELLOW}========================================${NC}"
-echo -e "${YELLOW}OpenClaw AI Assistant Uninstall${NC}"
+echo -e "${YELLOW}openclaw uninstall${NC}"
 echo -e "${YELLOW}========================================${NC}"
 echo ""
 
@@ -57,7 +57,7 @@ echo -e "${GREEN}✓ Service file removed${NC}"
 echo ""
 
 echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}OpenClaw AI Assistant successfully uninstalled!${NC}"
+echo -e "${GREEN}openclaw successfully uninstalled!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
 echo "Removed:"

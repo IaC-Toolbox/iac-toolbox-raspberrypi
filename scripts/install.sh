@@ -20,8 +20,31 @@ TERRAFORM_DIR="$PROJECT_ROOT/terraform/grafana-alerts"
 
 RUN_ANSIBLE=true
 RUN_TERRAFORM=true
-ANSIBLE_TAGS=""
 RPI_LOCAL_MODE="${RPI_LOCAL:-false}"
+declare -a ANSIBLE_TAGS=()
+SELECTED_COMPONENTS=false
+
+is_truthy() {
+  case "$(echo "${1:-}" | tr '[:upper:]' '[:lower:]')" in
+    true|1|yes|on) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+add_ansible_tag() {
+  local tag="$1"
+  local existing
+
+  for existing in "${ANSIBLE_TAGS[@]}"; do
+    if [ "$existing" = "$tag" ]; then
+      return
+    fi
+  done
+
+  ANSIBLE_TAGS+=("$tag")
+  SELECTED_COMPONENTS=true
+  RUN_TERRAFORM=false
+}
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -33,19 +56,40 @@ while [[ $# -gt 0 ]]; do
       RUN_ANSIBLE=false
       shift
       ;;
-    --assistant)
-      RUN_TERRAFORM=false
-      ANSIBLE_TAGS="assistant"
+    --setup)
+      add_ansible_tag "setup"
+      shift
+      ;;
+    --docker)
+      add_ansible_tag "docker"
       shift
       ;;
     --vault)
-      RUN_TERRAFORM=false
-      ANSIBLE_TAGS="vault"
+      add_ansible_tag "vault"
+      shift
+      ;;
+    --grafana)
+      add_ansible_tag "grafana"
+      shift
+      ;;
+    --prometheus)
+      add_ansible_tag "prometheus"
+      shift
+      ;;
+    --loki)
+      add_ansible_tag "loki"
+      shift
+      ;;
+    --openclaw)
+      add_ansible_tag "openclaw"
       shift
       ;;
     --cloudflared)
-      RUN_TERRAFORM=false
-      ANSIBLE_TAGS="cloudflare"
+      add_ansible_tag "cloudflared"
+      shift
+      ;;
+    --github-runner)
+      add_ansible_tag "github-runner"
       shift
       ;;
     --local)
@@ -58,11 +102,21 @@ while [[ $# -gt 0 ]]; do
       echo "Options:"
       echo "  --ansible-only     Run only Ansible playbook (infrastructure)"
       echo "  --terraform-only   Run only Terraform (Grafana alerts)"
-      echo "  --assistant        Deploy only OpenClaw AI Assistant service"
+      echo "  --setup            Run only the base system setup role"
+      echo "  --docker           Deploy only Docker"
       echo "  --vault            Deploy only HashiCorp Vault"
-      echo "  --cloudflared      Deploy only Cloudflare tunnel"
+      echo "  --grafana          Deploy only Grafana"
+      echo "  --prometheus       Deploy only Prometheus"
+      echo "  --loki             Deploy only Loki"
+      echo "  --openclaw         Deploy only openclaw"
+      echo "  --cloudflared      Deploy only the cloudflared tunnel roles"
+      echo "  --github-runner    Deploy only the GitHub Actions runner role"
       echo "  --local            Run Ansible locally on this machine instead of SSH"
       echo "  -h, --help         Show this help message"
+      echo ""
+      echo "Component flags can be combined, for example:"
+      echo "  $0 --docker --loki"
+      echo "  $0 --grafana --prometheus --local"
       echo ""
       echo "Default: Run both Ansible and Terraform"
       exit 0
@@ -75,19 +129,29 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [ "$RUN_ANSIBLE" = false ] && [ "$SELECTED_COMPONENTS" = true ]; then
+  echo -e "${RED}Error: Component flags cannot be combined with --terraform-only${NC}"
+  exit 1
+fi
+
+ANSIBLE_TAGS_CSV=""
+if [ ${#ANSIBLE_TAGS[@]} -gt 0 ]; then
+  ANSIBLE_TAGS_CSV="$(IFS=,; echo "${ANSIBLE_TAGS[*]}")"
+fi
+
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}Raspberry Pi Infrastructure Install${NC}"
 echo -e "${GREEN}========================================${NC}"
 if [ "$RUN_ANSIBLE" = false ]; then
   echo -e "${YELLOW}Mode: Terraform only (--terraform-only)${NC}"
-elif [ -n "$ANSIBLE_TAGS" ]; then
-  echo -e "${YELLOW}Mode: Ansible with tags: $ANSIBLE_TAGS${NC}"
+elif [ -n "$ANSIBLE_TAGS_CSV" ]; then
+  echo -e "${YELLOW}Mode: Ansible with tags: $ANSIBLE_TAGS_CSV${NC}"
 elif [ "$RUN_TERRAFORM" = false ]; then
   echo -e "${YELLOW}Mode: Ansible only (--ansible-only)${NC}"
 else
   echo -e "${YELLOW}Mode: Full deployment (Ansible + Terraform)${NC}"
 fi
-if [ "$(echo "$RPI_LOCAL_MODE" | tr '[:upper:]' '[:lower:]')" = "true" ] || [ "$RPI_LOCAL_MODE" = "1" ] || [ "$(echo "$RPI_LOCAL_MODE" | tr '[:upper:]' '[:lower:]')" = "yes" ] || [ "$(echo "$RPI_LOCAL_MODE" | tr '[:upper:]' '[:lower:]')" = "on" ]; then
+if is_truthy "$RPI_LOCAL_MODE"; then
   echo -e "${YELLOW}Target mode: local (--local)${NC}"
 fi
 echo ""
@@ -131,7 +195,7 @@ set -a
 source "$PROJECT_ROOT/.env"
 set +a
 
-if [ "$(echo "$RPI_LOCAL_MODE" | tr '[:upper:]' '[:lower:]')" = "true" ] || [ "$RPI_LOCAL_MODE" = "1" ] || [ "$(echo "$RPI_LOCAL_MODE" | tr '[:upper:]' '[:lower:]')" = "yes" ] || [ "$(echo "$RPI_LOCAL_MODE" | tr '[:upper:]' '[:lower:]')" = "on" ]; then
+if is_truthy "$RPI_LOCAL_MODE"; then
   export RPI_LOCAL=true
 else
   export RPI_LOCAL=false
@@ -141,8 +205,11 @@ echo -e "${GREEN}✓ .env file found${NC}"
 echo ""
 
 echo -e "${YELLOW}[3/7] Validating required environment variables...${NC}"
-REQUIRED_VARS=("RPI_HOST" "RPI_USER")
-if [ "$RUN_ANSIBLE" = true ] && [ "$ANSIBLE_TAGS" != "vault" ]; then
+REQUIRED_VARS=()
+if [ "$RUN_ANSIBLE" = true ]; then
+  REQUIRED_VARS+=("RPI_HOST" "RPI_USER")
+fi
+if [ "$RUN_ANSIBLE" = true ] && { [ "$SELECTED_COMPONENTS" = false ] || [[ ",$ANSIBLE_TAGS_CSV," == *",github-runner,"* ]]; }; then
   REQUIRED_VARS+=("GITHUB_REPO_URL" "GITHUB_RUNNER_TOKEN")
 fi
 
@@ -203,15 +270,15 @@ echo ""
 
 if [ "$RUN_ANSIBLE" = true ]; then
   echo -e "${YELLOW}[7/7] Running Ansible playbook...${NC}"
-  if [ "$RPI_LOCAL" = true ]; then
+  if is_truthy "$RPI_LOCAL_MODE"; then
     echo -e "${YELLOW}Target: local machine as $RPI_USER${NC}"
   else
     echo -e "${YELLOW}Target: $RPI_USER@$RPI_HOST${NC}"
   fi
 
   ANSIBLE_CMD=(ansible-playbook -i inventory/all.yml playbooks/main.yml --vault-password-file "$VAULT_PASS_FILE")
-  if [ -n "$ANSIBLE_TAGS" ]; then
-    ANSIBLE_CMD+=(--tags "$ANSIBLE_TAGS")
+  if [ -n "$ANSIBLE_TAGS_CSV" ]; then
+    ANSIBLE_CMD+=(--tags "$ANSIBLE_TAGS_CSV")
   fi
 
   (
