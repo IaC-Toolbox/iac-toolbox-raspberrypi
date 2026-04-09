@@ -81,9 +81,19 @@
     #   tags: [assistant, apps]
     #   when: openclaw is defined and openclaw.enabled
 
-    # - role: cloudflare-tunnel
-    #   tags: [cloudflare, tunnel]
-    #   when: cloudflare is defined and cloudflare.enabled
+    - role: cloudflare-tunnel
+      tags: [cloudflare, tunnel]
+      when:
+        - cloudflare is defined
+        - cloudflare.enabled
+        - (cloudflare.mode | default('oauth')) == 'oauth'
+
+    - role: cloudflare-tunnel-api
+      tags: [cloudflare, tunnel]
+      when:
+        - cloudflare is defined
+        - cloudflare.enabled
+        - (cloudflare.mode | default('oauth')) == 'api'
 
     # - role: promote_to_github_runner
     #   tags: [github-runner, runner]

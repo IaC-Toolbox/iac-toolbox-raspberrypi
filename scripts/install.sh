@@ -43,6 +43,11 @@ while [[ $# -gt 0 ]]; do
       ANSIBLE_TAGS="vault"
       shift
       ;;
+    --cloudflared)
+      RUN_TERRAFORM=false
+      ANSIBLE_TAGS="cloudflare"
+      shift
+      ;;
     --local)
       RPI_LOCAL_MODE=true
       shift
@@ -55,6 +60,7 @@ while [[ $# -gt 0 ]]; do
       echo "  --terraform-only   Run only Terraform (Grafana alerts)"
       echo "  --assistant        Deploy only OpenClaw AI Assistant service"
       echo "  --vault            Deploy only HashiCorp Vault"
+      echo "  --cloudflared      Deploy only Cloudflare tunnel"
       echo "  --local            Run Ansible locally on this machine instead of SSH"
       echo "  -h, --help         Show this help message"
       echo ""
