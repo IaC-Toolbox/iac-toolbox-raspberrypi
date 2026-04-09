@@ -22,7 +22,7 @@ cp ansible-configurations/.env.example .env
 ```
 
 2. **Configure services** (edit `ansible-configurations/inventory/group_vars/all.yml`):
-   - Set Cloudflare tunnel name and domains
+   - Set the `cloudflared` tunnel name and domains
    - Enable/disable features as needed
 
 3. **Run install script:**
@@ -95,6 +95,8 @@ All component runs are supported with `--local` for self-testing on the target R
 ./scripts/install.sh --docker --loki --local
 ./scripts/uninstall-vault.sh --local
 ```
+
+`--local` is supported for the same component-specific entry points shown above, including multi-component runs.
 
 Run specific components directly with Ansible:
 

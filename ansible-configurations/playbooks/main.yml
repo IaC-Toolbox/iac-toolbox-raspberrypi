@@ -139,7 +139,7 @@
           - Grafana query: {job="systemd"} |~ "openclaw"
           {% endif %}
           {% if cloudflare is defined and cloudflare.enabled %}
-          - Verify Cloudflare tunnel: sudo systemctl status cloudflared
+          - Verify cloudflared tunnel: sudo systemctl status cloudflared
           {% endif %}
           {% if github_runner is defined and github_runner.enabled %}
           - Verify GitHub runner: sudo systemctl status actions.runner.*
