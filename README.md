@@ -133,3 +133,4 @@ ansible-playbook -i inventory/all.yml playbooks/main.yml --tags secrets
 
 - [docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md) - Project architecture and overview
 - [docs/01-vault-setup.md](docs/01-vault-setup.md) - HashiCorp Vault setup and usage guide
+Codex ACP write test successful.
