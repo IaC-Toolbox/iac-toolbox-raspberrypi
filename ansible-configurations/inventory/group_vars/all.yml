@@ -12,17 +12,24 @@ docker:
 # Cloudflare Tunnel Configuration
 cloudflare:
   enabled: true
+  mode: "{{ lookup('env', 'CLOUDFLARE_MODE') | default('oauth', true) }}" # oauth (current login/cert.pem flow) or api (token-based flow)
   user: "{{ ansible_user }}" # User running cloudflared service
+  account_id: "{{ lookup('env', 'CLOUDFLARE_ACCOUNT_ID') | default('', true) }}"
+  zone_id: "{{ lookup('env', 'CLOUDFLARE_ZONE_ID') | default('', true) }}"
   tunnel_name: main-backend-tunnel # Name of the tunnel in Cloudflare
   domains:
     - hostname: api.iac-toolbox.com # Public domain
       service_port: 80 # Local port to expose
+      service: http://localhost:80
     - hostname: vault.iac-toolbox.com # Vault UI
       service_port: 8200 # Vault port
+      service: http://localhost:8200
     - hostname: grafana.iac-toolbox.com # Grafana UI
       service_port: 3000 # Grafana port
+      service: http://localhost:3000
     - hostname: alloy.iac-toolbox.com # Alloy log collector UI
       service_port: 12345 # Alloy port
+      service: http://localhost:12345
 
 # GitHub Actions Runner Configuration
 github_runner:
