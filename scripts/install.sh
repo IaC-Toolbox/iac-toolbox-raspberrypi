@@ -196,6 +196,8 @@ source "$PROJECT_ROOT/.env"
 set +a
 
 if is_truthy "$RPI_LOCAL_MODE"; then
+  export RPI_HOST="${RPI_HOST:-localhost}"
+  export RPI_USER="${RPI_USER:-$(id -un)}"
   export RPI_LOCAL=true
 else
   export RPI_LOCAL=false
@@ -206,7 +208,7 @@ echo ""
 
 echo -e "${YELLOW}[3/7] Validating required environment variables...${NC}"
 REQUIRED_VARS=()
-if [ "$RUN_ANSIBLE" = true ]; then
+if [ "$RUN_ANSIBLE" = true ] && ! is_truthy "$RPI_LOCAL_MODE"; then
   REQUIRED_VARS+=("RPI_HOST" "RPI_USER")
 fi
 if [ "$RUN_ANSIBLE" = true ] && { [ "$SELECTED_COMPONENTS" = false ] || [[ ",$ANSIBLE_TAGS_CSV," == *",github-runner,"* ]]; }; then
