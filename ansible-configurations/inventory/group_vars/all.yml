@@ -85,6 +85,6 @@ alloy:
   port: 12345
   domain: "alloy.iac-toolbox.com"
 
-# OpenClaw AI Assistant Service
+# openclaw service
 openclaw:
   enabled: true # Set to true to deploy openclaw as systemd service

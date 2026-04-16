@@ -38,7 +38,7 @@
 
 - name: Display openclaw installation path
   debug:
-    msg: "OpenClaw installed at: {{ openclaw_path }}"
+    msg: "openclaw installed at: {{ openclaw_path }}"
 
 - name: Deploy openclaw systemd service
   template:
@@ -73,9 +73,9 @@
   debug:
     msg:
       - "=========================================="
-      - "OpenClaw AI Assistant successfully deployed!"
+      - "openclaw successfully deployed!"
       - "=========================================="
-      - "OpenClaw version: npm list -g openclaw --depth=0"
+      - "openclaw version: npm list -g openclaw --depth=0"
       - "Service status: sudo systemctl status openclaw"
       - "View logs: journalctl -u openclaw -f"
       - ""
