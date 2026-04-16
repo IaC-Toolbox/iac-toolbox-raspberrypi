@@ -7,8 +7,10 @@ Automated setup for Raspberry Pi 4B using Ansible. Installs Docker, configures C
 ### Prerequisites
 
 - Raspberry Pi OS Lite (64-bit) installed
-- SSH access configured from your Mac
-- Homebrew installed on Mac
+- Docker available on the target Raspberry Pi
+- Ansible installed on the machine running the playbook
+- For remote deployment: SSH access configured to the Raspberry Pi
+- For local self-testing on the Pi itself: no SSH key is required when using `--local`
 
 ### Setup
 
@@ -24,11 +26,13 @@ cp .env.example .env
    - Set Cloudflare tunnel name and domains
    - Enable/disable features as needed
 
-3. **Run setup script:**
+3. **Run install script:**
 
 ```bash
-./scripts/setup.sh
+./scripts/install.sh
 ```
+
+`./scripts/setup.sh` remains as a compatibility wrapper.
 
 4. **If using Cloudflare Tunnel** (manual step):
 
@@ -44,7 +48,7 @@ cloudflared tunnel login
 - **HashiCorp Vault** - Secrets management with auto-unseal
 - **Cloudflare Tunnel** - Secure external access (optional)
 - **GitHub Actions Runner** - Self-hosted ARM64 runner
-- **Secrets** - Managed via Vault or deployed to `/etc/raspberrypi.env`
+- **Secrets** - Managed via HashiCorp Vault
 
 ## Configuration
 
@@ -56,7 +60,24 @@ Configuration is split across three layers:
 
 ## Usage
 
-Run specific components:
+Common entry points:
+
+```bash
+./scripts/install.sh
+./scripts/install.sh --vault
+./scripts/install.sh --assistant
+./scripts/install.sh --ansible-only
+./scripts/install.sh --terraform-only
+```
+
+Self-test against the same Raspberry Pi running the repo:
+
+```bash
+./scripts/install.sh --vault --local
+./scripts/uninstall-vault.sh --local
+```
+
+Run specific components directly with Ansible:
 
 ```bash
 cd ansible-configurations
@@ -71,23 +92,32 @@ ansible-playbook -i inventory/all.yml playbooks/main.yml --tags cloudflare
 Deploy HashiCorp Vault for secrets management:
 
 ```bash
-cd ansible-configurations
-ansible-playbook -i inventory/all.yml playbooks/main.yml --tags vault
+./scripts/install.sh --vault
+```
+
+Or, when testing directly on the target Pi itself:
+
+```bash
+./scripts/install.sh --vault --local
 ```
 
 After deployment:
 - Access Vault UI at: `https://vault.iac-toolbox.com`
 - Root token and unseal key are displayed in Ansible output
 - Credentials saved to: `~/vault/data/vault-init.json` on Raspberry Pi
+- Vault is automatically unsealed by the playbook before KV and audit setup continue
 
 **Cleanup Vault (if needed):**
 
 ```bash
-ssh pi@raspberrypi
-cd ~/vault && docker compose down && sudo rm -rf data && mkdir -p data && sudo chown 100:1000 data
+./scripts/uninstall-vault.sh
 ```
 
-Then re-run the Ansible playbook to redeploy with fresh initialization.
+Or locally on the Pi:
+
+```bash
+./scripts/uninstall-vault.sh --local
+```
 
 Update secrets:
 
