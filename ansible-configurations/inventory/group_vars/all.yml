@@ -21,8 +21,6 @@ cloudflare:
       service_port: 8200 # Vault port
     - hostname: grafana.iac-toolbox.com # Grafana UI
       service_port: 3000 # Grafana port
-    - hostname: alloy.iac-toolbox.com # Alloy log collector UI
-      service_port: 12345 # Alloy port
 
 # GitHub Actions Runner Configuration
 github_runner:
@@ -32,10 +30,6 @@ github_runner:
   version: "{{ lookup('env', 'RUNNER_VERSION') | default('2.315.0', true) }}"
   labels: "{{ lookup('env', 'RUNNER_LABELS') | default('rpi,arm64,docker', true) }}"
   work_dir: "/home/{{ ansible_user }}/actions-runner"
-
-# Secrets Configuration
-secrets:
-  env_file: /etc/raspberrypi.env # Location where secrets are stored
 
 # Vault Configuration
 vault:
