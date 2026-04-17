@@ -65,7 +65,6 @@ Common entry points:
 ```bash
 ./scripts/install.sh
 ./scripts/install.sh --vault
-./scripts/install.sh --assistant
 ./scripts/install.sh --ansible-only
 ./scripts/install.sh --terraform-only
 ```
@@ -102,6 +101,7 @@ Or, when testing directly on the target Pi itself:
 ```
 
 After deployment:
+
 - Access Vault UI at: `https://vault.iac-toolbox.com`
 - Root token and unseal key are displayed in Ansible output
 - Credentials saved to: `~/vault/data/vault-init.json` on Raspberry Pi

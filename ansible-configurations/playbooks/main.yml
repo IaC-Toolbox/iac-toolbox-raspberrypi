@@ -49,7 +49,6 @@
           connection: "{{ ansible_connection | default('ssh') }}"
           vault_enabled: "{{ vault.enabled | default(false) }}"
           loki_enabled: "{{ loki.enabled | default(false) }}"
-          openclaw_enabled: "{{ openclaw.enabled | default(false) }}"
       tags: always
 
   roles:
@@ -65,21 +64,17 @@
       tags: [vault, secrets]
       when: vault is defined and vault.enabled
 
-    # - role: grafana
-    #   tags: [grafana, monitoring]
-    #   when: grafana is defined and grafana.enabled
+    - role: grafana
+      tags: [grafana, monitoring]
+      when: grafana is defined and grafana.enabled
 
-    # - role: prometheus
-    #   tags: [prometheus, monitoring]
-    #   when: prometheus is defined and prometheus.enabled
+    - role: prometheus
+      tags: [prometheus, monitoring]
+      when: prometheus is defined and prometheus.enabled
 
     - role: loki
       tags: [loki, logs, monitoring]
       when: loki is defined and loki.enabled
-
-    # - role: openclaw
-    #   tags: [assistant, apps]
-    #   when: openclaw is defined and openclaw.enabled
 
     - role: cloudflare-tunnel
       tags: [cloudflare, tunnel]
@@ -132,11 +127,6 @@
           - Grafana datasource: Loki (auto-configured)
           - Dashboard: Loki Logs (auto-imported)
           - Query logs: {job="systemd"}, {job="docker"}, {job="auth"}
-          {% endif %}
-          {% if openclaw is defined and openclaw.enabled %}
-          - Verify OpenClaw: sudo systemctl status openclaw
-          - View logs: journalctl -u openclaw -f
-          - Grafana query: {job="systemd"} |~ "openclaw"
           {% endif %}
           {% if cloudflare is defined and cloudflare.enabled %}
           - Verify Cloudflare tunnel: sudo systemctl status cloudflared

@@ -33,11 +33,6 @@ while [[ $# -gt 0 ]]; do
       RUN_ANSIBLE=false
       shift
       ;;
-    --assistant)
-      RUN_TERRAFORM=false
-      ANSIBLE_TAGS="assistant"
-      shift
-      ;;
     --vault)
       RUN_TERRAFORM=false
       ANSIBLE_TAGS="vault"
@@ -58,7 +53,6 @@ while [[ $# -gt 0 ]]; do
       echo "Options:"
       echo "  --ansible-only     Run only Ansible playbook (infrastructure)"
       echo "  --terraform-only   Run only Terraform (Grafana alerts)"
-      echo "  --assistant        Deploy only OpenClaw AI Assistant service"
       echo "  --vault            Deploy only HashiCorp Vault"
       echo "  --cloudflared      Deploy only Cloudflare tunnel"
       echo "  --local            Run Ansible locally on this machine instead of SSH"
