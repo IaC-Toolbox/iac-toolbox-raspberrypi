@@ -228,9 +228,19 @@ if [ "$RUN_ANSIBLE" = true ]; then
     ANSIBLE_CMD+=(--tags "$ANSIBLE_TAGS")
   fi
 
+  # Log the full command with masked secrets
+  MASKED_CMD=$(mask_secrets "${ANSIBLE_CMD[*]}")
+  log_debug "Executing Ansible command: $MASKED_CMD"
+
   (
     cd "$ANSIBLE_DIR"
     "${ANSIBLE_CMD[@]}"
+    ANSIBLE_EXIT=$?
+    if [ $ANSIBLE_EXIT -ne 0 ]; then
+      log_debug "Ansible playbook failed with exit code $ANSIBLE_EXIT"
+      exit $ANSIBLE_EXIT
+    fi
+    log_debug "Ansible playbook completed successfully (exit code 0)"
   )
   echo -e "${GREEN}✓ Ansible run completed${NC}"
 else
@@ -274,10 +284,29 @@ pagerduty_token          = "${PAGERDUTY_TOKEN:-}"
 pagerduty_service_region = "${PAGERDUTY_SERVICE_REGION:-us}"
 pagerduty_user_email     = "${PAGERDUTY_USER_EMAIL:-}"
 EOF
+
+    # Log the full terraform configuration with masked secrets
+    TFVARS_CONTENT="grafana_url=https://grafana.iac-toolbox.com grafana_admin_user=${GRAFANA_ADMIN_USER} grafana_admin_password=${GRAFANA_ADMIN_PASSWORD} alert_email=${ALERT_EMAIL} pagerduty_token=${PAGERDUTY_TOKEN:-} pagerduty_service_region=${PAGERDUTY_SERVICE_REGION:-us} pagerduty_user_email=${PAGERDUTY_USER_EMAIL:-}"
+    MASKED_TFVARS=$(mask_secrets "$TFVARS_CONTENT")
+    log_debug "Terraform configuration: $MASKED_TFVARS"
+
     log_debug "Executing: terraform init"
     terraform init
+    TERRAFORM_INIT_EXIT=$?
+    if [ $TERRAFORM_INIT_EXIT -ne 0 ]; then
+      log_debug "Terraform init failed with exit code $TERRAFORM_INIT_EXIT"
+      exit $TERRAFORM_INIT_EXIT
+    fi
+    log_debug "Terraform init completed successfully (exit code 0)"
+
     log_debug "Executing: terraform apply -auto-approve"
     terraform apply -auto-approve
+    TERRAFORM_APPLY_EXIT=$?
+    if [ $TERRAFORM_APPLY_EXIT -ne 0 ]; then
+      log_debug "Terraform apply failed with exit code $TERRAFORM_APPLY_EXIT"
+      exit $TERRAFORM_APPLY_EXIT
+    fi
+    log_debug "Terraform apply completed successfully (exit code 0)"
   )
 
   echo -e "${GREEN}✓ Terraform completed${NC}"
