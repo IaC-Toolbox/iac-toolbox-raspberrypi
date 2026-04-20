@@ -13,6 +13,38 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+# ============================================
+# Logging Functions
+# ============================================
+
+# Emit timestamped debug logs to stderr for CLI capture
+log_debug() {
+  local message="$1"
+  echo "[DEBUG $(date '+%Y-%m-%d %H:%M:%S')] $message" >&2
+}
+
+# Mask secret values in strings for logging
+mask_secrets() {
+  local input="$1"
+  local output="$input"
+
+  # List of secret variable names to mask
+  local secret_patterns=(
+    "DOCKER_HUB_TOKEN"
+    "CLOUDFLARE_API_TOKEN"
+    "GRAFANA_ADMIN_PASSWORD"
+    "GITHUB_RUNNER_TOKEN"
+    "PAGERDUTY_TOKEN"
+  )
+
+  for pattern in "${secret_patterns[@]}"; do
+    # Match pattern=value and replace value with ***
+    output=$(echo "$output" | sed -E "s/${pattern}=[^ ]*/${pattern}=***/g")
+  done
+
+  echo "$output"
+}
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 ANSIBLE_DIR="$PROJECT_ROOT/ansible-configurations"
@@ -69,6 +101,16 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+log_debug "========================================="
+log_debug "Install script started"
+log_debug "Script directory: $SCRIPT_DIR"
+log_debug "Project root: $PROJECT_ROOT"
+log_debug "RUN_ANSIBLE: $RUN_ANSIBLE"
+log_debug "RUN_TERRAFORM: $RUN_TERRAFORM"
+log_debug "ANSIBLE_TAGS: ${ANSIBLE_TAGS:-none}"
+log_debug "RPI_LOCAL_MODE: $RPI_LOCAL_MODE"
+log_debug "========================================="
+
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}Raspberry Pi Infrastructure Install${NC}"
 echo -e "${GREEN}========================================${NC}"
@@ -120,14 +162,22 @@ if [ "$RUN_ANSIBLE" = true ] && [ "$ANSIBLE_TAGS" != "vault" ]; then
   REQUIRED_VARS+=("GITHUB_REPO_URL" "GITHUB_RUNNER_TOKEN")
 fi
 
+log_debug "Checking required variables: ${REQUIRED_VARS[*]}"
+
 MISSING_VARS=()
+PRESENT_VARS=()
 for var in "${REQUIRED_VARS[@]}"; do
   if [ -z "${!var}" ]; then
     MISSING_VARS+=("$var")
+    log_debug "Variable $var: MISSING"
+  else
+    PRESENT_VARS+=("$var")
+    log_debug "Variable $var: present"
   fi
 done
 
 if [ ${#MISSING_VARS[@]} -gt 0 ]; then
+  log_debug "Validation failed: ${#MISSING_VARS[@]} variable(s) missing"
   echo -e "${RED}Error: Missing required environment variables:${NC}"
   for var in "${MISSING_VARS[@]}"; do
     echo "  - $var"
@@ -135,6 +185,7 @@ if [ ${#MISSING_VARS[@]} -gt 0 ]; then
   exit 1
 fi
 
+log_debug "All required variables present: ${PRESENT_VARS[*]}"
 echo -e "${GREEN}✓ Required variables present${NC}"
 echo ""
 
@@ -142,27 +193,33 @@ if [ "$RUN_ANSIBLE" = true ]; then
   echo -e "${YELLOW}[4/4] Running Ansible playbook...${NC}"
   if [ "$RPI_LOCAL" = true ]; then
     echo -e "${YELLOW}Target: local machine as $RPI_USER${NC}"
+    log_debug "Ansible target mode: local execution as user $RPI_USER"
   else
     echo -e "${YELLOW}Target: $RPI_USER@$RPI_HOST${NC}"
+    log_debug "Ansible target mode: remote execution on $RPI_USER@$RPI_HOST"
   fi
 
   # Build secret variables from environment (injected by CLI from ~/.iac-toolbox/credentials)
   SECRET_VARS=""
   SECRET_ENV_NAMES=(
+
     DOCKER_HUB_TOKEN DOCKER_HUB_USERNAME
     CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_ZONE_ID
     GRAFANA_ADMIN_PASSWORD
     GITHUB_RUNNER_TOKEN GITHUB_REPO_URL
   )
+  log_debug "Building Ansible extra-vars from environment"
   for var_name in "${SECRET_ENV_NAMES[@]}"; do
     if [ -n "${!var_name}" ]; then
       SECRET_VARS="${SECRET_VARS} ${var_name}=${!var_name}"
+      log_debug "  Including variable: $var_name"
     fi
   done
 
   ANSIBLE_CMD=(ansible-playbook -i inventory/all.yml playbooks/main.yml)
   if [ -f "$ANSIBLE_DIR/iac-toolbox.yml" ]; then
     ANSIBLE_CMD+=(--extra-vars "@iac-toolbox.yml")
+    log_debug "Found config file: iac-toolbox.yml"
   fi
   if [ -n "$SECRET_VARS" ]; then
     ANSIBLE_CMD+=(--extra-vars "$SECRET_VARS")
@@ -183,15 +240,28 @@ echo ""
 
 if [ "$RUN_TERRAFORM" = true ]; then
   echo -e "${YELLOW}Running Terraform...${NC}"
+  log_debug "Starting Terraform execution"
 
   if [ -z "$GRAFANA_ADMIN_USER" ] || [ -z "$GRAFANA_ADMIN_PASSWORD" ] || [ -z "$ALERT_EMAIL" ]; then
-    echo -e "${RED}Error: Missing required variables for Terraform${NC}"
-    echo "Please ensure these environment variables are set:"
-    echo "  - GRAFANA_ADMIN_USER"
-    echo "  - GRAFANA_ADMIN_PASSWORD"
-    echo "  - ALERT_EMAIL"
+    log_debug "Terraform validation failed: missing required variables"
+    log_debug "GRAFANA_ADMIN_USER: $([ -n \"$GRAFANA_ADMIN_USER\" ] && echo 'present' || echo 'MISSING')"
+    log_debug "GRAFANA_ADMIN_PASSWORD: $([ -n \"$GRAFANA_ADMIN_PASSWORD\" ] && echo 'present' || echo 'MISSING')"
+    log_debug "ALERT_EMAIL: $([ -n \"$ALERT_EMAIL\" ] && echo 'present' || echo 'MISSING')"
+    echo -e "${RED}Error: Missing required variables for Terraform${NC}" >&2
+    echo "Please ensure these environment variables are set:" >&2
+    echo "  - GRAFANA_ADMIN_USER" >&2
+    echo "  - GRAFANA_ADMIN_PASSWORD" >&2
+    echo "  - ALERT_EMAIL" >&2
     exit 1
   fi
+
+  log_debug "Terraform required variables validated"
+  log_debug "Working directory: $TERRAFORM_DIR"
+  log_debug "Generating terraform.tfvars with configuration"
+  log_debug "  grafana_url: https://grafana.iac-toolbox.com"
+  log_debug "  grafana_admin_user: $GRAFANA_ADMIN_USER"
+  log_debug "  alert_email: $ALERT_EMAIL"
+  log_debug "  pagerduty_token: $([ -n \"$PAGERDUTY_TOKEN\" ] && echo 'provided' || echo 'not provided')"
 
   (
     cd "$TERRAFORM_DIR"
@@ -204,13 +274,16 @@ pagerduty_token          = "${PAGERDUTY_TOKEN:-}"
 pagerduty_service_region = "${PAGERDUTY_SERVICE_REGION:-us}"
 pagerduty_user_email     = "${PAGERDUTY_USER_EMAIL:-}"
 EOF
+    log_debug "Executing: terraform init"
     terraform init
+    log_debug "Executing: terraform apply -auto-approve"
     terraform apply -auto-approve
   )
 
   echo -e "${GREEN}✓ Terraform completed${NC}"
 else
   echo -e "${YELLOW}Skipping Terraform execution${NC}"
+  log_debug "Skipping Terraform execution (--ansible-only or similar mode)"
 fi
 
 echo ""
