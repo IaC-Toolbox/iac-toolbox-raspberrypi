@@ -3,7 +3,14 @@
 # Raspberry Pi Infrastructure Configuration
 # ============================================
 # This file contains all non-sensitive configuration.
-# Sensitive data (API keys, passwords) belongs in secrets.yml
+# Sensitive data (API keys, passwords) is injected via environment
+# variables by the CLI from ~/.iac-toolbox/credentials.
+
+# Architecture Selection
+# Set by CLI via --extra-vars at runtime.
+# Falls back to ansible_architecture for direct playbook runs.
+cloudflared_arch: "{{ cloudflared_arch | default(ansible_architecture | replace('x86_64', 'amd64') | replace('aarch64', 'arm64')) }}"
+runner_arch: "{{ runner_arch | default(ansible_architecture | replace('x86_64', 'x64') | replace('aarch64', 'arm64')) }}"
 
 # Docker Configuration
 docker:
@@ -32,7 +39,7 @@ github_runner:
   enabled: true
   repo_url: "{{ lookup('env', 'GITHUB_REPO_URL') }}"
   token: "{{ lookup('env', 'GITHUB_RUNNER_TOKEN') }}"
-  version: "{{ lookup('env', 'RUNNER_VERSION') | default('2.315.0', true) }}"
+  version: "{{ lookup('env', 'RUNNER_VERSION') | default('2.333.1', true) }}"
   labels: "{{ lookup('env', 'RUNNER_LABELS') | default('rpi,arm64,docker', true) }}"
   work_dir: "/home/{{ ansible_user }}/actions-runner"
 

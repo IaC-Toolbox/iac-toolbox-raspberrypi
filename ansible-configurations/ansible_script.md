@@ -1,13 +1,13 @@
 
-## Short-cut vault password in the file
+## Running Ansible
 
-To use a custom password file with `ansible-vault` instead of being prompted interactively (`--ask-vault-pass`), you can use the `--vault-password-file` option.
+Run the playbook directly:
 
 ```bash
-ansible-playbook -i inventory/all.yml playbooks/playbook.yml --vault-password-file .vault_pass.txt
+ansible-playbook -i inventory/all.yml playbooks/main.yml
 ```
 
-E voilá, your Raspberry pi is ready to run your apps, the infrastructure part is finished here.
+Secrets are passed via `--extra-vars` at runtime (the CLI handles this automatically).
 
 ## Description of playbooks
 
@@ -42,8 +42,6 @@ The Playbooks describe steps to run on hosts.
 - name: Setup Raspberry Pi 
   hosts: all
   become: true
-  vars_files:
-    - ../secrets.yml
 
   vars:
     datadog_api_key: "{{ datadog_api_key }}"
@@ -57,7 +55,7 @@ The Playbooks describe steps to run on hosts.
     - reboot
 ```
 
-Note, that playbooks only describes high-level roles (aka steps) and variables to use from `secrets.yml` file which creation and management is described in [this section](#create-vault-secrets).
+Note, that playbooks describe high-level roles (aka steps) and variables. Secrets are injected via environment variables by the CLI at runtime.
 
 
 ### **Write Roles**: 

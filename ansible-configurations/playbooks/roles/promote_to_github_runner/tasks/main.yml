@@ -19,7 +19,7 @@
 - name: Download GitHub Actions runner tarball
   become_user: "{{ ansible_user }}"
   get_url:
-    url: "https://github.com/actions/runner/releases/download/v{{ github_runner.version }}/actions-runner-linux-arm64-{{ github_runner.version }}.tar.gz"
+    url: "https://github.com/actions/runner/releases/download/v{{ github_runner.version }}/actions-runner-linux-{{ runner_arch }}-{{ github_runner.version }}.tar.gz"
     dest: "{{ github_runner.work_dir }}/actions-runner.tar.gz"
     mode: '0644'
 
