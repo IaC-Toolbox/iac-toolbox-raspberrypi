@@ -14,27 +14,21 @@ Automated setup for Raspberry Pi 4B using Ansible. Installs Docker, configures C
 
 ### Setup
 
-1. **Configure environment:**
-
-```bash
-cd ansible-configurations
-cp .env.example .env
-# Edit .env with your Raspberry Pi connection details and GitHub runner token
-```
-
-2. **Configure services** (edit `ansible-configurations/inventory/group_vars/all.yml`):
+1. **Configure services** (edit `ansible-configurations/inventory/group_vars/all.yml`):
    - Set Cloudflare tunnel name and domains
    - Enable/disable features as needed
 
-3. **Run install script:**
+2. **Run install script:**
 
 ```bash
 ./scripts/install.sh
 ```
 
+Secrets (API tokens, passwords) are injected as environment variables by the CLI from `~/.iac-toolbox/credentials`. Advanced users running `install.sh` directly can export the required variables before invoking the script.
+
 `./scripts/setup.sh` remains as a compatibility wrapper.
 
-4. **If using Cloudflare Tunnel** (manual step):
+3. **If using Cloudflare Tunnel** (manual step):
 
 ```bash
 ssh pi@raspberrypi.local
@@ -52,11 +46,10 @@ cloudflared tunnel login
 
 ## Configuration
 
-Configuration is split across three layers:
+Configuration is split across two layers:
 
-1. **`.env`** - Connection details (RPI_HOST, RPI_USER, GITHUB_RUNNER_TOKEN)
-2. **`inventory/group_vars/all.yml`** - Application settings (domains, ports, feature flags)
-3. **`secrets.yml`** - Encrypted secrets (API keys, passwords)
+1. **`inventory/group_vars/all.yml`** - Application settings (domains, ports, feature flags)
+2. **Environment variables** - Secrets and connection details (injected by the CLI from `~/.iac-toolbox/credentials`)
 
 ## Usage
 
@@ -117,16 +110,6 @@ Or locally on the Pi:
 
 ```bash
 ./scripts/uninstall-vault.sh --local
-```
-
-Update secrets:
-
-```bash
-cd ansible-configurations
-rm secrets.yml
-export $(grep -v '^#' .env | xargs)
-ansible-playbook playbooks/seed_vault.yml
-ansible-playbook -i inventory/all.yml playbooks/main.yml --tags secrets
 ```
 
 ## Documentation
