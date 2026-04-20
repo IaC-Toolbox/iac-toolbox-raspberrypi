@@ -8,27 +8,9 @@ You don't need to be inside of raspberry pi to run these commands. On the contra
 Next, we are going to do the following steps to ensure all software is installed and raspberry pi is ready to run our apps. Follow the steps below:
 
 
-### Required Ansbile Collections
+### Environment Variables
 
-Install the **datadog** collection prior to running
-
-```bash
-ansible-galaxy collection install datadog.dd
-```
-
-### Create Vault Secrets
-
-Ansible relies on secret values such as third-party APIs to install all the software. Make sure that those secrets exist in your `secrets.yml` in encrypted form. To Create a secrets file run: 
-
-```bash
-ansible-vault create secrets.yml
-```
-
-Ensure that you have all the necessary secrets in `.env`, then set them into the ansible vault by running `sh update-secrets.sh` from this filder.
-
-```sh
-sh update-secrets.sh
-```
+Secrets (API keys, passwords) are injected as environment variables by the CLI from `~/.iac-toolbox/credentials`. Advanced users running scripts directly should export the required variables before invoking `install.sh`. See `.env.example` for a reference of available variables.
 
 ### Ensure that you have device AWS IoT Certificates
 

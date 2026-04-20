@@ -1,5 +1,4 @@
 .env
-secrets.yml
-.vault_pass.txt
+iac-toolbox.yml
 .claude/**
 CLAUDE.md

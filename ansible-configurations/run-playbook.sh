@@ -11,4 +11,4 @@ fi
 PLAYBOOK_PATH="$1"
 
 # Run the ansible-playbook command with the provided playbook
-ansible-playbook -i inventory/all.yml "$PLAYBOOK_PATH" --vault-password-file .vault_pass.txt
+ansible-playbook -i inventory/all.yml "$PLAYBOOK_PATH"
