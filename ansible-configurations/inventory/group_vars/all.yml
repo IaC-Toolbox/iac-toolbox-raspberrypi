@@ -3,7 +3,8 @@
 # Raspberry Pi Infrastructure Configuration
 # ============================================
 # This file contains all non-sensitive configuration.
-# Sensitive data (API keys, passwords) belongs in secrets.yml
+# Sensitive data (API keys, passwords) is injected via environment
+# variables by the CLI from ~/.iac-toolbox/credentials.
 
 # Architecture Selection
 # Set by CLI via --extra-vars at runtime.

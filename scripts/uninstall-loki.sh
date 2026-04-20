@@ -21,17 +21,6 @@ echo ""
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-# Load environment variables
-if [ -f "$PROJECT_ROOT/.env" ]; then
-    set -a
-    source "$PROJECT_ROOT/.env"
-    set +a
-else
-    echo -e "${RED}Error: .env file not found${NC}"
-    exit 1
-fi
-
-# Default values if not in .env
 RPI_HOST="${RPI_HOST:-raspberry-4b.local}"
 RPI_USER="${RPI_USER:-pi}"
 

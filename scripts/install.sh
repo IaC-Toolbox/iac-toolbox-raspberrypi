@@ -86,17 +86,7 @@ if [ "$(echo "$RPI_LOCAL_MODE" | tr '[:upper:]' '[:lower:]')" = "true" ] || [ "$
 fi
 echo ""
 
-echo -e "${YELLOW}[1/7] Checking required tools...${NC}"
-REQUIRED_COMMANDS=(openssl)
-for cmd in "${REQUIRED_COMMANDS[@]}"; do
-  if ! command -v "$cmd" >/dev/null 2>&1; then
-    echo -e "${RED}Error: Required command not found: $cmd${NC}"
-    exit 1
-  fi
-done
-
-echo -e "${GREEN}✓ Core tools found${NC}"
-
+echo -e "${YELLOW}[1/4] Checking required tools...${NC}"
 if [ "$RUN_ANSIBLE" = true ]; then
   if ! command -v ansible-playbook >/dev/null 2>&1; then
     echo -e "${RED}Error: ansible-playbook is not installed${NC}"
@@ -114,27 +104,17 @@ if [ "$RUN_TERRAFORM" = true ]; then
 fi
 echo ""
 
-echo -e "${YELLOW}[2/7] Checking environment configuration...${NC}"
-if [ ! -f "$PROJECT_ROOT/.env" ]; then
-  echo -e "${RED}Error: .env file not found${NC}"
-  echo "Please create $PROJECT_ROOT/.env from ansible-configurations/.env.example or your own config"
-  exit 1
-fi
-
-set -a
-source "$PROJECT_ROOT/.env"
-set +a
-
+echo -e "${YELLOW}[2/4] Checking environment configuration...${NC}"
 if [ "$(echo "$RPI_LOCAL_MODE" | tr '[:upper:]' '[:lower:]')" = "true" ] || [ "$RPI_LOCAL_MODE" = "1" ] || [ "$(echo "$RPI_LOCAL_MODE" | tr '[:upper:]' '[:lower:]')" = "yes" ] || [ "$(echo "$RPI_LOCAL_MODE" | tr '[:upper:]' '[:lower:]')" = "on" ]; then
   export RPI_LOCAL=true
 else
   export RPI_LOCAL=false
 fi
 
-echo -e "${GREEN}✓ .env file found${NC}"
+echo -e "${GREEN}✓ Environment configured${NC}"
 echo ""
 
-echo -e "${YELLOW}[3/7] Validating required environment variables...${NC}"
+echo -e "${YELLOW}[3/4] Validating required environment variables...${NC}"
 REQUIRED_VARS=("RPI_HOST" "RPI_USER")
 if [ "$RUN_ANSIBLE" = true ] && [ "$ANSIBLE_TAGS" != "vault" ]; then
   REQUIRED_VARS+=("GITHUB_REPO_URL" "GITHUB_RUNNER_TOKEN")
@@ -158,52 +138,35 @@ fi
 echo -e "${GREEN}✓ Required variables present${NC}"
 echo ""
 
-echo -e "${YELLOW}[4/7] Installing required Ansible collections...${NC}"
-if [ "$RUN_ANSIBLE" = true ] && [ -f "$ANSIBLE_DIR/requirements.yml" ]; then
-  (
-    cd "$ANSIBLE_DIR"
-    ansible-galaxy collection install -r requirements.yml
-  )
-  echo -e "${GREEN}✓ Ansible collections ready${NC}"
-else
-  echo -e "${GREEN}✓ No Ansible collections to install${NC}"
-fi
-echo ""
-
-echo -e "${YELLOW}[5/7] Ensuring Ansible Vault password exists...${NC}"
-VAULT_PASS_FILE="$ANSIBLE_DIR/.vault_pass.txt"
-if [ ! -f "$VAULT_PASS_FILE" ]; then
-  echo "Generating vault password..."
-  openssl rand -base64 32 > "$VAULT_PASS_FILE"
-  chmod 600 "$VAULT_PASS_FILE"
-  echo -e "${GREEN}✓ Vault password generated${NC}"
-else
-  echo -e "${GREEN}✓ Vault password already exists${NC}"
-fi
-echo ""
-
-echo -e "${YELLOW}[6/7] Ensuring encrypted secrets exist...${NC}"
-if [ ! -f "$ANSIBLE_DIR/secrets.yml" ]; then
-  echo "Creating encrypted secrets..."
-  (
-    cd "$ANSIBLE_DIR"
-    ansible-playbook playbooks/seed_vault.yml
-  )
-  echo -e "${GREEN}✓ Secrets encrypted${NC}"
-else
-  echo -e "${GREEN}✓ Encrypted secrets already exist${NC}"
-fi
-echo ""
-
 if [ "$RUN_ANSIBLE" = true ]; then
-  echo -e "${YELLOW}[7/7] Running Ansible playbook...${NC}"
+  echo -e "${YELLOW}[4/4] Running Ansible playbook...${NC}"
   if [ "$RPI_LOCAL" = true ]; then
     echo -e "${YELLOW}Target: local machine as $RPI_USER${NC}"
   else
     echo -e "${YELLOW}Target: $RPI_USER@$RPI_HOST${NC}"
   fi
 
-  ANSIBLE_CMD=(ansible-playbook -i inventory/all.yml playbooks/main.yml --vault-password-file "$VAULT_PASS_FILE")
+  # Build secret variables from environment (injected by CLI from ~/.iac-toolbox/credentials)
+  SECRET_VARS=""
+  SECRET_ENV_NAMES=(
+    DOCKER_HUB_TOKEN DOCKER_HUB_USERNAME
+    CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_ZONE_ID
+    GRAFANA_ADMIN_PASSWORD
+    GITHUB_RUNNER_TOKEN GITHUB_REPO_URL
+  )
+  for var_name in "${SECRET_ENV_NAMES[@]}"; do
+    if [ -n "${!var_name}" ]; then
+      SECRET_VARS="${SECRET_VARS} ${var_name}=${!var_name}"
+    fi
+  done
+
+  ANSIBLE_CMD=(ansible-playbook -i inventory/all.yml playbooks/main.yml)
+  if [ -f "$ANSIBLE_DIR/iac-toolbox.yml" ]; then
+    ANSIBLE_CMD+=(--extra-vars "@iac-toolbox.yml")
+  fi
+  if [ -n "$SECRET_VARS" ]; then
+    ANSIBLE_CMD+=(--extra-vars "$SECRET_VARS")
+  fi
   if [ -n "$ANSIBLE_TAGS" ]; then
     ANSIBLE_CMD+=(--tags "$ANSIBLE_TAGS")
   fi
@@ -214,16 +177,16 @@ if [ "$RUN_ANSIBLE" = true ]; then
   )
   echo -e "${GREEN}✓ Ansible run completed${NC}"
 else
-  echo -e "${YELLOW}[7/7] Skipping Ansible playbook (--terraform-only)${NC}"
+  echo -e "${YELLOW}[4/4] Skipping Ansible playbook (--terraform-only)${NC}"
 fi
 echo ""
 
 if [ "$RUN_TERRAFORM" = true ]; then
-  echo -e "${YELLOW}[7/7] Running Terraform...${NC}"
+  echo -e "${YELLOW}Running Terraform...${NC}"
 
   if [ -z "$GRAFANA_ADMIN_USER" ] || [ -z "$GRAFANA_ADMIN_PASSWORD" ] || [ -z "$ALERT_EMAIL" ]; then
     echo -e "${RED}Error: Missing required variables for Terraform${NC}"
-    echo "Please ensure these are set in $PROJECT_ROOT/.env:"
+    echo "Please ensure these environment variables are set:"
     echo "  - GRAFANA_ADMIN_USER"
     echo "  - GRAFANA_ADMIN_PASSWORD"
     echo "  - ALERT_EMAIL"
@@ -247,7 +210,7 @@ EOF
 
   echo -e "${GREEN}✓ Terraform completed${NC}"
 else
-  echo -e "${YELLOW}[7/7] Skipping Terraform execution${NC}"
+  echo -e "${YELLOW}Skipping Terraform execution${NC}"
 fi
 
 echo ""
