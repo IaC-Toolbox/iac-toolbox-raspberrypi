@@ -1,4 +1,14 @@
 ---
+- name: Validate GitHub runner repo URL is provided
+  fail:
+    msg: "Missing required variable: github_runner.repo_url (set via GITHUB_REPO_URL environment variable)"
+  when: github_runner.repo_url is not defined or github_runner.repo_url == ''
+
+- name: Validate GitHub runner token is provided
+  fail:
+    msg: "Missing required variable: github_runner.token (set via GITHUB_RUNNER_TOKEN environment variable)"
+  when: github_runner.token is not defined or github_runner.token == ''
+
 - name: Install required packages for GitHub runner
   apt:
     name:
