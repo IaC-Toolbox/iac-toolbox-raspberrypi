@@ -6,11 +6,13 @@ Automated setup for Raspberry Pi 4B using Ansible. Installs Docker, configures C
 
 ### Prerequisites
 
-- Raspberry Pi OS Lite (64-bit) installed
+- Raspberry Pi OS Lite (64-bit) installed (includes Python 3 by default)
 - Docker available on the target Raspberry Pi
 - Ansible installed on the machine running the playbook
 - For remote deployment: SSH access configured to the Raspberry Pi
 - For local self-testing on the Pi itself: no SSH key is required when using `--local`
+
+**Note**: Python 3 is required on the target Raspberry Pi for Ansible to function. This is included by default in Raspberry Pi OS. All application services run in Docker containers and do not require Python on the host system.
 
 ### Setup
 
