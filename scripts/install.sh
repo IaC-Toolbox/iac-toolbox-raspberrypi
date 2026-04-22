@@ -115,9 +115,12 @@ echo -e "${GREEN}✓ Environment configured${NC}"
 echo ""
 
 echo -e "${YELLOW}[3/4] Validating required environment variables...${NC}"
-REQUIRED_VARS=("RPI_HOST" "RPI_USER")
-if [ "$RUN_ANSIBLE" = true ] && [ "$ANSIBLE_TAGS" != "vault" ]; then
-  REQUIRED_VARS+=("GITHUB_REPO_URL" "GITHUB_RUNNER_TOKEN")
+# Only validate non-secret configuration variables required by install.sh
+# Secret validation (GITHUB_REPO_URL, GITHUB_RUNNER_TOKEN, etc.) is delegated
+# to Ansible roles, which will fail with clear errors if required variables are missing.
+REQUIRED_VARS=()
+if [ "$RPI_LOCAL" = false ]; then
+  REQUIRED_VARS=("RPI_HOST" "RPI_USER")
 fi
 
 MISSING_VARS=()
@@ -147,6 +150,7 @@ if [ "$RUN_ANSIBLE" = true ]; then
   fi
 
   # Build secret variables from environment (injected by CLI from ~/.iac-toolbox/credentials)
+  # Ansible roles validate their required secrets and fail with clear errors if missing.
   SECRET_VARS=""
   SECRET_ENV_NAMES=(
     DOCKER_HUB_TOKEN DOCKER_HUB_USERNAME
