@@ -91,3 +91,10 @@ alloy:
   version: "latest"
   port: 12345
   domain: "alloy.iac-toolbox.com"
+
+# GitHub Build Workflow Configuration
+github_build_workflow:
+  enabled: false
+  docker_hub_username: ""
+  docker_image_name: ""
+  docker_hub_token: ""

@@ -87,6 +87,10 @@
         - cloudflare.enabled
         - (cloudflare.mode | default('oauth')) == 'api'
 
+    - role: github-build-workflow
+      tags: [github-build-workflow, ci]
+      when: github_build_workflow is defined and github_build_workflow.enabled
+
     # - role: promote_to_github_runner
     #   tags: [github-runner, runner]
     #   when: github_runner is defined and github_runner.enabled

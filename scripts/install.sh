@@ -164,6 +164,7 @@ if [ "$RUN_ANSIBLE" = true ]; then
   if [ -f "$ANSIBLE_DIR/iac-toolbox.yml" ]; then
     ANSIBLE_CMD+=(--extra-vars "@iac-toolbox.yml")
   fi
+  ANSIBLE_CMD+=(--extra-vars "project_root=${PROJECT_ROOT}")
   if [ -n "$SECRET_VARS" ]; then
     ANSIBLE_CMD+=(--extra-vars "$SECRET_VARS")
   fi
