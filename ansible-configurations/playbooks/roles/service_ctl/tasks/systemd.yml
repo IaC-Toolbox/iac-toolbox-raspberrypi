@@ -1,0 +1,8 @@
+---
+- name: "{{ svc_action }} {{ svc_name }} via systemd"
+  systemd:
+    name: "{{ svc_name }}"
+    state: "{{ svc_action }}"
+    enabled: "{{ svc_enabled | default(true) }}"
+    daemon_reload: "{{ svc_daemon_reload | default(false) }}"
+  become: true

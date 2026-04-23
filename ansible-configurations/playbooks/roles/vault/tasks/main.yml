@@ -193,11 +193,18 @@
     mode: '0644'
   notify: Reload systemd
 
-- name: Enable vault systemd services
-  systemd:
-    name: "{{ item }}"
-    enabled: yes
-    daemon_reload: yes
-  loop:
-    - vault
-    - vault-unseal
+- name: Enable vault systemd service
+  include_role:
+    name: service_ctl
+  vars:
+    svc_name: vault
+    svc_action: started
+    svc_enabled: true
+
+- name: Enable vault-unseal systemd service
+  include_role:
+    name: service_ctl
+  vars:
+    svc_name: vault-unseal
+    svc_action: started
+    svc_enabled: true

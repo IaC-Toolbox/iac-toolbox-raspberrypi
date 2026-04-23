@@ -50,16 +50,13 @@
     mode: '0644'
   notify: Reload systemd
 
-- name: Enable Loki systemd service
-  systemd:
-    name: loki
-    enabled: yes
-    daemon_reload: yes
-
-- name: Start Loki stack via systemd
-  systemd:
-    name: loki
-    state: started
+- name: Enable and start Loki service
+  include_role:
+    name: service_ctl
+  vars:
+    svc_name: loki
+    svc_action: started
+    svc_enabled: true
 
 - name: Wait for Loki to be ready
   uri:

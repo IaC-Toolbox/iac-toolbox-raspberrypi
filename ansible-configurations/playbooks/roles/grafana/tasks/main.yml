@@ -78,16 +78,13 @@
     mode: '0644'
   notify: Reload systemd
 
-- name: Enable Grafana systemd service
-  systemd:
-    name: grafana
-    enabled: yes
-    daemon_reload: yes
-
-- name: Start Grafana via systemd
-  systemd:
-    name: grafana
-    state: started
+- name: Enable and start Grafana service
+  include_role:
+    name: service_ctl
+  vars:
+    svc_name: grafana
+    svc_action: started
+    svc_enabled: true
 
 - name: Wait for Grafana to be healthy
   uri:
