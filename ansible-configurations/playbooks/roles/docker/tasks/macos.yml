@@ -1,0 +1,16 @@
+---
+- name: Install Docker Desktop via brew cask
+  community.general.homebrew_cask:
+    name: docker
+    state: present
+
+- name: Verify Docker installation
+  command: docker --version
+  register: docker_version
+  changed_when: false
+  retries: 5
+  delay: 3
+
+- name: Display Docker version
+  debug:
+    msg: "Docker installed: {{ docker_version.stdout }}"
