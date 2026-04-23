@@ -1,7 +1,7 @@
 ---
-- name: Create .cloudflared directory
+- name: Create cloudflared directory
   file:
-    path: "{{ ansible_env.HOME }}/.cloudflared"
+    path: "{{ ansible_env.HOME }}/.iac-toolbox/cloudflared"
     state: directory
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
@@ -9,7 +9,7 @@
 
 - name: Check if cert.pem exists
   stat:
-    path: "{{ ansible_env.HOME }}/.cloudflared/cert.pem"
+    path: "{{ ansible_env.HOME }}/.iac-toolbox/cloudflared/cert.pem"
   register: cloudflare_cert
 
 - name: Fail if cert.pem does not exist
@@ -29,7 +29,7 @@
 - name: Create tunnel if not exists
   command: cloudflared tunnel create {{ cloudflare.tunnel_name }}
   args:
-    chdir: "{{ ansible_env.HOME }}/.cloudflared"
+    chdir: "{{ ansible_env.HOME }}/.iac-toolbox/cloudflared"
   become_user: "{{ ansible_user }}"
   when: 'cloudflare.tunnel_name not in tunnel_list.stdout'
   register: tunnel_created
@@ -52,7 +52,7 @@
 - name: Create DNS routes
   command: cloudflared tunnel route dns {{ cloudflare.tunnel_name }} {{ item.hostname }}
   args:
-    chdir: "{{ ansible_env.HOME }}/.cloudflared"
+    chdir: "{{ ansible_env.HOME }}/.iac-toolbox/cloudflared"
   become_user: "{{ ansible_user }}"
   loop: "{{ cloudflare.domains }}"
   register: dns_routes
@@ -72,10 +72,10 @@
 
 - name: Create config.yml
   copy:
-    dest: "{{ ansible_env.HOME }}/.cloudflared/config.yml"
+    dest: "{{ ansible_env.HOME }}/.iac-toolbox/cloudflared/config.yml"
     content: |
       tunnel: {{ cloudflare.tunnel_name }}
-      credentials-file: {{ ansible_env.HOME }}/.cloudflared/{{ tunnel_id }}.json
+      credentials-file: {{ ansible_env.HOME }}/.iac-toolbox/cloudflared/{{ tunnel_id }}.json
 
       ingress:
       {{ ingress_config | indent(2, true) }}

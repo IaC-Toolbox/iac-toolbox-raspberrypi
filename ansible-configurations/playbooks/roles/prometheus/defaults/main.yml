@@ -3,7 +3,7 @@
 prometheus:
   enabled: true
   version: "latest"
-  base_dir: "/home/{{ ansible_user }}/observability"
+  base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/observability"
   port: 9090
   scrape_interval: "15s"
   retention: "15d"

@@ -30,7 +30,7 @@
 
 - name: Create .cloudflared directory
   file:
-    path: "/home/{{ ansible_user }}/.cloudflared"
+    path: "{{ ansible_env.HOME }}/.iac-toolbox/cloudflared"
     state: directory
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"

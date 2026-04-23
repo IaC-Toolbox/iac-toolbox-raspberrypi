@@ -46,13 +46,13 @@ github_runner:
   token: "{{ lookup('env', 'GITHUB_RUNNER_TOKEN') }}"
   version: "{{ lookup('env', 'RUNNER_VERSION') | default('2.333.1', true) }}"
   labels: "{{ lookup('env', 'RUNNER_LABELS') | default('rpi,arm64,docker', true) }}"
-  work_dir: "/home/{{ ansible_user }}/actions-runner"
+  work_dir: "{{ ansible_env.HOME }}/.iac-toolbox/actions-runner"
 
 # Vault Configuration
 vault:
   enabled: true
   version: "latest"
-  base_dir: "/home/{{ ansible_user }}/vault"
+  base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/vault"
   port: 8200
   enable_kv: true
   enable_audit: true
@@ -61,7 +61,7 @@ vault:
 grafana:
   enabled: true
   version: "latest"
-  base_dir: "/home/{{ ansible_user }}/grafana"
+  base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/grafana"
   port: 3000
   admin_user: "admin"
   admin_password: "{{ lookup('env', 'GRAFANA_ADMIN_PASSWORD') }}"
@@ -72,7 +72,7 @@ grafana:
 prometheus:
   enabled: true
   version: "latest"
-  base_dir: "/home/{{ ansible_user }}/observability"
+  base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/observability"
   port: 9090
   scrape_interval: "15s"
   retention: "15d" # Configurable: 7d, 15d, 30d, etc.
@@ -86,7 +86,7 @@ node_exporter:
 loki:
   enabled: true
   version: "latest"
-  base_dir: "/home/{{ ansible_user }}/loki"
+  base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/loki"
   port: 3100
   retention_hours: 168 # 7 days (72=3d, 168=7d, 336=14d, 720=30d)
 

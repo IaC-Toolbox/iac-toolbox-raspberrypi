@@ -3,7 +3,7 @@
 grafana:
   enabled: true
   version: "latest"
-  base_dir: "/home/{{ ansible_user }}/grafana"
+  base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/grafana"
   port: 3000
   admin_user: "admin"
   vault_path: "kv/observability/grafana"
