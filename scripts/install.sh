@@ -8,6 +8,15 @@
 
 set -e
 
+# Bootstrap Ansible if not already installed
+if ! command -v ansible-playbook >/dev/null 2>&1; then
+  case "$(uname -s)" in
+    Darwin) bash "$(dirname "$0")/bootstrap/bootstrap-macos.sh" ;;
+    Linux)  bash "$(dirname "$0")/bootstrap/bootstrap-debian.sh" ;;
+    *)      echo "Unsupported OS: $(uname -s)"; exit 1 ;;
+  esac
+fi
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'

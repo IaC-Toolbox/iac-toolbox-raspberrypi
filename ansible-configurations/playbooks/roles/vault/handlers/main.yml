@@ -4,7 +4,9 @@
     name: vault
     state: restarted
     daemon_reload: yes
+  when: ansible_service_mgr == "systemd"
 
 - name: Reload systemd
   systemd:
     daemon_reload: yes
+  when: ansible_service_mgr == "systemd"

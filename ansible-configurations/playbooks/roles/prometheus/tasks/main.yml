@@ -42,16 +42,13 @@
     mode: '0644'
   notify: Reload systemd
 
-- name: Enable Prometheus systemd service
-  systemd:
-    name: prometheus
-    enabled: yes
-    daemon_reload: yes
-
-- name: Start Prometheus stack via systemd
-  systemd:
-    name: prometheus
-    state: started
+- name: Enable and start Prometheus service
+  include_role:
+    name: service_ctl
+  vars:
+    svc_name: prometheus
+    svc_action: started
+    svc_enabled: true
 
 - name: Wait for Prometheus to be healthy
   uri:

@@ -9,14 +9,23 @@
     msg: "Missing required variable: github_runner.token (set via GITHUB_RUNNER_TOKEN environment variable)"
   when: github_runner.token is not defined or github_runner.token == ''
 
-- name: Install required packages for GitHub runner
-  apt:
-    name:
-      - curl
-      - jq
-      - tar
-    state: present
-    update_cache: yes
+- name: Install curl for GitHub runner
+  include_role:
+    name: package
+  vars:
+    pkg_name: curl
+
+- name: Install jq for GitHub runner
+  include_role:
+    name: package
+  vars:
+    pkg_name: jq
+
+- name: Install tar for GitHub runner
+  include_role:
+    name: package
+  vars:
+    pkg_name: tar
 
 - name: Create runner directory
   file:
@@ -85,8 +94,10 @@
   register: runner_service
 
 - name: Enable runner service
-  systemd:
-    name: "{{ runner_service.files[0].path | basename }}"
-    enabled: yes
-    state: started
+  include_role:
+    name: service_ctl
+  vars:
+    svc_name: "{{ runner_service.files[0].path | basename }}"
+    svc_action: started
+    svc_enabled: true
   when: runner_service.files | length > 0
