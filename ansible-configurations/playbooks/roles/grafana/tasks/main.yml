@@ -77,6 +77,7 @@
     dest: /etc/systemd/system/grafana.service
     mode: '0644'
   notify: Reload systemd
+  when: ansible_service_mgr == "systemd"
 
 - name: Enable and start Grafana service
   include_role:
@@ -85,6 +86,7 @@
     svc_name: grafana
     svc_action: started
     svc_enabled: true
+  when: ansible_service_mgr == "systemd"
 
 - name: Wait for Grafana to be healthy
   uri:

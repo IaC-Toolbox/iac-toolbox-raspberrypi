@@ -49,6 +49,7 @@
     dest: /etc/systemd/system/loki.service
     mode: '0644'
   notify: Reload systemd
+  when: ansible_service_mgr == "systemd"
 
 - name: Enable and start Loki service
   include_role:
@@ -57,6 +58,7 @@
     svc_name: loki
     svc_action: started
     svc_enabled: true
+  when: ansible_service_mgr == "systemd"
 
 - name: Wait for Loki to be ready
   uri:
