@@ -4,7 +4,6 @@
     path: "{{ vault.base_dir }}"
     state: directory
     owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
     mode: '0755'
 
 - name: Create vault config and scripts directories
@@ -12,7 +11,6 @@
     path: "{{ item }}"
     state: directory
     owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
     mode: '0755'
   loop:
     - "{{ vault.base_dir }}/config"
@@ -39,7 +37,6 @@
     src: vault.hcl.j2
     dest: "{{ vault.base_dir }}/config/vault.hcl"
     owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
     mode: '0644'
 
 - name: Deploy docker-compose configuration
@@ -47,7 +44,6 @@
     src: docker-compose.yml.j2
     dest: "{{ vault.base_dir }}/docker-compose.yml"
     owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
     mode: '0644'
 
 - name: Deploy auto-unseal script
@@ -55,7 +51,6 @@
     src: auto-unseal.sh.j2
     dest: "{{ vault.base_dir }}/scripts/auto-unseal.sh"
     owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
     mode: '0755'
 
 - name: Start vault container
@@ -100,7 +95,6 @@
   file:
     path: "{{ vault.base_dir }}/data/vault-init.json"
     owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
     mode: '0600'
 
 - name: Read vault-init.json file

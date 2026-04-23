@@ -54,7 +54,6 @@
     path: "{{ grafana.base_dir }}"
     state: directory
     owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
     mode: '0755'
 
 - name: Deploy docker-compose configuration
@@ -62,7 +61,6 @@
     src: docker-compose.yml.j2
     dest: "{{ grafana.base_dir }}/docker-compose.yml"
     owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
     mode: '0644'
 
 - name: Pull Grafana container image

@@ -4,7 +4,6 @@
     path: "{{ loki.base_dir }}"
     state: directory
     owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
     mode: '0755'
 
 - name: Deploy Loki configuration
@@ -12,7 +11,6 @@
     src: loki-config.yml.j2
     dest: "{{ loki.base_dir }}/loki-config.yml"
     owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
     mode: '0644'
 
 - name: Deploy Alloy configuration
@@ -20,7 +18,6 @@
     src: alloy-config.alloy.j2
     dest: "{{ loki.base_dir }}/alloy-config.alloy"
     owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
     mode: '0644'
 
 - name: Deploy docker-compose configuration
@@ -28,7 +25,6 @@
     src: docker-compose.yml.j2
     dest: "{{ loki.base_dir }}/docker-compose.yml"
     owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
     mode: '0644'
 
 - name: Pull Loki container image
