@@ -1,14 +1,33 @@
 ---
-- name: Install Docker dependencies
-  apt:
-    name:
-      - apt-transport-https
-      - ca-certificates
-      - curl
-      - gnupg
-      - lsb-release
-    state: present
-    update_cache: yes
+- name: Install docker dependency apt-transport-https
+  include_role:
+    name: package
+  vars:
+    pkg_name: apt-transport-https
+
+- name: Install docker dependency ca-certificates
+  include_role:
+    name: package
+  vars:
+    pkg_name: ca-certificates
+
+- name: Install docker dependency curl
+  include_role:
+    name: package
+  vars:
+    pkg_name: curl
+
+- name: Install docker dependency gnupg
+  include_role:
+    name: package
+  vars:
+    pkg_name: gnupg
+
+- name: Install docker dependency lsb-release
+  include_role:
+    name: package
+  vars:
+    pkg_name: lsb-release
 
 - name: Add Docker GPG key
   apt_key:
@@ -26,16 +45,35 @@
     state: present
     filename: docker
 
-- name: Install Docker
-  apt:
-    name:
-      - docker-ce
-      - docker-ce-cli
-      - containerd.io
-      - docker-buildx-plugin
-      - docker-compose-plugin
-    state: present
-    update_cache: yes
+- name: Install docker-ce
+  include_role:
+    name: package
+  vars:
+    pkg_name: docker-ce
+
+- name: Install docker-ce-cli
+  include_role:
+    name: package
+  vars:
+    pkg_name: docker-ce-cli
+
+- name: Install containerd.io
+  include_role:
+    name: package
+  vars:
+    pkg_name: containerd.io
+
+- name: Install docker-buildx-plugin
+  include_role:
+    name: package
+  vars:
+    pkg_name: docker-buildx-plugin
+
+- name: Install docker-compose-plugin
+  include_role:
+    name: package
+  vars:
+    pkg_name: docker-compose-plugin
 
 - name: Add user to docker group
   user:
@@ -43,11 +81,13 @@
     groups: docker
     append: yes
 
-- name: Enable Docker service
-  systemd:
-    name: docker
-    enabled: yes
-    state: started
+- name: Enable and start Docker service
+  include_role:
+    name: service_ctl
+  vars:
+    svc_name: docker
+    svc_action: started
+    svc_enabled: true
 
 - name: Verify Docker installation
   command: docker --version

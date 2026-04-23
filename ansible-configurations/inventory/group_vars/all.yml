@@ -6,6 +6,11 @@
 # Sensitive data (API keys, passwords) is injected via environment
 # variables by the CLI from ~/.iac-toolbox/credentials.
 
+# Hexagonal architecture: OS abstraction variables
+# Used by the package and service_ctl port roles to dispatch to the correct adapter.
+package_manager: "{{ ansible_pkg_mgr }}"
+service_manager: "{{ ansible_service_mgr }}"
+
 # Architecture Selection
 # Set by CLI via --extra-vars at runtime.
 # Falls back to ansible_architecture for direct playbook runs.

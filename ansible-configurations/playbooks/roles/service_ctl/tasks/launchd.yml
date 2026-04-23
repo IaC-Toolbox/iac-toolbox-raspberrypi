@@ -1,0 +1,5 @@
+---
+- name: "{{ svc_action }} {{ svc_name }} via launchd"
+  community.general.launchd:
+    name: "{{ svc_name }}"
+    state: "{{ svc_action }}"

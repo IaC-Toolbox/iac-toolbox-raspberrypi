@@ -120,8 +120,9 @@
   notify: Restart cloudflared
 
 - name: Enable and start cloudflared service
-  systemd:
-    name: cloudflared
-    daemon_reload: yes
-    enabled: yes
-    state: started
+  include_role:
+    name: service_ctl
+  vars:
+    svc_name: cloudflared
+    svc_action: started
+    svc_enabled: true
