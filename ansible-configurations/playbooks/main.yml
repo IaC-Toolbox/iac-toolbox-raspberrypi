@@ -57,23 +57,33 @@
 
     - role: docker
       tags: [docker]
-      when: docker is not defined or docker.enabled
+      when:
+        - (docker is not defined or docker.enabled)
+        - ansible_os_family != "Darwin"
 
     - role: vault
       tags: [vault, secrets]
-      when: vault is defined and vault.enabled
+      when:
+        - vault is defined and vault.enabled
+        - ansible_os_family != "Darwin"
 
     - role: grafana
       tags: [grafana, monitoring]
-      when: grafana is defined and grafana.enabled
+      when:
+        - grafana is defined and grafana.enabled
+        - ansible_os_family != "Darwin"
 
     - role: prometheus
       tags: [prometheus, monitoring]
-      when: prometheus is defined and prometheus.enabled
+      when:
+        - prometheus is defined and prometheus.enabled
+        - ansible_os_family != "Darwin"
 
     - role: loki
       tags: [loki, logs, monitoring]
-      when: loki is defined and loki.enabled
+      when:
+        - loki is defined and loki.enabled
+        - ansible_os_family != "Darwin"
 
     - role: cloudflare-tunnel
       tags: [cloudflare, tunnel]
@@ -81,6 +91,7 @@
         - cloudflare is defined
         - cloudflare.enabled
         - (cloudflare.mode | default('oauth')) == 'oauth'
+        - ansible_os_family != "Darwin"
 
     - role: cloudflare-tunnel-api
       tags: [cloudflare, tunnel]
@@ -88,6 +99,7 @@
         - cloudflare is defined
         - cloudflare.enabled
         - (cloudflare.mode | default('oauth')) == 'api'
+        - ansible_os_family != "Darwin"
 
     - role: github-build-workflow
       tags: [github-build-workflow, ci]
