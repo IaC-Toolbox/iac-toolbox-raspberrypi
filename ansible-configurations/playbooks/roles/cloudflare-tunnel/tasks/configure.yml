@@ -1,0 +1,93 @@
+---
+- name: Create .cloudflared directory
+  file:
+    path: "{{ ansible_env.HOME }}/.cloudflared"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0700'
+
+- name: Check if cert.pem exists
+  stat:
+    path: "{{ ansible_env.HOME }}/.cloudflared/cert.pem"
+  register: cloudflare_cert
+
+- name: Fail if cert.pem does not exist
+  fail:
+    msg: |
+      Cloudflare cert.pem not found!
+      Please run: ssh {{ ansible_user }}@{{ ansible_host }} 'cloudflared tunnel login'
+  when: not cloudflare_cert.stat.exists
+
+- name: Get list of existing tunnels
+  command: cloudflared tunnel list --output json
+  register: tunnel_list
+  failed_when: false
+  changed_when: false
+  become_user: "{{ ansible_user }}"
+
+- name: Create tunnel if not exists
+  command: cloudflared tunnel create {{ cloudflare.tunnel_name }}
+  args:
+    chdir: "{{ ansible_env.HOME }}/.cloudflared"
+  become_user: "{{ ansible_user }}"
+  when: 'cloudflare.tunnel_name not in tunnel_list.stdout'
+  register: tunnel_created
+
+- name: Get tunnel ID
+  command: cloudflared tunnel list --output json
+  register: tunnel_list_json
+  changed_when: false
+  become_user: "{{ ansible_user }}"
+
+- name: Extract tunnel ID
+  set_fact:
+    tunnel_id: "{{ (tunnel_list_json.stdout | from_json) | selectattr('name','equalto', cloudflare.tunnel_name) | map(attribute='id') | first }}"
+
+- name: Wait for tunnel registration
+  pause:
+    seconds: 5
+  when: tunnel_created is changed
+
+- name: Create DNS routes
+  command: cloudflared tunnel route dns {{ cloudflare.tunnel_name }} {{ item.hostname }}
+  args:
+    chdir: "{{ ansible_env.HOME }}/.cloudflared"
+  become_user: "{{ ansible_user }}"
+  loop: "{{ cloudflare.domains }}"
+  register: dns_routes
+  failed_when:
+    - dns_routes.rc != 0
+    - "'already exists' not in dns_routes.stderr"
+  changed_when: "'already exists' not in dns_routes.stderr"
+
+- name: Build ingress configuration
+  set_fact:
+    ingress_config: |
+      {% for domain in cloudflare.domains %}
+        - hostname: {{ domain.hostname }}
+          service: http://localhost:{{ domain.service_port }}
+      {% endfor %}
+        - service: http_status:404
+
+- name: Create config.yml
+  copy:
+    dest: "{{ ansible_env.HOME }}/.cloudflared/config.yml"
+    content: |
+      tunnel: {{ cloudflare.tunnel_name }}
+      credentials-file: {{ ansible_env.HOME }}/.cloudflared/{{ tunnel_id }}.json
+
+      ingress:
+      {{ ingress_config | indent(2, true) }}
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0600'
+  notify: Restart cloudflared
+
+- name: Enable and start cloudflared service
+  include_role:
+    name: service_ctl
+  vars:
+    svc_name: cloudflared
+    svc_action: started
+    svc_enabled: true

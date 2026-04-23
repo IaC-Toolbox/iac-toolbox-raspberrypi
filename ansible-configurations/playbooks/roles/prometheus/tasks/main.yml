@@ -41,6 +41,7 @@
     dest: /etc/systemd/system/prometheus.service
     mode: '0644'
   notify: Reload systemd
+  when: ansible_service_mgr == "systemd"
 
 - name: Enable and start Prometheus service
   include_role:
@@ -49,6 +50,7 @@
     svc_name: prometheus
     svc_action: started
     svc_enabled: true
+  when: ansible_service_mgr == "systemd"
 
 - name: Wait for Prometheus to be healthy
   uri:

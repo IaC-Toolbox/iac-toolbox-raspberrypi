@@ -185,6 +185,7 @@
     dest: /etc/systemd/system/vault.service
     mode: '0644'
   notify: Reload systemd
+  when: ansible_service_mgr == "systemd"
 
 - name: Create vault-unseal systemd service
   template:
@@ -192,6 +193,7 @@
     dest: /etc/systemd/system/vault-unseal.service
     mode: '0644'
   notify: Reload systemd
+  when: ansible_service_mgr == "systemd"
 
 - name: Enable vault systemd service
   include_role:
@@ -200,6 +202,7 @@
     svc_name: vault
     svc_action: started
     svc_enabled: true
+  when: ansible_service_mgr == "systemd"
 
 - name: Enable vault-unseal systemd service
   include_role:
@@ -208,3 +211,4 @@
     svc_name: vault-unseal
     svc_action: started
     svc_enabled: true
+  when: ansible_service_mgr == "systemd"

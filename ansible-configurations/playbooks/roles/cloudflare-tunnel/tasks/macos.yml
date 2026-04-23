@@ -1,0 +1,23 @@
+---
+- name: Check if cloudflared is already installed
+  command: cloudflared --version
+  register: cloudflared_check
+  changed_when: false
+  failed_when: false
+
+- name: Install cloudflared via brew
+  community.general.homebrew:
+    name: cloudflared
+    state: present
+  when: cloudflared_check.rc != 0
+
+- name: Verify cloudflared installation
+  command: cloudflared --version
+  register: cloudflared_version
+  changed_when: false
+
+- name: Display cloudflared version
+  debug:
+    msg: "Cloudflared installed: {{ cloudflared_version.stdout }}"
+
+- include_tasks: configure.yml
