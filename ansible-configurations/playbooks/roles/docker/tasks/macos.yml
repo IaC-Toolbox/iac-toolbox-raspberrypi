@@ -1,8 +1,15 @@
 ---
+- name: Check if docker is already installed
+  command: docker --version
+  register: docker_check
+  changed_when: false
+  failed_when: false
+
 - name: Install Docker Desktop via brew cask
   community.general.homebrew_cask:
     name: docker
     state: present
+  when: docker_check.rc != 0
 
 - name: Verify Docker installation
   command: docker --version
