@@ -4,6 +4,7 @@
     upgrade: dist
     update_cache: yes
   become: true
+  when: ansible_pkg_mgr == "apt"
 
 - name: Install lsof
   include_role:

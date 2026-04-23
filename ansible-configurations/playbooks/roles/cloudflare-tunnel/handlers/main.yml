@@ -3,3 +3,4 @@
   systemd:
     name: cloudflared
     state: restarted
+  when: ansible_service_mgr == "systemd"
