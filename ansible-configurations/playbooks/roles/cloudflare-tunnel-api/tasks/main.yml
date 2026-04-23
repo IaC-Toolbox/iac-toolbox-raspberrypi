@@ -33,7 +33,6 @@
     path: "{{ ansible_env.HOME }}/.iac-toolbox/cloudflared"
     state: directory
     owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
     mode: '0700'
 
 - name: Get existing tunnels from Cloudflare API

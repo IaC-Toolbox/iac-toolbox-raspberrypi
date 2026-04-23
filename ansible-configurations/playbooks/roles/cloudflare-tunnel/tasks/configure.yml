@@ -4,7 +4,6 @@
     path: "{{ ansible_env.HOME }}/.iac-toolbox/cloudflared"
     state: directory
     owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
     mode: '0700'
 
 - name: Check if cert.pem exists
@@ -80,7 +79,6 @@
       ingress:
       {{ ingress_config | indent(2, true) }}
     owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
     mode: '0600'
   notify: Restart cloudflared
 
