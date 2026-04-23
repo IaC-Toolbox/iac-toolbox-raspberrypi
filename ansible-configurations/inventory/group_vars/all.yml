@@ -17,10 +17,6 @@ service_manager: "{{ ansible_service_mgr }}"
 cloudflared_arch: "{{ cloudflared_arch | default(ansible_architecture | replace('x86_64', 'amd64') | replace('aarch64', 'arm64')) }}"
 runner_arch: "{{ runner_arch | default(ansible_architecture | replace('x86_64', 'x64') | replace('aarch64', 'arm64')) }}"
 
-# Docker Configuration
-docker:
-  enabled: true
-
 # Cloudflare Tunnel Configuration
 cloudflare:
   enabled: true
