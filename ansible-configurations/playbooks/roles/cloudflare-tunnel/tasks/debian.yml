@@ -25,7 +25,7 @@
       [Service]
       Type=simple
       User={{ ansible_user }}
-      ExecStart=/usr/local/bin/cloudflared --config {{ ansible_env.HOME }}/.cloudflared/config.yml tunnel run {{ cloudflare.tunnel_name }}
+      ExecStart=/usr/local/bin/cloudflared --config {{ ansible_env.HOME }}/.iac-toolbox/cloudflared/config.yml tunnel run {{ cloudflare.tunnel_name }}
       Restart=always
       RestartSec=5s
 
