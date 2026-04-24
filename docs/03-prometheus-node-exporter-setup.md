@@ -140,7 +140,7 @@ Where to deploy on Raspberry Pi?
 PROMETHEUS_RETENTION=15d
 ```
 
-### Ansible Variables (group_vars/all.yml)
+### Ansible Variables (iac-toolbox.yml)
 ```yaml
 prometheus:
   enabled: true
@@ -316,7 +316,7 @@ ansible-configurations/playbooks/roles/prometheus/
 ```
 
 ### Modified Files
-1. **`inventory/group_vars/all.yml`**
+1. **`iac-toolbox.yml`**
    - Add prometheus and node_exporter config blocks
 
 2. **`playbooks/main.yml`**

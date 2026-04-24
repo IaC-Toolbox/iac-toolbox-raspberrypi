@@ -90,7 +90,7 @@ Add to `.env` file:
 GRAFANA_ADMIN_PASSWORD=your-secure-password-here  # Generate with: openssl rand -base64 32
 ```
 
-Add to `inventory/group_vars/all.yml`:
+Add to `iac-toolbox.yml`:
 
 ```yaml
 # Grafana Configuration
@@ -105,7 +105,7 @@ grafana:
   domain: "grafana.iac-toolbox.com"
 ```
 
-Update Cloudflare domains in `inventory/group_vars/all.yml`:
+Update Cloudflare domains in `iac-toolbox.yml`:
 
 ```yaml
 cloudflare:
@@ -261,7 +261,7 @@ ansible-configurations/
 
 ### Modified Files
 
-1. **`ansible-configurations/inventory/group_vars/all.yml`**
+1. **`iac-toolbox.yml`**
    - Add grafana configuration block
    - Add `grafana.iac-toolbox.com:3000` to cloudflare.domains
 
@@ -453,7 +453,7 @@ Container should auto-start via systemd.
   - [ ] Display access information
 
 ### Configuration Updates
-- [ ] Update `inventory/group_vars/all.yml`:
+- [ ] Update `iac-toolbox.yml`:
   - [ ] Add grafana configuration block
   - [ ] Add grafana domain to cloudflare.domains
 - [ ] Update `playbooks/main.yml`:
@@ -515,7 +515,7 @@ After Grafana is deployed and tested, we'll add:
 With design decisions confirmed, I'm ready to implement:
 
 1. ✅ **Create the grafana role** with all templates and tasks
-2. ✅ **Update configuration files** (group_vars, main.yml)
+2. ✅ **Update configuration files** (iac-toolbox.yml, main.yml)
 3. ✅ **Test deployment** on Raspberry Pi
 4. ✅ **Verify** login and UI access
 

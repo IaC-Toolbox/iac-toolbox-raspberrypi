@@ -32,7 +32,7 @@ Automate deployment of systemd services for non-containerized applications using
 - Consistent with existing infrastructure patterns
 - Repeatable and version controlled
 - Easy to deploy/undeploy
-- Configurable via group_vars
+- Configurable via iac-toolbox.yml
 
 ### Question 2: Generic Role vs App-Specific? ✅ DECIDED
 **SELECTED: App-specific role (example: openclaw)**
@@ -169,7 +169,7 @@ roles/openclaw/
 
 ## Configuration Variables
 
-### Add to `inventory/group_vars/all.yml`:
+### Add to `iac-toolbox.yml`:
 
 ```yaml
 # OpenClaw AI Assistant Service
@@ -253,7 +253,7 @@ All values are hardcoded - simple and clean!
 5. Write `tasks/main.yml` with deployment logic
 
 ### Phase 2: Update Configuration
-1. Update `inventory/group_vars/all.yml`:
+1. Update `iac-toolbox.yml`:
    - Add openclaw configuration block
 2. Update `playbooks/main.yml`:
    - Add openclaw role
@@ -284,7 +284,7 @@ ansible-configurations/playbooks/roles/openclaw/
 ```
 
 ### Modified Files
-1. `inventory/group_vars/all.yml` - Add openclaw config
+1. `iac-toolbox.yml` - Add openclaw config
 2. `playbooks/main.yml` - Add openclaw role
 3. `scripts/setup.sh` - Add --openclaw flag
 
@@ -320,7 +320,7 @@ To add a different application (e.g., myapp):
    - `roles/myapp/templates/myapp.service.j2`: Update Description
    - `roles/myapp/tasks/main.yml`: Update service name
 
-3. **Add to group_vars:**
+3. **Add to iac-toolbox.yml:**
    ```yaml
    myapp:
      enabled: true

@@ -88,7 +88,7 @@ roles/vault/
 
 ### 2. Configuration Variables
 
-Add to `inventory/group_vars/all.yml`:
+Add to `iac-toolbox.yml`:
 
 ```yaml
 vault:
@@ -103,7 +103,7 @@ vault:
 
 ### 3. Cloudflare Domain Configuration
 
-Update `cloudflare.domains` in `inventory/group_vars/all.yml`:
+Update `cloudflare.domains` in `iac-toolbox.yml`:
 
 ```yaml
 cloudflare:
@@ -284,8 +284,8 @@ ansible-configurations/
 │               ├── vault.hcl.j2                    # Vault server config
 │               └── vault.service.j2                # Systemd vault service
 └── inventory/
-    └── group_vars/
-        └── all.yml                                 # MODIFIED: Added vault config
+    └── all.yml                                     # Inventory configuration
+iac-toolbox.yml                                     # MODIFIED: Added vault config
 ```
 
 ### File Details:
@@ -328,7 +328,7 @@ ansible-configurations/
 
 **Modified Files:**
 
-1. **`inventory/group_vars/all.yml`**
+1. **`iac-toolbox.yml`**
    - Added vault configuration block
    - Added `vault.iac-toolbox.com:8200` to cloudflare.domains
 
@@ -458,8 +458,8 @@ ansible-configurations/
 - [ ] Create systemd service templates
 - [ ] Write `defaults/main.yml` with default variables
 - [ ] Write `handlers/main.yml` for service restarts
-- [ ] Update `inventory/group_vars/all.yml` with vault config
-- [ ] Update `inventory/group_vars/all.yml` with cloudflare domain
+- [ ] Update `iac-toolbox.yml` with vault config
+- [ ] Update `iac-toolbox.yml` with cloudflare domain
 - [ ] Update `playbooks/main.yml` to include vault role
 - [ ] Test deployment on Raspberry Pi
 - [ ] Verify auto-unseal after reboot

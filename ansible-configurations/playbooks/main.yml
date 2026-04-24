@@ -49,6 +49,9 @@
       tags: always
 
   roles:
+    - role: common
+      tags: [always]
+
     - role: setup
       tags: [setup, base]
       when:

@@ -105,7 +105,7 @@ cloudflare_api_token: "{{ lookup('env', 'CLOUDFLARE_API_TOKEN') }}"
 ```
 
 Suggested split:
-- non-secret values in `inventory/group_vars/all.yml`
+- non-secret values in `iac-toolbox.yml`
 - API token loaded from environment, following the repo’s existing pattern
 
 Recommended environment variable names:
