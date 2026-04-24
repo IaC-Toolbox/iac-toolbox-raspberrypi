@@ -183,7 +183,7 @@ if [ "$RUN_ANSIBLE" = true ]; then
     echo -e "${GREEN}✓ Using configuration from IAC_TOOLBOX_CONFIG: $IAC_CONFIG_FILE${NC}"
   else
     for config_path in \
-      "$PROJECT_ROOT/infrastructure/iac-toolbox.yml" \
+      "$PROJECT_ROOT/iac-toolbox.yml" \
       "$HOME/.iac-toolbox/iac-toolbox.yml"; do
       if [ -f "$config_path" ]; then
         IAC_CONFIG_FILE="$config_path"
