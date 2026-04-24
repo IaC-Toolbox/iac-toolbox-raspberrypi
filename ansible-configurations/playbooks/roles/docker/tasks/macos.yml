@@ -21,3 +21,22 @@
 - name: Display Docker version
   debug:
     msg: "Docker installed: {{ docker_version.stdout }}"
+
+- name: Check if Docker daemon is running
+  command: docker info
+  register: docker_daemon_check
+  changed_when: false
+  failed_when: false
+
+- name: Start Docker Desktop if daemon is not running
+  command: open -a Docker
+  when: docker_daemon_check.rc != 0
+
+- name: Wait for Docker daemon to be ready
+  command: docker info
+  register: docker_daemon_wait
+  retries: 30
+  delay: 2
+  until: docker_daemon_wait.rc == 0
+  changed_when: false
+  when: docker_daemon_check.rc != 0
