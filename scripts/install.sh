@@ -174,8 +174,29 @@ if [ "$RUN_ANSIBLE" = true ]; then
   done
 
   ANSIBLE_CMD=(ansible-playbook -i inventory/all.yml playbooks/main.yml)
-  if [ -f "$ANSIBLE_DIR/iac-toolbox.yml" ]; then
-    ANSIBLE_CMD+=(--extra-vars "@iac-toolbox.yml")
+
+  # Load iac-toolbox.yml configuration file
+  # Priority: 1) IAC_TOOLBOX_CONFIG env var, 2) infrastructure/ folder, 3) ~/.iac-toolbox/
+  IAC_CONFIG_FILE=""
+  if [ -n "$IAC_TOOLBOX_CONFIG" ] && [ -f "$IAC_TOOLBOX_CONFIG" ]; then
+    IAC_CONFIG_FILE="$IAC_TOOLBOX_CONFIG"
+    echo -e "${GREEN}✓ Using configuration from IAC_TOOLBOX_CONFIG: $IAC_CONFIG_FILE${NC}"
+  else
+    for config_path in \
+      "$PROJECT_ROOT/infrastructure/iac-toolbox.yml" \
+      "$HOME/.iac-toolbox/iac-toolbox.yml"; do
+      if [ -f "$config_path" ]; then
+        IAC_CONFIG_FILE="$config_path"
+        echo -e "${GREEN}✓ Found configuration file: $IAC_CONFIG_FILE${NC}"
+        break
+      fi
+    done
+  fi
+
+  if [ -n "$IAC_CONFIG_FILE" ]; then
+    ANSIBLE_CMD+=(--extra-vars "@$IAC_CONFIG_FILE")
+  else
+    echo -e "${YELLOW}⚠ No iac-toolbox.yml configuration file found. Using role defaults.${NC}"
   fi
   ANSIBLE_CMD+=(--extra-vars "project_root=${PROJECT_ROOT}")
   if [ -n "$SECRET_VARS" ]; then
