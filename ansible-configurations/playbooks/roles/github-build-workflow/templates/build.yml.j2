@@ -16,12 +16,12 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: {% raw %}${{ secrets.DOCKER_USERNAME }}{% endraw %}
-          password: {% raw %}${{ secrets.DOCKER_PASSWORD }}{% endraw %}
+          username: ${{ '{{' }} secrets.DOCKER_USERNAME {{ '}}' }}
+          password: ${{ '{{' }} secrets.DOCKER_PASSWORD {{ '}}' }}
 
       - name: Build and Push Container Image
         run: |
-          TAG={% raw %}${{ github.sha }}{% endraw %}
+          TAG=${{ '{{' }} github.sha {{ '}}' }}
           docker build -f ./Dockerfile \
             -t {{ github_build_workflow.docker_image_name }}:$TAG \
             -t {{ github_build_workflow.docker_image_name }}:latest \
