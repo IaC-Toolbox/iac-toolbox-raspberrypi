@@ -56,9 +56,8 @@ Configuration is split across two layers:
 The `iac-toolbox.yml` file is automatically discovered in the following order:
 
 1. Path specified by `IAC_TOOLBOX_CONFIG` environment variable (highest priority)
-2. `ansible-configurations/iac-toolbox.yml` (repository location)
-3. `../iac-toolbox-cli/infrastructure/iac-toolbox.yml` (sibling repository)
-4. `~/.iac-toolbox/iac-toolbox.yml` (user home directory)
+2. `iac-toolbox.yml` in the project root directory
+3. `~/.iac-toolbox/iac-toolbox.yml` (user home directory)
 
 To specify a custom location:
 
