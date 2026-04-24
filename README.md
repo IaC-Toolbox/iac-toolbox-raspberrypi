@@ -14,7 +14,7 @@ Automated setup for Raspberry Pi 4B using Ansible. Installs Docker, configures C
 
 ### Setup
 
-1. **Configure services** (edit `ansible-configurations/inventory/group_vars/all.yml`):
+1. **Configure services** (edit `iac-toolbox.yml` at the repository root):
    - Set Cloudflare tunnel name and domains
    - Configure optional features (Cloudflare Tunnel, GitHub Runner)
 
@@ -48,7 +48,7 @@ cloudflared tunnel login
 
 Configuration is split across two layers:
 
-1. **`inventory/group_vars/all.yml`** - Application settings (domains, ports, feature flags)
+1. **`iac-toolbox.yml`** - Application settings (domains, ports, feature flags)
 2. **Environment variables** - Secrets and connection details (injected by the CLI from `~/.iac-toolbox/credentials`)
 
 ## Usage

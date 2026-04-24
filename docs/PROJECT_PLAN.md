@@ -14,7 +14,7 @@ Automated setup and configuration for Raspberry Pi 4B using Ansible:
 ### Three-Layer Configuration System
 
 1. **Environment Variables** (`.env`) - Infrastructure connection
-2. **YAML Configuration** (`group_vars/all.yml`) - Application settings
+2. **YAML Configuration** (`iac-toolbox.yml`) - Application settings
 3. **Ansible Vault** (`secrets.yml`) - Sensitive data
 
 ## Setup Workflow
@@ -34,7 +34,7 @@ RUNNER_VERSION=2.315.0
 ### 2. Configure Application Settings
 
 ```yaml
-# ansible-configurations/inventory/group_vars/all.yml
+# iac-toolbox.yml
 cloudflare:
   enabled: true
   tunnel_name: my-rpi-tunnel
@@ -131,7 +131,7 @@ pre_tasks:
 
 ### Update Config
 ```bash
-# Edit group_vars/all.yml
+# Edit iac-toolbox.yml
 ansible-playbook ansible-configurations/playbooks/main.yml --tags cloudflare
 ```
 
@@ -177,7 +177,7 @@ cat /etc/raspberrypi.env
 
 **Always commit:**
 - `secrets.yml` (encrypted)
-- `group_vars/all.yml`
+- `iac-toolbox.yml`
 - `.env.example`
 
 **File permissions:**

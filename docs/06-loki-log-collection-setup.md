@@ -90,7 +90,7 @@ Deploy Loki (log storage) and Grafana Alloy (log collector) using Ansible, with 
 - Configurable filtering via template (can exclude noisy containers)
 
 ### 3. Log Retention ✅ DECIDED
-**SELECTED: Configurable via group_vars**
+**SELECTED: Configurable via iac-toolbox.yml**
 - Default: `loki.retention_hours: 168` (7 days)
 - User configurable: 72h (3d), 168h (7d), 336h (14d), 720h (30d)
 - Matches Prometheus retention pattern
@@ -148,7 +148,7 @@ roles/loki/
 
 ## Configuration Variables
 
-### Add to `inventory/group_vars/all.yml`:
+### Add to `iac-toolbox.yml`:
 
 ```yaml
 # Loki Log Aggregation Configuration
@@ -513,7 +513,7 @@ Alternative dashboard options:
 3. Include Grafana API tasks for dashboards
 
 ### Phase 4: Update Configuration
-1. Update `inventory/group_vars/all.yml`
+1. Update `iac-toolbox.yml`
    - Add loki configuration
    - Add alloy configuration
    - Add alloy domain to cloudflare
@@ -547,7 +547,7 @@ ansible-configurations/playbooks/roles/loki/
 ```
 
 ### Modified Files
-1. `inventory/group_vars/all.yml` - Add loki/alloy config + cloudflare domain
+1. `iac-toolbox.yml` - Add loki/alloy config + cloudflare domain
 2. `playbooks/main.yml` - Add loki role
 
 ### Files on Raspberry Pi
