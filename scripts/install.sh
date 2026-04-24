@@ -176,14 +176,14 @@ if [ "$RUN_ANSIBLE" = true ]; then
   ANSIBLE_CMD=(ansible-playbook -i inventory/all.yml playbooks/main.yml)
 
   # Load iac-toolbox.yml configuration file
-  # Priority: 1) IAC_TOOLBOX_CONFIG env var, 2) project root, 3) ~/.iac-toolbox/
+  # Priority: 1) IAC_TOOLBOX_CONFIG env var, 2) infrastructure/ folder, 3) ~/.iac-toolbox/
   IAC_CONFIG_FILE=""
   if [ -n "$IAC_TOOLBOX_CONFIG" ] && [ -f "$IAC_TOOLBOX_CONFIG" ]; then
     IAC_CONFIG_FILE="$IAC_TOOLBOX_CONFIG"
     echo -e "${GREEN}✓ Using configuration from IAC_TOOLBOX_CONFIG: $IAC_CONFIG_FILE${NC}"
   else
     for config_path in \
-      "$PROJECT_ROOT/iac-toolbox.yml" \
+      "$PROJECT_ROOT/infrastructure/iac-toolbox.yml" \
       "$HOME/.iac-toolbox/iac-toolbox.yml"; do
       if [ -f "$config_path" ]; then
         IAC_CONFIG_FILE="$config_path"
