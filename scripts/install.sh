@@ -27,7 +27,7 @@ IAC_ROOT="$(dirname "$SCRIPT_DIR")"
 PROJECT_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || echo "$IAC_ROOT")"
 ANSIBLE_DIR="$IAC_ROOT/ansible-configurations"
 TERRAFORM_DIR="$IAC_ROOT/terraform/grafana-alerts"
-
+echo $IAC_ROOT
 RUN_ANSIBLE=true
 RUN_TERRAFORM=true
 ANSIBLE_TAGS=""
@@ -184,7 +184,7 @@ if [ "$RUN_ANSIBLE" = true ]; then
     echo -e "${GREEN}✓ Using configuration from IAC_TOOLBOX_CONFIG: $IAC_CONFIG_FILE${NC}"
   else
     for config_path in \
-      "$PROJECT_ROOT/iac-toolbox.yml" \
+      "$PROJECT_ROOT/infrastructure/iac-toolbox.yml" \
       "$HOME/.iac-toolbox/iac-toolbox.yml"; do
       if [ -f "$config_path" ]; then
         IAC_CONFIG_FILE="$config_path"
