@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================
-# Raspberry Pi Infrastructure Install Script
+# IaC Toolbox Infrastructure Install Script
 # ============================================
 # Supports full deployment, targeted Ansible runs,
 # and Terraform-only execution.
@@ -79,7 +79,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}Raspberry Pi Infrastructure Install${NC}"
+echo -e "${GREEN}IaC Toolbox Infrastructure Install${NC}"
 echo -e "${GREEN}========================================${NC}"
 if [ "$RUN_ANSIBLE" = false ]; then
   echo -e "${YELLOW}Mode: Terraform only (--terraform-only)${NC}"
