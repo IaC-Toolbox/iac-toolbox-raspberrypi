@@ -51,6 +51,24 @@ Configuration is split across two layers:
 1. **`iac-toolbox.yml`** - Application settings (domains, ports, feature flags)
 2. **Environment variables** - Secrets and connection details (injected by the CLI from `~/.iac-toolbox/credentials`)
 
+### Configuration File Location
+
+The `iac-toolbox.yml` file is automatically discovered in the following order:
+
+1. Path specified by `IAC_TOOLBOX_CONFIG` environment variable (highest priority)
+2. `ansible-configurations/iac-toolbox.yml` (repository location)
+3. `../iac-toolbox-cli/infrastructure/iac-toolbox.yml` (sibling repository)
+4. `~/.iac-toolbox/iac-toolbox.yml` (user home directory)
+
+To specify a custom location:
+
+```bash
+export IAC_TOOLBOX_CONFIG=/path/to/your/iac-toolbox.yml
+./scripts/install.sh
+```
+
+If no configuration file is found, role defaults will be used (all services enabled).
+
 ## Usage
 
 Common entry points:
