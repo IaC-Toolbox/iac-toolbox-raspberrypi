@@ -1,9 +1,9 @@
 ---
-- name: Setup Raspberry Pi Infrastructure
+- name: Setup IaC Toolbox Infrastructure
   hosts: all
   become: false
   pre_tasks:
-    - name: Validate connection to Raspberry Pi
+    - name: Validate connection to target host
       ping:
       tags: always
 
@@ -105,7 +105,7 @@
       debug:
         msg: |
           ========================================
-          Raspberry Pi setup completed successfully!
+          IaC Toolbox setup completed successfully!
           ========================================
 
           Next steps:
@@ -142,5 +142,5 @@
           {% endif %}
           - Check Docker: docker --version
 
-          Your Raspberry Pi is ready for deployment!
+          Your IaC Toolbox target is ready for deployment!
       tags: always
