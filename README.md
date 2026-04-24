@@ -16,7 +16,7 @@ Automated setup for Raspberry Pi 4B using Ansible. Installs Docker, configures C
 
 1. **Configure services** (edit `ansible-configurations/inventory/group_vars/all.yml`):
    - Set Cloudflare tunnel name and domains
-   - Enable/disable features as needed
+   - Configure optional features (Cloudflare Tunnel, GitHub Runner)
 
 2. **Run install script:**
 
