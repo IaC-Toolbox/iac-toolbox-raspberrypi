@@ -20,16 +20,16 @@
   file:
     path: "{{ vault.base_dir }}/logs"
     state: directory
-    owner: "100"
-    group: "1000"
+    owner: "{{ '100' if ansible_facts['system'] == 'Linux' else omit }}"
+    group: "{{ '1000' if ansible_facts['system'] == 'Linux' else omit }}"
     mode: '0755'
 
 - name: Create vault data directory with restricted permissions
   file:
     path: "{{ vault.base_dir }}/data"
     state: directory
-    owner: "100"
-    group: "1000"
+    owner: "{{ '100' if ansible_facts['system'] == 'Linux' else omit }}"
+    group: "{{ '1000' if ansible_facts['system'] == 'Linux' else omit }}"
     mode: '0755'
 
 - name: Deploy vault configuration
