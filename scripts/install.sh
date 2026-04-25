@@ -30,7 +30,7 @@ TERRAFORM_DIR="$IAC_ROOT/terraform/grafana-alerts"
 echo $IAC_ROOT
 RUN_ANSIBLE=true
 RUN_TERRAFORM=true
-ANSIBLE_TAGS=""
+ANSIBLE_PLAYBOOK="playbooks/main.yml"
 RPI_LOCAL_MODE="${RPI_LOCAL:-false}"
 
 while [[ $# -gt 0 ]]; do
@@ -45,12 +45,37 @@ while [[ $# -gt 0 ]]; do
       ;;
     --vault)
       RUN_TERRAFORM=false
-      ANSIBLE_TAGS="vault"
+      ANSIBLE_PLAYBOOK="playbooks/vault.yml"
       shift
       ;;
     --cloudflared)
       RUN_TERRAFORM=false
-      ANSIBLE_TAGS="cloudflare"
+      ANSIBLE_PLAYBOOK="playbooks/cloudflare.yml"
+      shift
+      ;;
+    --grafana)
+      RUN_TERRAFORM=false
+      ANSIBLE_PLAYBOOK="playbooks/grafana.yml"
+      shift
+      ;;
+    --loki)
+      RUN_TERRAFORM=false
+      ANSIBLE_PLAYBOOK="playbooks/loki.yml"
+      shift
+      ;;
+    --prometheus)
+      RUN_TERRAFORM=false
+      ANSIBLE_PLAYBOOK="playbooks/prometheus.yml"
+      shift
+      ;;
+    --github-build-workflow)
+      RUN_TERRAFORM=false
+      ANSIBLE_PLAYBOOK="playbooks/github-build-workflow.yml"
+      shift
+      ;;
+    --promote-to-github-runner)
+      RUN_TERRAFORM=false
+      ANSIBLE_PLAYBOOK="playbooks/promote-to-github-runner.yml"
       shift
       ;;
     --local)
@@ -61,12 +86,17 @@ while [[ $# -gt 0 ]]; do
       echo "Usage: $0 [OPTIONS]"
       echo ""
       echo "Options:"
-      echo "  --ansible-only     Run only Ansible playbook (infrastructure)"
-      echo "  --terraform-only   Run only Terraform (Grafana alerts)"
-      echo "  --vault            Deploy only HashiCorp Vault"
-      echo "  --cloudflared      Deploy only Cloudflare tunnel"
-      echo "  --local            Run Ansible locally on this machine instead of SSH"
-      echo "  -h, --help         Show this help message"
+      echo "  --ansible-only              Run only Ansible (skip Terraform)"
+      echo "  --terraform-only            Run only Terraform (skip Ansible)"
+      echo "  --vault                     Deploy only HashiCorp Vault"
+      echo "  --cloudflared               Deploy only Cloudflare tunnel"
+      echo "  --grafana                   Deploy only Grafana"
+      echo "  --loki                      Deploy only Loki + Alloy"
+      echo "  --prometheus                Deploy only Prometheus + Node Exporter"
+      echo "  --github-build-workflow     Deploy only GitHub build workflow templates"
+      echo "  --promote-to-github-runner  Deploy only GitHub Actions self-hosted runner"
+      echo "  --local                     Run Ansible locally instead of SSH"
+      echo "  -h, --help                  Show this help message"
       echo ""
       echo "Default: Run both Ansible and Terraform"
       exit 0
@@ -84,8 +114,8 @@ echo -e "${GREEN}IaC Toolbox Infrastructure Install${NC}"
 echo -e "${GREEN}========================================${NC}"
 if [ "$RUN_ANSIBLE" = false ]; then
   echo -e "${YELLOW}Mode: Terraform only (--terraform-only)${NC}"
-elif [ -n "$ANSIBLE_TAGS" ]; then
-  echo -e "${YELLOW}Mode: Ansible with tags: $ANSIBLE_TAGS${NC}"
+elif [ "$ANSIBLE_PLAYBOOK" != "playbooks/main.yml" ]; then
+  echo -e "${YELLOW}Mode: Ansible playbook: $ANSIBLE_PLAYBOOK${NC}"
 elif [ "$RUN_TERRAFORM" = false ]; then
   echo -e "${YELLOW}Mode: Ansible only (--ansible-only)${NC}"
 else
@@ -174,7 +204,7 @@ if [ "$RUN_ANSIBLE" = true ]; then
     fi
   done
 
-  ANSIBLE_CMD=(ansible-playbook -i inventory/all.yml playbooks/main.yml)
+  ANSIBLE_CMD=(ansible-playbook -i inventory/all.yml "$ANSIBLE_PLAYBOOK")
 
   # Load iac-toolbox.yml configuration file
   # Priority: 1) IAC_TOOLBOX_CONFIG env var, 2) infrastructure/ folder, 3) ~/.iac-toolbox/
@@ -202,9 +232,6 @@ if [ "$RUN_ANSIBLE" = true ]; then
   ANSIBLE_CMD+=(--extra-vars "project_root=${PROJECT_ROOT}")
   if [ -n "$SECRET_VARS" ]; then
     ANSIBLE_CMD+=(--extra-vars "$SECRET_VARS")
-  fi
-  if [ -n "$ANSIBLE_TAGS" ]; then
-    ANSIBLE_CMD+=(--tags "$ANSIBLE_TAGS")
   fi
 
   (

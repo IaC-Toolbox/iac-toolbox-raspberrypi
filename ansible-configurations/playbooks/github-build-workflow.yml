@@ -1,0 +1,38 @@
+---
+- name: Deploy GitHub Build Workflow
+  hosts: all
+  become: false
+  pre_tasks:
+    - name: Validate connection to target host
+      ping:
+
+    - name: Check Python installation
+      command: python3 --version
+      register: python_version
+      changed_when: false
+
+    - name: Gather system facts
+      setup:
+
+    - name: Display target system information
+      debug:
+        msg: |
+          Target: {{ ansible_host }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+
+  roles:
+    - role: common
+
+    - role: setup
+      when: ansible_os_family != "Darwin"
+
+    - role: docker
+
+    - role: github-build-workflow
+
+  post_tasks:
+    - name: Display completion message
+      debug:
+        msg: |
+          GitHub build workflow deployed successfully.
+          - Workflow templates generated in project repository

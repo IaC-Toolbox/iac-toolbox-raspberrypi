@@ -1,0 +1,39 @@
+---
+- name: Deploy Prometheus and Node Exporter
+  hosts: all
+  become: false
+  pre_tasks:
+    - name: Validate connection to target host
+      ping:
+
+    - name: Check Python installation
+      command: python3 --version
+      register: python_version
+      changed_when: false
+
+    - name: Gather system facts
+      setup:
+
+    - name: Display target system information
+      debug:
+        msg: |
+          Target: {{ ansible_host }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+
+  roles:
+    - role: common
+
+    - role: setup
+      when: ansible_os_family != "Darwin"
+
+    - role: docker
+
+    - role: prometheus
+
+  post_tasks:
+    - name: Display completion message
+      debug:
+        msg: |
+          Prometheus and Node Exporter deployed successfully.
+          - Prometheus UI (via SSH tunnel): ssh -L {{ prometheus.port }}:localhost:{{ prometheus.port }} {{ ansible_user }}@{{ ansible_host }}
+          - Node Exporter metrics: http://{{ ansible_host }}:{{ node_exporter.port }}/metrics
