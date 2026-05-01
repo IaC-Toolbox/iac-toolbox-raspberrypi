@@ -58,6 +58,11 @@ while [[ $# -gt 0 ]]; do
       ANSIBLE_TAGS="grafana"
       shift
       ;;
+    --prometheus)
+      RUN_TERRAFORM=false
+      ANSIBLE_TAGS="prometheus"
+      shift
+      ;;
     --local)
       RPI_LOCAL_MODE=true
       shift
@@ -71,6 +76,7 @@ while [[ $# -gt 0 ]]; do
       echo "  --vault            Deploy only HashiCorp Vault"
       echo "  --cloudflared      Deploy only Cloudflare tunnel"
       echo "  --grafana          Deploy only Grafana observability stack"
+      echo "  --prometheus       Deploy only Prometheus metrics collection"
       echo "  --local            Run Ansible locally on this machine instead of SSH"
       echo "  -h, --help         Show this help message"
       echo ""

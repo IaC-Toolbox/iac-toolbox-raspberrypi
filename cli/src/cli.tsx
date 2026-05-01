@@ -210,18 +210,37 @@ const prometheus = program
   .description('Manage Prometheus metrics collection');
 
 prometheus
+  .command('init')
+  .description('Configure Grafana URL for Prometheus')
+  .option(
+    '--destination <path>',
+    'Path to infrastructure directory',
+    'infrastructure'
+  )
+  .action(async (options: { destination: string }) => {
+    const { default: PrometheusInitWizard } = await import(
+      './components/PrometheusInitWizard.js'
+    );
+    render(<PrometheusInitWizard destination={options.destination} />, {
+      exitOnCtrlC: true,
+      patchConsole: false,
+    });
+  });
+
+prometheus
   .command('install')
   .description('Install or reinstall Prometheus metrics collection')
-  .action(async () => {
-    const { spawnSync } = await import('child_process');
-    const result = spawnSync(
-      'bash',
-      ['infrastructure/scripts/install.sh', '--prometheus', '--local'],
-      {
-        stdio: 'inherit',
-      }
+  .option('--profile <name>', 'Credential profile to use', 'default')
+  .option(
+    '--destination <path>',
+    'Path to infrastructure directory',
+    'infrastructure'
+  )
+  .action(async (options: { profile: string; destination: string }) => {
+    const { runPrometheusInstall } = await import(
+      './actions/prometheusInstall.js'
     );
-    process.exit(result.status ?? 1);
+    await runPrometheusInstall(options.destination, options.profile);
   });
 
 const githubBuildWorkflow = program
