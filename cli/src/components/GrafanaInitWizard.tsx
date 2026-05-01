@@ -1,12 +1,30 @@
 import { Box, Text, useApp } from 'ink';
-import TextInput from 'ink-text-input';
+import RealTextInput from 'ink-text-input';
 import { useState, useEffect } from 'react';
 import { loadCredentials, saveCredentials } from '../utils/credentials.js';
 import { updateGrafanaConfig } from '../utils/grafanaConfig.js';
 
+interface TextInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: (value: string) => void;
+  mask?: string;
+}
+
 interface GrafanaInitWizardProps {
   profile: string;
   destination: string;
+  /** Injectable for testing — defaults to the real TextInput from ink-text-input */
+  _TextInput?: (props: TextInputProps) => null;
+  /** Injectable for testing — defaults to loadCredentials */
+  _loadCredentials?: (profile: string) => Record<string, string>;
+  /** Injectable for testing — defaults to saveCredentials */
+  _saveCredentials?: (
+    credentials: Record<string, string>,
+    profile: string
+  ) => void;
+  /** Injectable for testing — defaults to updateGrafanaConfig */
+  _updateGrafanaConfig?: (destination: string, adminUser: string) => void;
 }
 
 type Step = 'username' | 'password' | 'confirm' | 'done';
@@ -14,9 +32,15 @@ type Step = 'username' | 'password' | 'confirm' | 'done';
 export default function GrafanaInitWizard({
   profile,
   destination,
+  _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
+  _loadCredentials = loadCredentials,
+  _saveCredentials = saveCredentials,
+  _updateGrafanaConfig = updateGrafanaConfig,
 }: GrafanaInitWizardProps) {
   const { exit } = useApp();
-  const creds = loadCredentials(profile);
+  const creds = _loadCredentials(profile);
+
+  const existingPassword = creds.grafana_admin_password || '';
 
   const [step, setStep] = useState<Step>('username');
   const [inputValue, setInputValue] = useState(
@@ -26,22 +50,33 @@ export default function GrafanaInitWizard({
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  const InputComponent = _TextInput;
+
   useEffect(() => {
     if (step === 'done') {
       // Save credentials and config, then exit
-      saveCredentials(
+      _saveCredentials(
         {
           grafana_admin_password: password,
           grafana_admin_user: username,
         },
         profile
       );
-      updateGrafanaConfig(destination, username);
+      _updateGrafanaConfig(destination, username);
       // Give Ink time to render final screen
       const timer = setTimeout(() => exit(), 100);
       return () => clearTimeout(timer);
     }
-  }, [step, password, username, profile, destination, exit]);
+  }, [
+    step,
+    password,
+    username,
+    profile,
+    destination,
+    exit,
+    _saveCredentials,
+    _updateGrafanaConfig,
+  ]);
 
   if (step === 'username') {
     return (
@@ -61,7 +96,7 @@ export default function GrafanaInitWizard({
         )}
         <Box paddingLeft={3} marginTop={1}>
           <Text>{'› '}</Text>
-          <TextInput
+          <InputComponent
             value={inputValue}
             onChange={(val) => {
               setInputValue(val);
@@ -74,7 +109,7 @@ export default function GrafanaInitWizard({
                 return;
               }
               setUsername(trimmed);
-              setInputValue('');
+              setInputValue(existingPassword);
               setError(null);
               setStep('password');
             }}
@@ -107,7 +142,7 @@ export default function GrafanaInitWizard({
         )}
         <Box paddingLeft={3} marginTop={1}>
           <Text>{'› '}</Text>
-          <TextInput
+          <InputComponent
             value={inputValue}
             onChange={(val) => {
               setInputValue(val);
@@ -158,7 +193,7 @@ export default function GrafanaInitWizard({
         )}
         <Box paddingLeft={3} marginTop={1}>
           <Text>{'› '}</Text>
-          <TextInput
+          <InputComponent
             value={inputValue}
             onChange={(val) => {
               setInputValue(val);
@@ -206,3 +241,5 @@ export default function GrafanaInitWizard({
     </Box>
   );
 }
+
+export type { GrafanaInitWizardProps, TextInputProps };
