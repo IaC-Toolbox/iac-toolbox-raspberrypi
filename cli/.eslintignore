@@ -1,0 +1,8 @@
+node_modules
+build
+coverage
+cypress-bin
+dist
+
+# temporary ignored
+src/react-app-env.d.ts
