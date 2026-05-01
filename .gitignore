@@ -5,3 +5,8 @@ CLAUDE.md.claude/worktrees/
 .claude/worktrees/
 .claude/context/roadmap/features/
 .claude/context/roadmap/bugs/
+
+# CLI (Node/TypeScript)
+cli/node_modules/
+cli/dist/
+cli/.next/

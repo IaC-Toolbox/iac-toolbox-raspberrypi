@@ -1,9 +1,19 @@
-name: CI
+name: CLI CI
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "cli/**"
   pull_request:
     branches:
       - main
+    paths:
+      - "cli/**"
+
+defaults:
+  run:
+    working-directory: cli
 
 jobs:
   ci:
@@ -24,6 +34,7 @@ jobs:
         with:
           node-version: 22.21.0
           cache: pnpm
+          cache-dependency-path: cli/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
