@@ -1,0 +1,39 @@
+services:
+  loki:
+    image: grafana/loki:{{ loki.version }}
+    container_name: loki
+    restart: unless-stopped
+    ports:
+      - "{{ loki.port }}:3100"
+    volumes:
+      - ./loki-config.yml:/etc/loki/config.yaml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/config.yaml
+    networks:
+      - monitoring
+
+  alloy:
+    image: grafana/alloy:{{ alloy.version }}
+    container_name: alloy
+    restart: unless-stopped
+    ports:
+      - "{{ alloy.port }}:12345"
+    volumes:
+      - ./alloy-config.alloy:/etc/alloy/config.alloy:ro
+      - /var/log:/var/log:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /run/log/journal:/run/log/journal:ro
+      - /etc/machine-id:/etc/machine-id:ro
+    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    depends_on:
+      - loki
+    networks:
+      - monitoring
+
+volumes:
+  loki_data:
+
+networks:
+  monitoring:
+    name: monitoring
+    external: true

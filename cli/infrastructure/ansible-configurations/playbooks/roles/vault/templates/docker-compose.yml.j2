@@ -1,0 +1,37 @@
+services:
+  vault:
+    image: hashicorp/vault:{{ vault.version }}
+    container_name: vault
+    restart: unless-stopped
+    ports:
+      - "{{ vault.port }}:{{ vault.port }}"
+    environment:
+      VAULT_ADDR: 'http://0.0.0.0:{{ vault.port }}'
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - ./config:/vault/config:ro
+      - ./data:/vault/data
+      - ./logs:/vault/logs
+    command: server
+    healthcheck:
+      test: ["CMD", "sh", "-c", "vault status || true"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  vault-unsealer:
+    image: hashicorp/vault:{{ vault.version }}
+    container_name: vault-unsealer
+    restart: "no"
+    depends_on:
+      vault:
+        condition: service_healthy
+    environment:
+      VAULT_ADDR: 'http://vault:{{ vault.port }}'
+    volumes:
+      - ./scripts:/scripts:ro
+      - ./data:/vault/data
+    entrypoint: ["/bin/sh", "/scripts/auto-unseal.sh"]
+    profiles:
+      - unseal
