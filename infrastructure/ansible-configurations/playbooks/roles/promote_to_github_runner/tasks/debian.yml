@@ -1,0 +1,102 @@
+---
+- name: Validate GitHub runner repo URL is provided
+  fail:
+    msg: "Missing required variable: github_runner.repo_url (set via GITHUB_REPO_URL environment variable)"
+  when: github_runner.repo_url is not defined or github_runner.repo_url == ''
+
+- name: Validate GitHub runner token is provided
+  fail:
+    msg: "Missing required variable: github_runner.token (set via GITHUB_RUNNER_TOKEN environment variable)"
+  when: github_runner.token is not defined or github_runner.token == ''
+
+- name: Install curl for GitHub runner
+  include_role:
+    name: package
+  vars:
+    pkg_name: curl
+
+- name: Install jq for GitHub runner
+  include_role:
+    name: package
+  vars:
+    pkg_name: jq
+
+- name: Install tar for GitHub runner
+  include_role:
+    name: package
+  vars:
+    pkg_name: tar
+
+- name: Create runner directory
+  file:
+    path: "{{ github_runner.work_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Download GitHub Actions runner tarball
+  become_user: "{{ ansible_user }}"
+  get_url:
+    url: "https://github.com/actions/runner/releases/download/v{{ github_runner.version }}/actions-runner-linux-{{ runner_arch }}-{{ github_runner.version }}.tar.gz"
+    dest: "{{ github_runner.work_dir }}/actions-runner.tar.gz"
+    mode: '0644'
+
+- name: Extract GitHub Actions runner
+  become_user: "{{ ansible_user }}"
+  unarchive:
+    src: "{{ github_runner.work_dir }}/actions-runner.tar.gz"
+    dest: "{{ github_runner.work_dir }}"
+    remote_src: yes
+    creates: "{{ github_runner.work_dir }}/config.sh"
+
+- name: Check if runner is already configured
+  stat:
+    path: "{{ github_runner.work_dir }}/.runner"
+  register: runner_configured
+
+- name: Configure GitHub Actions runner
+  become_user: "{{ ansible_user }}"
+  shell: |
+    ./config.sh --unattended \
+      --url {{ github_runner.repo_url }} \
+      --token {{ github_runner.token }} \
+      --labels {{ github_runner.labels }} \
+      --work _work
+  args:
+    chdir: "{{ github_runner.work_dir }}"
+  when: not runner_configured.stat.exists
+  register: config_output
+
+- name: Display runner configuration result
+  debug:
+    msg: "Runner configured successfully"
+  when: config_output is changed
+
+- name: Install runner as a service
+  shell: |
+    ./svc.sh install {{ ansible_user }}
+  args:
+    chdir: "{{ github_runner.work_dir }}"
+  when: not runner_configured.stat.exists
+
+- name: Start runner service
+  shell: |
+    ./svc.sh start
+  args:
+    chdir: "{{ github_runner.work_dir }}"
+  when: not runner_configured.stat.exists
+
+- name: Find GitHub Actions runner service file
+  find:
+    paths: /etc/systemd/system
+    patterns: "actions.runner.*.service"
+  register: runner_service
+
+- name: Enable runner service
+  include_role:
+    name: service_ctl
+  vars:
+    svc_name: "{{ runner_service.files[0].path | basename }}"
+    svc_action: started
+    svc_enabled: true
+  when: runner_service.files | length > 0

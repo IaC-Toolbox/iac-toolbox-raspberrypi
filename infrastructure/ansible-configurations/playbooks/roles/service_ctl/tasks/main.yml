@@ -1,0 +1,6 @@
+---
+- include_tasks: systemd.yml
+  when: ansible_service_mgr == "systemd"
+
+- include_tasks: launchd.yml
+  when: ansible_service_mgr == "launchd"
