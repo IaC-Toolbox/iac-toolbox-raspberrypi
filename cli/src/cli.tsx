@@ -135,25 +135,42 @@ const grafana = program
   .description('Manage Grafana observability stack');
 
 grafana
-  .command('install')
-  .description('Install or reinstall Grafana observability stack')
-  .action(async () => {
-    const { spawnSync } = await import('child_process');
-    const { loadCredentials } = await import('./utils/credentials.js');
-    const creds = loadCredentials('default');
-    const env = {
-      ...process.env,
-      GRAFANA_ADMIN_PASSWORD: creds.grafana_admin_password || '',
-    };
-    const result = spawnSync(
-      'bash',
-      ['infrastructure/scripts/install.sh', '--grafana', '--local'],
+  .command('init')
+  .description('Collect Grafana credentials')
+  .option('--profile <name>', 'Credential profile to use', 'default')
+  .option(
+    '--destination <path>',
+    'Path to infrastructure directory',
+    'infrastructure'
+  )
+  .action(async (options: { profile: string; destination: string }) => {
+    const { default: GrafanaInitWizard } = await import(
+      './components/GrafanaInitWizard.js'
+    );
+    render(
+      <GrafanaInitWizard
+        profile={options.profile}
+        destination={options.destination}
+      />,
       {
-        env,
-        stdio: 'inherit',
+        exitOnCtrlC: true,
+        patchConsole: false,
       }
     );
-    process.exit(result.status ?? 1);
+  });
+
+grafana
+  .command('install')
+  .description('Install or reinstall Grafana observability stack')
+  .option('--profile <name>', 'Credential profile to use', 'default')
+  .option(
+    '--destination <path>',
+    'Path to infrastructure directory',
+    'infrastructure'
+  )
+  .action(async (options: { profile: string; destination: string }) => {
+    const { runGrafanaInstall } = await import('./actions/grafanaInstall.js');
+    await runGrafanaInstall(options.destination, options.profile);
   });
 
 grafana
