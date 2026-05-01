@@ -60,25 +60,44 @@ const cloudflare = program
   .description('Manage Cloudflare Tunnel integration');
 
 cloudflare
-  .command('install')
-  .description('Install or reinstall Cloudflare Tunnel')
-  .action(async () => {
-    const { spawnSync } = await import('child_process');
-    const { loadCredentials } = await import('./utils/credentials.js');
-    const creds = loadCredentials('default');
-    const env = {
-      ...process.env,
-      CLOUDFLARE_API_TOKEN: creds.cloudflare_api_token || '',
-    };
-    const result = spawnSync(
-      'bash',
-      ['infrastructure/scripts/install.sh', '--cloudflared', '--local'],
+  .command('init')
+  .description('Collect Cloudflare API credentials and tunnel config')
+  .option('--profile <name>', 'Credential profile to use', 'default')
+  .option(
+    '--destination <path>',
+    'Path to infrastructure directory',
+    'infrastructure'
+  )
+  .action(async (options: { profile: string; destination: string }) => {
+    const { default: CloudflareInitWizard } = await import(
+      './components/CloudflareInitWizard.js'
+    );
+    render(
+      <CloudflareInitWizard
+        profile={options.profile}
+        destination={options.destination}
+      />,
       {
-        env,
-        stdio: 'inherit',
+        exitOnCtrlC: true,
+        patchConsole: false,
       }
     );
-    process.exit(result.status ?? 1);
+  });
+
+cloudflare
+  .command('install')
+  .description('Install or reinstall Cloudflare Tunnel')
+  .option('--profile <name>', 'Credential profile to use', 'default')
+  .option(
+    '--destination <path>',
+    'Path to infrastructure directory',
+    'infrastructure'
+  )
+  .action(async (options: { profile: string; destination: string }) => {
+    const { runCloudflareInstall } = await import(
+      './actions/cloudflareInstall.js'
+    );
+    await runCloudflareInstall(options.destination, options.profile);
   });
 
 cloudflare
