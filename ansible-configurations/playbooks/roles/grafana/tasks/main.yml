@@ -4,7 +4,7 @@
     that:
       - grafana.admin_password is defined
       - grafana.admin_password | length > 0
-    fail_msg: "GRAFANA_ADMIN_PASSWORD must be set in .env file"
+    fail_msg: "GRAFANA_ADMIN_PASSWORD must be provided — run: iac-toolbox grafana init && iac-toolbox grafana install"
 
 - name: Check if Vault is available (optional)
   command: docker ps --filter name=vault --filter status=running --format {% raw %}'{{.Names}}'{% endraw %}
