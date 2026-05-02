@@ -81,7 +81,7 @@ async function validateCloudflareToken(
 
     if (res.ok) {
       const data = (await res.json()) as { success?: boolean };
-      if (data.success) {
+      if (data.success !== false) {
         return { valid: true, message: 'Cloudflare token verified' };
       }
     }
