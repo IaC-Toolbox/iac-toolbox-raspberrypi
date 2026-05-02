@@ -26,30 +26,6 @@ type Step =
   | 'hostname'
   | 'servicePort';
 
-async function validateToken(
-  token: string
-): Promise<{ valid: boolean; message: string }> {
-  try {
-    const res = await fetch(
-      'https://api.cloudflare.com/client/v4/user/tokens/verify',
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        signal: AbortSignal.timeout(5000),
-      }
-    );
-    if (res.ok) {
-      const data = (await res.json()) as { success?: boolean };
-      if (data.success) return { valid: true, message: 'Token validated' };
-    }
-    return { valid: false, message: `Invalid token (status ${res.status})` };
-  } catch {
-    return { valid: false, message: 'Connection failed' };
-  }
-}
-
 async function validateZone(
   token: string,
   zoneId: string
@@ -105,7 +81,7 @@ export default function CloudflareConfigDialog({
 
   useEffect(() => {
     if (!validating) return;
-    let cancelled = false;
+    const cancelled = false;
 
     const run = async () => {
       if (step === 'token') {
