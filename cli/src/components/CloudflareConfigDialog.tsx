@@ -26,7 +26,7 @@ type Step =
   | 'hostname'
   | 'servicePort';
 
-async function validateToken(
+export async function validateToken(
   token: string
 ): Promise<{ valid: boolean; message: string }> {
   try {
@@ -42,7 +42,7 @@ async function validateToken(
     );
     if (res.ok) {
       const data = (await res.json()) as { success?: boolean };
-      if (data.success) {
+      if (data.success !== false) {
         return { valid: true, message: 'Token verified' };
       }
     }

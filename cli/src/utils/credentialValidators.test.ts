@@ -51,6 +51,35 @@ describe('credentialValidators', () => {
       expect(result.message).toContain('verified');
     });
 
+    it('validates Cloudflare token when success field is missing in 200 response', async () => {
+      (fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      } as Response);
+
+      const result = await validateCredential(
+        'cloudflare_tunnel_token',
+        'cf_token'
+      );
+      expect(result.valid).toBe(true);
+      expect(result.message).toContain('verified');
+    });
+
+    it('rejects Cloudflare token on 401 response', async () => {
+      (fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+        ok: false,
+        status: 401,
+      } as Response);
+
+      const result = await validateCredential(
+        'cloudflare_tunnel_token',
+        'cf_token'
+      );
+      expect(result.valid).toBe(false);
+      expect(result.message).toContain('401');
+    });
+
     it('handles network error gracefully', async () => {
       (fetch as jest.MockedFunction<typeof fetch>).mockRejectedValue(
         new Error('Network error')
