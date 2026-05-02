@@ -1,8 +1,8 @@
 import { spawnSync } from 'child_process';
-import os from 'os';
 import { loadCredentials } from '../utils/credentials.js';
 import { loadIacToolboxYaml } from '../utils/grafanaConfig.js';
 import { pollHealth } from '../utils/healthCheck.js';
+import { buildTargetEnv } from '../utils/targetConfig.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;
@@ -69,10 +69,10 @@ export async function runPrometheusInstall(
   console.log('◆  Installing Prometheus...');
   console.log('│  ══════════════════════════════════════');
 
+  const targetEnv = buildTargetEnv(destination);
   const env = {
     ...process.env,
-    RPI_HOST: 'localhost',
-    RPI_USER: os.userInfo().username,
+    ...targetEnv,
     GRAFANA_ADMIN_USER: adminUser,
     GRAFANA_ADMIN_PASSWORD: creds.grafana_admin_password,
     GRAFANA_PORT: grafanaPort,

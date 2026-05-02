@@ -1,8 +1,8 @@
 import { spawnSync } from 'child_process';
-import os from 'os';
 import { loadCredentials } from '../utils/credentials.js';
 import { loadIacToolboxYaml } from '../utils/grafanaConfig.js';
 import { pollHealth } from '../utils/healthCheck.js';
+import { buildTargetEnv } from '../utils/targetConfig.js';
 
 /**
  * Run `iac-toolbox grafana install`.
@@ -41,10 +41,10 @@ export async function runGrafanaInstall(
   console.log('◆  Installing Grafana...');
   console.log('│  ══════════════════════════════════════');
 
+  const targetEnv = buildTargetEnv(destination);
   const env = {
     ...process.env,
-    RPI_HOST: 'localhost',
-    RPI_USER: os.userInfo().username,
+    ...targetEnv,
     GRAFANA_ADMIN_USER: adminUser,
     GRAFANA_ADMIN_PASSWORD: creds.grafana_admin_password,
   };
