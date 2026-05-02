@@ -1,7 +1,7 @@
 import { spawnSync } from 'child_process';
-import os from 'os';
 import { loadIacToolboxYaml } from '../utils/grafanaConfig.js';
 import { pollHealth } from '../utils/healthCheck.js';
+import { buildTargetEnv } from '../utils/targetConfig.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;
@@ -45,10 +45,10 @@ export async function runMetricsAgentInstall(
   console.log('◆  Installing metrics agent...');
   console.log('│  ════════════════════════════════════════');
 
+  const targetEnv = buildTargetEnv(destination);
   const env = {
     ...process.env,
-    RPI_HOST: 'localhost',
-    RPI_USER: os.userInfo().username,
+    ...targetEnv,
     ALLOY_REMOTE_WRITE_URL: remoteWriteUrl,
   };
 

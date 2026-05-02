@@ -376,6 +376,28 @@ githubRunner
     process.exit(result.status ?? 1);
   });
 
+const target = program
+  .command('target')
+  .description('Configure the target device for deployments');
+
+target
+  .command('init')
+  .description('Set up the target device (localhost or remote SSH)')
+  .option(
+    '--destination <path>',
+    'Path to infrastructure directory',
+    'infrastructure'
+  )
+  .action(async (options: { destination: string }) => {
+    const { default: TargetInitWizard } = await import(
+      './components/TargetInitWizard.js'
+    );
+    render(<TargetInitWizard destination={options.destination} />, {
+      exitOnCtrlC: true,
+      patchConsole: false,
+    });
+  });
+
 program
   .command('install')
   .description('Run install script using existing configuration')

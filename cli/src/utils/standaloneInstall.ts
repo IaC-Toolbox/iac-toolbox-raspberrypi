@@ -6,6 +6,7 @@ import {
   runInstallScript,
   installScriptExists,
 } from './installRunner.js';
+import { buildTargetEnv } from './targetConfig.js';
 
 /**
  * Check if iac-toolbox.yml exists at the expected path.
@@ -50,6 +51,10 @@ export async function runStandaloneInstall(
     credentials.docker_hub_username,
     credentials.docker_image_name
   );
+
+  // Override RPI_* vars with target config (preserves backward compat when no config exists)
+  const targetEnv = buildTargetEnv(destination);
+  Object.assign(env, targetEnv);
 
   // Add additional credentials that may be used by the install script
   if (credentials.cloudflare_api_token) {
