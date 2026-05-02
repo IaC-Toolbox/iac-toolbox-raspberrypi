@@ -107,7 +107,7 @@ cloudflare
     const { spawnSync } = await import('child_process');
     const result = spawnSync(
       'bash',
-      ['infrastructure/scripts/uninstall-cloudflare.sh', '--local'],
+      ['infrastructure/scripts/uninstall-cloudflared.sh', '--local'],
       {
         stdio: 'inherit',
       }

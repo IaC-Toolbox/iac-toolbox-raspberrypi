@@ -1,4 +1,8 @@
 ---
+# ============================================
+# IaC Toolbox - Main Playbook
+# ============================================
+
 - name: Setup IaC Toolbox Infrastructure
   hosts: all
   become: false
@@ -78,6 +82,14 @@
       tags: [loki, logs, monitoring]
       when: loki is defined and loki.enabled
 
+    - role: node_exporter
+      tags: [node_exporter, monitoring]
+      when: node_exporter is defined and node_exporter.enabled
+
+    - role: grafana-alloy
+      tags: [grafana-alloy, monitoring]
+      when: grafana_alloy is defined and grafana_alloy.enabled
+
     - role: cloudflare-tunnel
       tags: [cloudflare, tunnel]
       when:
@@ -122,9 +134,7 @@
           {% if prometheus is defined and prometheus.enabled %}
           - Verify Prometheus: sudo systemctl status prometheus
           - Prometheus UI (via SSH tunnel): ssh -L {{ prometheus.port }}:localhost:{{ prometheus.port }} {{ ansible_user }}@{{ ansible_host }}
-          - Node Exporter metrics: http://{{ ansible_host }}:{{ node_exporter.port }}/metrics
-          - Grafana datasource: Prometheus (auto-configured)
-          - Dashboard: Node Exporter Full (auto-imported)
+          - Remote write receiver: enabled (app service devices push metrics via Grafana Alloy)
           {% endif %}
           {% if loki is defined and loki.enabled %}
           - Verify Loki: sudo systemctl status loki
@@ -133,6 +143,14 @@
           - Grafana datasource: Loki (auto-configured)
           - Dashboard: Loki Logs (auto-imported)
           - Query logs: {job="systemd"}, {job="docker"}, {job="auth"}
+          {% endif %}
+          {% if node_exporter is defined and node_exporter.enabled %}
+          - Verify Node Exporter: sudo systemctl status node_exporter
+          - Node Exporter metrics: http://{{ ansible_host }}:{{ node_exporter_port | default(9100) }}/metrics
+          {% endif %}
+          {% if grafana_alloy is defined and grafana_alloy.enabled %}
+          - Verify Grafana Alloy: sudo systemctl status grafana-alloy
+          - Alloy UI: http://{{ ansible_host }}:{{ alloy_port | default(12345) }}
           {% endif %}
           {% if cloudflare is defined and cloudflare.enabled %}
           - Verify Cloudflare tunnel: sudo systemctl status cloudflared

@@ -1,0 +1,12 @@
+// Scrape Node Exporter running locally on this device
+prometheus.scrape "node_exporter" {
+  targets = [{ __address__ = "localhost:{{ node_exporter_port }}" }]
+  forward_to = [prometheus.remote_write.platform.receiver]
+}
+
+// Push metrics to the central Prometheus instance on the platform
+prometheus.remote_write "platform" {
+  endpoint {
+    url = "{{ alloy_remote_write_url }}"
+  }
+}
