@@ -27,6 +27,7 @@ IAC_ROOT="$(dirname "$SCRIPT_DIR")"
 PROJECT_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || echo "$IAC_ROOT")"
 ANSIBLE_DIR="$IAC_ROOT/ansible-configurations"
 TERRAFORM_DIR="$IAC_ROOT/terraform/grafana-alerts"
+echo $IAC_ROOT
 RUN_ANSIBLE=true
 RUN_TERRAFORM=true
 ANSIBLE_TAGS=""
@@ -52,6 +53,21 @@ while [[ $# -gt 0 ]]; do
       ANSIBLE_TAGS="cloudflare"
       shift
       ;;
+    --grafana)
+      RUN_TERRAFORM=false
+      ANSIBLE_TAGS="grafana"
+      shift
+      ;;
+    --prometheus)
+      RUN_TERRAFORM=false
+      ANSIBLE_TAGS="prometheus"
+      shift
+      ;;
+    --metrics-agent)
+      RUN_TERRAFORM=false
+      ANSIBLE_TAGS="node_exporter,grafana-alloy"
+      shift
+      ;;
     --local)
       RPI_LOCAL_MODE=true
       shift
@@ -64,6 +80,9 @@ while [[ $# -gt 0 ]]; do
       echo "  --terraform-only   Run only Terraform (Grafana alerts)"
       echo "  --vault            Deploy only HashiCorp Vault"
       echo "  --cloudflared      Deploy only Cloudflare tunnel"
+      echo "  --grafana          Deploy only Grafana observability stack"
+      echo "  --prometheus       Deploy only Prometheus metrics collection"
+      echo "  --metrics-agent    Deploy only Node Exporter + Grafana Alloy"
       echo "  --local            Run Ansible locally on this machine instead of SSH"
       echo "  -h, --help         Show this help message"
       echo ""
@@ -164,8 +183,9 @@ if [ "$RUN_ANSIBLE" = true ]; then
   SECRET_ENV_NAMES=(
     DOCKER_HUB_TOKEN DOCKER_HUB_USERNAME
     CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_ZONE_ID
-    GRAFANA_ADMIN_PASSWORD
+    GRAFANA_ADMIN_USER GRAFANA_ADMIN_PASSWORD
     GITHUB_RUNNER_TOKEN GITHUB_REPO_URL
+    ALLOY_REMOTE_WRITE_URL
   )
   for var_name in "${SECRET_ENV_NAMES[@]}"; do
     if [ -n "${!var_name}" ]; then
@@ -192,8 +212,6 @@ if [ "$RUN_ANSIBLE" = true ]; then
       fi
     done
   fi
-
-  echo "TEST" $IAC_CONFIG_FILE
 
   if [ -n "$IAC_CONFIG_FILE" ]; then
     ANSIBLE_CMD+=(--extra-vars "@$IAC_CONFIG_FILE")
