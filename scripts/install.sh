@@ -219,10 +219,26 @@ if [ "$RUN_ANSIBLE" = true ]; then
     ANSIBLE_CMD+=(--tags "$ANSIBLE_TAGS")
   fi
 
-  (
+  if ! (
     cd "$ANSIBLE_DIR"
     "${ANSIBLE_CMD[@]}"
-  )
+  ); then
+    ANSIBLE_EXIT_CODE=$?
+    echo ""
+    echo -e "${RED}========================================${NC}"
+    echo -e "${RED}ERROR: Ansible playbook failed${NC}"
+    echo -e "${RED}========================================${NC}"
+    echo -e "${RED}The Ansible playbook execution failed with exit code $ANSIBLE_EXIT_CODE${NC}"
+    echo ""
+    echo -e "${YELLOW}Troubleshooting steps:${NC}"
+    echo "  1. Review the Ansible output above for specific error details"
+    echo "  2. Verify all required environment variables are correctly set"
+    echo "  3. Check SSH connectivity if running in remote mode (RPI_LOCAL=false)"
+    echo "  4. Ensure the target host meets all prerequisites"
+    echo "  5. Review the Ansible inventory file at: $ANSIBLE_DIR/inventory/all.yml"
+    echo ""
+    exit $ANSIBLE_EXIT_CODE
+  fi
   echo -e "${GREEN}✓ Ansible run completed${NC}"
 else
   echo -e "${YELLOW}[4/4] Skipping Ansible playbook (--terraform-only)${NC}"
@@ -241,7 +257,7 @@ if [ "$RUN_TERRAFORM" = true ]; then
     exit 1
   fi
 
-  (
+  if ! (
     cd "$TERRAFORM_DIR"
     cat > terraform.tfvars <<EOF
 grafana_url            = "https://grafana.iac-toolbox.com"
@@ -254,7 +270,23 @@ pagerduty_user_email     = "${PAGERDUTY_USER_EMAIL:-}"
 EOF
     terraform init
     terraform apply -auto-approve
-  )
+  ); then
+    TERRAFORM_EXIT_CODE=$?
+    echo ""
+    echo -e "${RED}========================================${NC}"
+    echo -e "${RED}ERROR: Terraform failed${NC}"
+    echo -e "${RED}========================================${NC}"
+    echo -e "${RED}Terraform execution failed with exit code $TERRAFORM_EXIT_CODE${NC}"
+    echo ""
+    echo -e "${YELLOW}Troubleshooting steps:${NC}"
+    echo "  1. Review the Terraform output above for specific error details"
+    echo "  2. Verify Grafana is accessible at the configured URL"
+    echo "  3. Check that GRAFANA_ADMIN_USER and GRAFANA_ADMIN_PASSWORD are correct"
+    echo "  4. Ensure ALERT_EMAIL is a valid email address"
+    echo "  5. Review Terraform configuration at: $TERRAFORM_DIR"
+    echo ""
+    exit $TERRAFORM_EXIT_CODE
+  fi
 
   echo -e "${GREEN}✓ Terraform completed${NC}"
 else
