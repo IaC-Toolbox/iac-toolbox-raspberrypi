@@ -262,6 +262,58 @@ prometheus
     await runPrometheusInstall(options.destination, options.profile);
   });
 
+const metricsAgent = program
+  .command('metrics-agent')
+  .description('Manage metrics agent (Node Exporter + Grafana Alloy)');
+
+metricsAgent
+  .command('init')
+  .description('Configure Prometheus remote_write URL for metrics agent')
+  .option(
+    '--destination <path>',
+    'Path to infrastructure directory',
+    'infrastructure'
+  )
+  .action(async (options: { destination: string }) => {
+    const { default: MetricsAgentInitWizard } = await import(
+      './components/MetricsAgentInitWizard.js'
+    );
+    render(<MetricsAgentInitWizard destination={options.destination} />, {
+      exitOnCtrlC: true,
+      patchConsole: false,
+    });
+  });
+
+metricsAgent
+  .command('install')
+  .description(
+    'Install or reinstall metrics agent (Node Exporter + Grafana Alloy)'
+  )
+  .option(
+    '--destination <path>',
+    'Path to infrastructure directory',
+    'infrastructure'
+  )
+  .action(async (options: { destination: string }) => {
+    const { runMetricsAgentInstall } = await import(
+      './actions/metricsAgentInstall.js'
+    );
+    await runMetricsAgentInstall(options.destination);
+  });
+
+metricsAgent
+  .command('uninstall')
+  .description('Remove metrics agent from this device')
+  .action(async () => {
+    const { spawnSync } = await import('child_process');
+    const result = spawnSync(
+      'bash',
+      ['infrastructure/scripts/uninstall-metrics-agent.sh', '--local'],
+      { stdio: 'inherit' }
+    );
+    process.exit(result.status ?? 1);
+  });
+
 const githubBuildWorkflow = program
   .command('github-build-workflow')
   .description('Manage GitHub Build Workflow templates');

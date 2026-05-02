@@ -42,9 +42,11 @@ async function validateToken(
     );
     if (res.ok) {
       const data = (await res.json()) as { success?: boolean };
-      if (data.success) return { valid: true, message: 'Token validated' };
+      if (data.success) {
+        return { valid: true, message: 'Token verified' };
+      }
     }
-    return { valid: false, message: `Invalid token (status ${res.status})` };
+    return { valid: false, message: `Cloudflare returned ${res.status}` };
   } catch {
     return { valid: false, message: 'Connection failed' };
   }
@@ -109,8 +111,7 @@ export default function CloudflareConfigDialog({
 
     const run = async () => {
       if (step === 'token') {
-        // const result = await validateToken(inputValue.trim());
-        const result = { valid: true, message: 'Token validated' };
+        const result = await validateToken(inputValue.trim());
         if (cancelled) return;
         if (result.valid) {
           setToken(inputValue.trim());
@@ -143,9 +144,9 @@ export default function CloudflareConfigDialog({
     };
 
     run();
-    // return () => {
-    //   cancelled = true;
-    // };
+    return () => {
+      cancelled = true;
+    };
   }, [validating, step, inputValue, token]);
 
   const handleSubmit = (value: string) => {
