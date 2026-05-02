@@ -193,6 +193,8 @@ if [ "$RUN_ANSIBLE" = true ]; then
     done
   fi
 
+  echo "TEST" $IAC_CONFIG_FILE
+
   if [ -n "$IAC_CONFIG_FILE" ]; then
     ANSIBLE_CMD+=(--extra-vars "@$IAC_CONFIG_FILE")
   else
