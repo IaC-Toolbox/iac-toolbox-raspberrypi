@@ -45,13 +45,53 @@
     owner: "{{ ansible_user }}"
   notify: Restart cloudflared
 
-- name: Enable and start cloudflared service
-  include_role:
-    name: service_ctl
-  vars:
-    svc_name: cloudflared
-    svc_action: started
-    svc_enabled: true
+- name: Ensure LaunchAgents directory exists
+  file:
+    path: "{{ ansible_env.HOME }}/Library/LaunchAgents"
+    state: directory
+    mode: '0755'
+
+- name: Create cloudflared launchd plist
+  copy:
+    dest: "{{ ansible_env.HOME }}/Library/LaunchAgents/com.cloudflare.cloudflared.plist"
+    content: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+      <dict>
+          <key>Label</key>
+          <string>com.cloudflare.cloudflared</string>
+          <key>ProgramArguments</key>
+          <array>
+              <string>/opt/homebrew/bin/cloudflared</string>
+              <string>tunnel</string>
+              <string>--no-autoupdate</string>
+              <string>run</string>
+              <string>--token</string>
+              <string>{{ cloudflare_tunnel_token }}</string>
+          </array>
+          <key>RunAtLoad</key>
+          <true/>
+          <key>KeepAlive</key>
+          <true/>
+          <key>StandardOutPath</key>
+          <string>{{ ansible_env.HOME }}/Library/Logs/cloudflared.out.log</string>
+          <key>StandardErrorPath</key>
+          <string>{{ ansible_env.HOME }}/Library/Logs/cloudflared.err.log</string>
+      </dict>
+      </plist>
+    mode: '0644'
+    owner: "{{ ansible_user }}"
+  notify: Restart cloudflared
+
+- name: Unload cloudflared launchd service (for idempotency)
+  command: launchctl unload "{{ ansible_env.HOME }}/Library/LaunchAgents/com.cloudflare.cloudflared.plist"
+  failed_when: false
+  changed_when: false
+
+- name: Load cloudflared launchd service
+  command: launchctl load "{{ ansible_env.HOME }}/Library/LaunchAgents/com.cloudflare.cloudflared.plist"
+  changed_when: true
 
 - name: Display Cloudflare tunnel API mode summary
   debug:
