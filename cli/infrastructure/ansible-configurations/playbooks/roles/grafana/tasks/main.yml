@@ -1,0 +1,110 @@
+---
+- name: Validate Grafana admin password is set
+  assert:
+    that:
+      - grafana.admin_password is defined
+      - grafana.admin_password | length > 0
+    fail_msg: "GRAFANA_ADMIN_PASSWORD must be set in .env file"
+
+- name: Check if Vault is available (optional)
+  command: docker ps --filter name=vault --filter status=running --format {% raw %}'{{.Names}}'{% endraw %}
+  register: vault_running
+  changed_when: false
+  failed_when: false
+
+- name: Get Vault root token if Vault is running
+  block:
+    - name: Check if Vault is initialized
+      stat:
+        path: "{{ vault.base_dir }}/data/vault-init.json"
+      register: vault_init_file
+
+    - name: Read Vault root token
+      slurp:
+        src: "{{ vault.base_dir }}/data/vault-init.json"
+      register: vault_init_content
+      when:
+        - vault_init_file.stat.exists
+        - vault_init_file.stat.size > 0
+
+    - name: Parse Vault root token
+      set_fact:
+        vault_root_token: "{{ (vault_init_content.content | b64decode | from_json).root_token }}"
+      when:
+        - vault_init_file.stat.exists
+        - vault_init_file.stat.size > 0
+        - vault_init_content.content is defined
+
+    - name: Store Grafana password in Vault for backup
+      shell: |
+        docker exec -e VAULT_TOKEN="{{ vault_root_token }}" vault \
+          vault kv put {{ grafana.vault_path }} \
+            ADMIN_PASSWORD="{{ grafana.admin_password }}"
+      when: vault_root_token is defined
+      register: password_stored
+
+    - name: Display Vault storage message
+      debug:
+        msg: "Grafana admin password has been backed up to Vault at {{ grafana.vault_path }}"
+      when: password_stored is changed
+  when: vault_running.stdout == "vault"
+
+- name: Create Grafana base directory
+  file:
+    path: "{{ grafana.base_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Deploy docker-compose configuration
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ grafana.base_dir }}/docker-compose.yml"
+    owner: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Pull Grafana container image
+  community.docker.docker_image:
+    name: "grafana/grafana:{{ grafana.version }}"
+    source: pull
+  become_user: "{{ ansible_user }}"
+
+- name: Deploy Grafana systemd service
+  template:
+    src: grafana.service.j2
+    dest: /etc/systemd/system/grafana.service
+    mode: '0644'
+  notify: Reload systemd
+  when: ansible_service_mgr == "systemd"
+
+- name: Enable and start Grafana service
+  include_role:
+    name: service_ctl
+  vars:
+    svc_name: grafana
+    svc_action: started
+    svc_enabled: true
+  when: ansible_service_mgr == "systemd"
+
+- name: Wait for Grafana to be healthy
+  uri:
+    url: "http://localhost:{{ grafana.port }}/api/health"
+    method: GET
+    status_code: 200
+  register: grafana_health
+  retries: 30
+  delay: 2
+  until: grafana_health.status == 200
+
+- name: Display Grafana access information
+  debug:
+    msg:
+      - "=========================================="
+      - "Grafana has been successfully deployed!"
+      - "=========================================="
+      - "Local URL: http://{{ ansible_host }}:{{ grafana.port }}"
+      - "Remote URL: https://{{ grafana.domain }} (after Cloudflare tunnel configured)"
+      - "Username: {{ grafana.admin_user }}"
+      - "Password: {{ grafana.admin_password }}"
+      - ""
+      - "Password is also backed up in Vault at {{ grafana.vault_path }} (if Vault is running)"

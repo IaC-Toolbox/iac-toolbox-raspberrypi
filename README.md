@@ -129,7 +129,21 @@ Or locally on the Pi:
 ./scripts/uninstall-vault.sh --local
 ```
 
+## Packages
+
+This repository is a monorepo containing the following packages:
+
+| Package | Path | Description |
+|---------|------|-------------|
+| **Ansible Automation** | `ansible-configurations/` | Ansible playbooks and roles for Raspberry Pi provisioning |
+| **CLI Wizard** | [`cli/`](cli/README.md) | TypeScript/Ink-based terminal wizard that guides users through the provisioning flow |
+| **Terraform** | `terraform/` | Terraform configurations (Grafana alerts) |
+| **Scripts** | `scripts/` | Shell scripts for installation and setup |
+
+Each package has its own CI workflow scoped to its directory. See individual package READMEs for details.
+
 ## Documentation
 
 - [docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md) - Project architecture and overview
 - [docs/01-vault-setup.md](docs/01-vault-setup.md) - HashiCorp Vault setup and usage guide
+- [cli/README.md](cli/README.md) - CLI wizard documentation
