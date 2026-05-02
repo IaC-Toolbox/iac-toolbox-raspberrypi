@@ -2,188 +2,9 @@
 # ============================================
 # IaC Toolbox - Main Playbook
 # ============================================
-# Play 1: Common setup for all hosts
-# Play 2: Platform hosts (Prometheus + Grafana)
-# Play 3: App service devices (Node Exporter + Grafana Alloy)
-# Play 4: Legacy single-host setup (targets 'all' for backwards compatibility)
 
-# -----------------------------------------------------------------
-# Play 1: Platform — Prometheus (remote_write receiver) + Grafana
-# -----------------------------------------------------------------
-- name: Setup IaC Toolbox Platform (Prometheus + Grafana)
-  hosts: platform
-  become: false
-  pre_tasks:
-    - name: Validate connection to target host
-      ping:
-      tags: always
-
-    - name: Check Python installation
-      command: python3 --version
-      register: python_version
-      changed_when: false
-      tags: always
-
-    - name: Display Python version
-      debug:
-        msg: "Python {{ python_version.stdout }} is installed"
-      tags: always
-
-    - name: Verify required variables are defined
-      assert:
-        that:
-          - ansible_host is defined
-          - ansible_user is defined
-        fail_msg: "Required connection variables are missing. Check inventory configuration."
-      tags: always
-
-    - name: Gather system facts
-      setup:
-      tags: always
-
-  roles:
-    - role: common
-      tags: [always]
-
-    - role: setup
-      tags: [setup, base]
-      when:
-        - (setup is not defined or setup)
-        - ansible_os_family != "Darwin"
-
-    - role: docker
-      tags: [docker]
-      when: docker is not defined or docker.enabled
-
-    - role: vault
-      tags: [vault, secrets]
-      when: vault is defined and vault.enabled
-
-    - role: prometheus
-      tags: [prometheus, monitoring]
-      when: prometheus is defined and prometheus.enabled
-
-    - role: grafana
-      tags: [grafana, monitoring]
-      when: grafana is defined and grafana.enabled
-
-    - role: loki
-      tags: [loki, logs, monitoring]
-      when: loki is defined and loki.enabled
-
-    - role: cloudflare-tunnel
-      tags: [cloudflare, tunnel]
-      when:
-        - cloudflare is defined
-        - cloudflare.enabled
-        - (cloudflare.mode | default('oauth')) == 'oauth'
-
-    - role: cloudflare-tunnel-api
-      tags: [cloudflare, tunnel]
-      when:
-        - cloudflare is defined
-        - cloudflare.enabled
-        - (cloudflare.mode | default('oauth')) == 'api'
-
-    - role: github-build-workflow
-      tags: [github-build-workflow, ci]
-      when: github_build_workflow is defined and github_build_workflow.enabled
-
-  post_tasks:
-    - name: Display platform completion message
-      debug:
-        msg: |
-          ========================================
-          IaC Toolbox platform setup completed!
-          ========================================
-
-          {% if prometheus is defined and prometheus.enabled %}
-          - Verify Prometheus: sudo systemctl status prometheus
-          - Prometheus UI (via SSH tunnel): ssh -L {{ prometheus.port }}:localhost:{{ prometheus.port }} {{ ansible_user }}@{{ ansible_host }}
-          - Remote write receiver: enabled (app service devices push metrics)
-          {% endif %}
-          {% if grafana is defined and grafana.enabled %}
-          - Verify Grafana: sudo systemctl status grafana
-          - Access Grafana UI: https://{{ grafana.domain }}
-          - Username: {{ grafana.admin_user }} / Password: {{ grafana.admin_password }}
-          - Prometheus datasource: auto-provisioned
-          - Node Exporter Full dashboard: auto-imported
-          {% endif %}
-          {% if loki is defined and loki.enabled %}
-          - Verify Loki: sudo systemctl status loki
-          - Loki API: http://{{ ansible_host }}:{{ loki.port }}
-          {% endif %}
-          {% if cloudflare is defined and cloudflare.enabled %}
-          - Verify Cloudflare tunnel: sudo systemctl status cloudflared
-          {% endif %}
-      tags: always
-
-# -----------------------------------------------------------------
-# Play 2: App Service Devices — Node Exporter + Grafana Alloy
-# -----------------------------------------------------------------
-- name: Setup IaC Toolbox App Service Devices (Node Exporter + Grafana Alloy)
-  hosts: app_services
-  become: false
-  pre_tasks:
-    - name: Validate connection to target host
-      ping:
-      tags: always
-
-    - name: Check Python installation
-      command: python3 --version
-      register: python_version
-      changed_when: false
-      tags: always
-
-    - name: Display Python version
-      debug:
-        msg: "Python {{ python_version.stdout }} is installed"
-      tags: always
-
-    - name: Verify required variables are defined
-      assert:
-        that:
-          - ansible_host is defined
-          - ansible_user is defined
-        fail_msg: "Required connection variables are missing. Check inventory configuration."
-      tags: always
-
-    - name: Gather system facts
-      setup:
-      tags: always
-
-  roles:
-    - role: common
-      tags: [always]
-
-    - role: node_exporter
-      tags: [node_exporter, monitoring]
-      when: node_exporter_enabled | default(true)
-
-    - role: grafana-alloy
-      tags: [grafana-alloy, monitoring]
-      when: grafana_alloy_enabled | default(true)
-
-  post_tasks:
-    - name: Display app service completion message
-      debug:
-        msg: |
-          ========================================
-          IaC Toolbox app service setup completed!
-          ========================================
-
-          - Verify Node Exporter: sudo systemctl status node_exporter
-          - Node Exporter metrics: http://{{ ansible_host }}:{{ node_exporter_port | default(9100) }}/metrics
-          - Verify Grafana Alloy: sudo systemctl status grafana-alloy
-          - Alloy UI: http://{{ ansible_host }}:{{ alloy_port | default(12345) }}
-          - Metrics are being pushed to: {{ alloy_remote_write_url | default('https://grafana.iac-toolbox.com/prometheus/api/v1/write') }}
-      tags: always
-
-# -----------------------------------------------------------------
-# Play 3: Legacy single-host setup (all hosts not in a named group)
-# -----------------------------------------------------------------
-- name: Setup IaC Toolbox Infrastructure (legacy single-host)
-  hosts: iac-toolbox-target
+- name: Setup IaC Toolbox Infrastructure
+  hosts: all
   become: false
   pre_tasks:
     - name: Validate connection to target host
@@ -261,6 +82,14 @@
       tags: [loki, logs, monitoring]
       when: loki is defined and loki.enabled
 
+    - role: node_exporter
+      tags: [node_exporter, monitoring]
+      when: node_exporter is defined and node_exporter.enabled
+
+    - role: grafana-alloy
+      tags: [grafana-alloy, monitoring]
+      when: grafana_alloy is defined and grafana_alloy.enabled
+
     - role: cloudflare-tunnel
       tags: [cloudflare, tunnel]
       when:
@@ -305,8 +134,7 @@
           {% if prometheus is defined and prometheus.enabled %}
           - Verify Prometheus: sudo systemctl status prometheus
           - Prometheus UI (via SSH tunnel): ssh -L {{ prometheus.port }}:localhost:{{ prometheus.port }} {{ ansible_user }}@{{ ansible_host }}
-          - Grafana datasource: Prometheus (auto-configured)
-          - Dashboard: Node Exporter Full (auto-imported)
+          - Remote write receiver: enabled (app service devices push metrics via Grafana Alloy)
           {% endif %}
           {% if loki is defined and loki.enabled %}
           - Verify Loki: sudo systemctl status loki
@@ -315,6 +143,14 @@
           - Grafana datasource: Loki (auto-configured)
           - Dashboard: Loki Logs (auto-imported)
           - Query logs: {job="systemd"}, {job="docker"}, {job="auth"}
+          {% endif %}
+          {% if node_exporter is defined and node_exporter.enabled %}
+          - Verify Node Exporter: sudo systemctl status node_exporter
+          - Node Exporter metrics: http://{{ ansible_host }}:{{ node_exporter_port | default(9100) }}/metrics
+          {% endif %}
+          {% if grafana_alloy is defined and grafana_alloy.enabled %}
+          - Verify Grafana Alloy: sudo systemctl status grafana-alloy
+          - Alloy UI: http://{{ ansible_host }}:{{ alloy_port | default(12345) }}
           {% endif %}
           {% if cloudflare is defined and cloudflare.enabled %}
           - Verify Cloudflare tunnel: sudo systemctl status cloudflared
