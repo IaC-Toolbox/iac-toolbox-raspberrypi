@@ -286,8 +286,9 @@ metricsAgent
 
 metricsAgent
   .command('install')
-  .description('Install or reinstall metrics agent (Node Exporter + Grafana Alloy)')
-  .option('--profile <name>', 'Credential profile to use', 'default')
+  .description(
+    'Install or reinstall metrics agent (Node Exporter + Grafana Alloy)'
+  )
   .option(
     '--destination <path>',
     'Path to infrastructure directory',
