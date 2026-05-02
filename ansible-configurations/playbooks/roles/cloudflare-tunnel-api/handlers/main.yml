@@ -4,3 +4,8 @@
     name: cloudflared
     state: restarted
   when: ansible_service_mgr == "systemd"
+
+- name: Restart cloudflared (brew)
+  command: brew services restart cloudflared
+  listen: Restart cloudflared
+  when: ansible_service_mgr == "launchd"
