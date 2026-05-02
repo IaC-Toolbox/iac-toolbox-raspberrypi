@@ -1,0 +1,8 @@
+---
+- name: Include Debian/Linux tasks
+  include_tasks: debian.yml
+  when: ansible_os_family != "Darwin"
+
+- name: Include macOS tasks
+  include_tasks: macos.yml
+  when: ansible_os_family == "Darwin"

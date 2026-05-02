@@ -2,10 +2,25 @@
 # ============================================
 # Ansible Inventory - Environment Variable Based
 # ============================================
-# Configure connection via .env file:
+# Configure connection via environment variables:
+#
+# Legacy single-host (backwards compatible):
 #   RPI_HOST=<your-host-ip-or-hostname>
 #   RPI_USER=pi
 #   RPI_SSH_KEY=~/.ssh/id_ed25519
+#   RPI_LOCAL=true  (set to use local connection instead of SSH)
+#
+# Platform host (Prometheus + Grafana):
+#   PLATFORM_HOST=<platform-ip-or-hostname>
+#   PLATFORM_USER=<platform-user>
+#   PLATFORM_SSH_KEY=~/.ssh/id_ed25519
+#   PLATFORM_LOCAL=true  (set to use local connection instead of SSH)
+#
+# App service devices (Node Exporter + Grafana Alloy):
+#   APP_HOST=<device-ip>
+#   APP_USER=pi
+#   APP_SSH_KEY=~/.ssh/id_ed25519
+#   APP_LOCAL=true  (set to use local connection instead of SSH)
 
 all:
   hosts:
@@ -16,3 +31,26 @@ all:
       ansible_ssh_private_key_file: "{{ lookup('env', 'RPI_SSH_KEY') | default('~/.ssh/id_ed25519', true) }}"
       ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
       ansible_python_interpreter: /usr/bin/python3
+
+  children:
+    # Platform hosts: run Prometheus (remote_write receiver) and Grafana
+    platform:
+      hosts:
+        platform-host:
+          ansible_connection: "{{ 'local' if (lookup('env', 'PLATFORM_LOCAL') | default('false', true) | lower) in ['1', 'true', 'yes', 'on'] else 'ssh' }}"
+          ansible_host: "{{ lookup('env', 'PLATFORM_HOST') | default(lookup('env', 'RPI_HOST') | default('localhost', true), true) }}"
+          ansible_user: "{{ lookup('env', 'PLATFORM_USER') | default(lookup('env', 'RPI_USER') | default('pi', true), true) }}"
+          ansible_ssh_private_key_file: "{{ lookup('env', 'PLATFORM_SSH_KEY') | default(lookup('env', 'RPI_SSH_KEY') | default('~/.ssh/id_ed25519', true), true) }}"
+          ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+          ansible_python_interpreter: /usr/bin/python3
+
+    # App service devices: run Node Exporter and Grafana Alloy (push metrics to platform)
+    app_services:
+      hosts:
+        app-service-device:
+          ansible_connection: "{{ 'local' if (lookup('env', 'APP_LOCAL') | default('false', true) | lower) in ['1', 'true', 'yes', 'on'] else 'ssh' }}"
+          ansible_host: "{{ lookup('env', 'APP_HOST') | default(lookup('env', 'RPI_HOST') | default('localhost', true), true) }}"
+          ansible_user: "{{ lookup('env', 'APP_USER') | default(lookup('env', 'RPI_USER') | default('pi', true), true) }}"
+          ansible_ssh_private_key_file: "{{ lookup('env', 'APP_SSH_KEY') | default(lookup('env', 'RPI_SSH_KEY') | default('~/.ssh/id_ed25519', true), true) }}"
+          ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+          ansible_python_interpreter: /usr/bin/python3

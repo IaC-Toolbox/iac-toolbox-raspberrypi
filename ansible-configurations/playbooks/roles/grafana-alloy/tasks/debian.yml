@@ -1,0 +1,82 @@
+---
+- name: Set alloy architecture
+  set_fact:
+    alloy_arch: "{{ ansible_architecture | replace('x86_64', 'amd64') | replace('aarch64', 'arm64') }}"
+
+- name: Create alloy system user
+  user:
+    name: "{{ alloy_user }}"
+    system: true
+    shell: /sbin/nologin
+    create_home: false
+    comment: "Grafana Alloy system user"
+  become: true
+
+- name: Create alloy config directory
+  file:
+    path: "{{ alloy_config_dir }}"
+    state: directory
+    owner: "{{ alloy_user }}"
+    group: "{{ alloy_user }}"
+    mode: '0755'
+  become: true
+
+- name: Download Grafana Alloy binary
+  get_url:
+    url: "https://github.com/grafana/alloy/releases/download/v{{ alloy_version }}/alloy-linux-{{ alloy_arch }}.zip"
+    dest: "/tmp/alloy-linux-{{ alloy_arch }}.zip"
+    mode: '0644'
+
+- name: Extract Grafana Alloy binary
+  unarchive:
+    src: "/tmp/alloy-linux-{{ alloy_arch }}.zip"
+    dest: /tmp
+    remote_src: true
+
+- name: Install Grafana Alloy binary
+  copy:
+    src: "/tmp/alloy-linux-{{ alloy_arch }}"
+    dest: "{{ alloy_install_dir }}/alloy"
+    owner: root
+    group: root
+    mode: '0755'
+    remote_src: true
+  become: true
+  notify: Restart grafana-alloy
+
+- name: Deploy Alloy config
+  template:
+    src: config.alloy.j2
+    dest: "{{ alloy_config_dir }}/config.alloy"
+    owner: "{{ alloy_user }}"
+    group: "{{ alloy_user }}"
+    mode: '0644'
+  become: true
+  notify: Restart grafana-alloy
+
+- name: Deploy Alloy systemd service
+  template:
+    src: grafana-alloy.service.j2
+    dest: /etc/systemd/system/grafana-alloy.service
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  notify:
+    - Reload systemd
+    - Restart grafana-alloy
+
+- name: Enable and start grafana-alloy service
+  include_role:
+    name: service_ctl
+  vars:
+    svc_name: grafana-alloy
+    svc_action: started
+    svc_enabled: true
+
+- name: Display grafana-alloy status
+  debug:
+    msg:
+      - "Grafana Alloy {{ alloy_version }} is running"
+      - "Alloy UI: http://{{ ansible_host }}:{{ alloy_port }}"
+      - "Shipping metrics to: {{ alloy_remote_write_url }}"
