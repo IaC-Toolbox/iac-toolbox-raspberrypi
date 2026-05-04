@@ -1,8 +1,39 @@
 ---
-- name: Include Debian/Linux tasks
-  include_tasks: debian.yml
-  when: ansible_os_family != "Darwin"
+- name: Ensure monitoring Docker network exists
+  community.docker.docker_network:
+    name: monitoring
+    state: present
 
-- name: Include macOS tasks
-  include_tasks: macos.yml
-  when: ansible_os_family == "Darwin"
+- name: Create alloy config directory
+  file:
+    path: "{{ alloy_config_dir }}"
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Deploy Alloy config
+  template:
+    src: config.alloy.j2
+    dest: "{{ alloy_config_dir }}/config.alloy"
+    mode: '0644'
+  become: true
+  notify: Restart grafana-alloy
+
+- name: Run Grafana Alloy container
+  community.docker.docker_container:
+    name: grafana-alloy
+    image: "grafana/alloy:v{{ alloy_version }}"
+    state: started
+    restart_policy: always
+    networks:
+      - name: monitoring
+    ports:
+      - "{{ alloy_port }}:{{ alloy_port }}"
+    volumes:
+      - "{{ alloy_config_dir }}:{{ alloy_config_dir }}"
+    command:
+      - run
+      - "--server.http.listen-addr=0.0.0.0:{{ alloy_port }}"
+      - "--storage.path=/var/lib/alloy/data"
+      - "{{ alloy_config_dir }}/config.alloy"
+  notify: Restart grafana-alloy
