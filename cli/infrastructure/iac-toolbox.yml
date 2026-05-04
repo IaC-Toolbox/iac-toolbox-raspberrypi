@@ -39,7 +39,12 @@ loki:
 pagerduty:
   enabled: false
 target:
-  mode: remote
-  host: raspberry-4b.local
-  user: vvasylkovskyi
-  ssh_key: ~/.ssh/raspberrypi-4b
+  mode: local
+  # host: raspberry-4b.local
+  # user: vvasylkovskyi
+  # ssh_key: ~/.ssh/raspberrypi-4b
+node_exporter:
+  enabled: true
+grafana_alloy:
+  enabled: true
+  alloy_remote_write_url: https://grafana.iac-toolbox.com/prometheus/api/v1/write
