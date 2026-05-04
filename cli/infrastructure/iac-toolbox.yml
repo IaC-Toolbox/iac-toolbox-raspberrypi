@@ -33,7 +33,13 @@ prometheus:
   port: 9090
   scrape_interval: 15s
   retention: 15d
+  grafana_url: http://localhost:3000
 loki:
   enabled: false
 pagerduty:
   enabled: false
+target:
+  mode: remote
+  host: raspberry-4b.local
+  user: vvasylkovskyi
+  ssh_key: ~/.ssh/raspberrypi-4b

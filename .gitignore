@@ -1,7 +1,6 @@
 .env
 iac-toolbox.yml
 .claude/**
-CLAUDE.md.claude/worktrees/
 .claude/worktrees/
 .claude/context/roadmap/features/
 .claude/context/roadmap/bugs/

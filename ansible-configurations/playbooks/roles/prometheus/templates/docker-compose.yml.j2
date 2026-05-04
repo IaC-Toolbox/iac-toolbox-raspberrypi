@@ -14,9 +14,7 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
-{% if prometheus.remote_write_receiver | default(true) %}
       - '--enable-feature=remote-write-receiver'
-{% endif %}
     networks:
       - monitoring
 
