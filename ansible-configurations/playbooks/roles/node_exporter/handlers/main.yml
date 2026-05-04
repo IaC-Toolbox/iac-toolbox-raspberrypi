@@ -1,13 +1,7 @@
 ---
-- name: Reload systemd
-  systemd:
-    daemon_reload: true
-  become: true
-  when: ansible_service_mgr == "systemd"
-
 - name: Restart node_exporter
-  systemd:
-    name: node_exporter
-    state: restarted
+  community.docker.docker_container:
+    name: node-exporter
+    state: started
+    restart: true
   become: true
-  when: ansible_service_mgr == "systemd"

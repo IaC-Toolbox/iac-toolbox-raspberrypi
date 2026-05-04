@@ -1,13 +1,6 @@
 ---
-- name: Reload systemd
-  systemd:
-    daemon_reload: true
-  become: true
-  when: ansible_service_mgr == "systemd"
-
 - name: Restart grafana-alloy
-  systemd:
+  community.docker.docker_container:
     name: grafana-alloy
-    state: restarted
-  become: true
-  when: ansible_service_mgr == "systemd"
+    state: started
+    restart: true

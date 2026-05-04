@@ -122,14 +122,14 @@
           {% if prometheus is defined and prometheus.enabled %}
           - Verify Prometheus: sudo systemctl status prometheus
           - Prometheus UI (via SSH tunnel): ssh -L {{ prometheus.port }}:localhost:{{ prometheus.port }} {{ ansible_user }}@{{ ansible_host }}
-          - Node Exporter metrics: http://{{ ansible_host }}:{{ node_exporter.port }}/metrics
+          - Node Exporter metrics: http://{{ ansible_host }}:{{ node_exporter.port | default(9100) }}/metrics
           - Grafana datasource: Prometheus (auto-configured)
           - Dashboard: Node Exporter Full (auto-imported)
           {% endif %}
           {% if loki is defined and loki.enabled %}
           - Verify Loki: sudo systemctl status loki
           - Loki API: http://{{ ansible_host }}:{{ loki.port }}
-          - Alloy UI: https://{{ alloy.domain }}
+          - Alloy UI: https://{{ alloy.domain | default('') }}
           - Grafana datasource: Loki (auto-configured)
           - Dashboard: Loki Logs (auto-imported)
           - Query logs: {job="systemd"}, {job="docker"}, {job="auth"}

@@ -1,6 +1,6 @@
-// Scrape Node Exporter running locally on this device
+// Scrape Node Exporter via Docker DNS on the monitoring network
 prometheus.scrape "node_exporter" {
-  targets = [{ __address__ = "localhost:{{ node_exporter_port }}" }]
+  targets = [{ __address__ = "{{ alloy_node_exporter_host }}:{{ node_exporter_port }}" }]
   forward_to = [prometheus.remote_write.platform.receiver]
 }
 
