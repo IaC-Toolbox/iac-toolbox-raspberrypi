@@ -1,0 +1,51 @@
+---
+# ============================================
+# IaC Toolbox - Common Base Playbook
+# ============================================
+# Imported by every per-service playbook.
+# Runs: common (always), setup (non-Darwin), docker.
+
+- name: Setup IaC Toolbox Base
+  hosts: all
+  become: false
+  pre_tasks:
+    - name: Validate connection to target host
+      ping:
+
+    - name: Check Python installation
+      command: python3 --version
+      register: python_version
+      changed_when: false
+
+    - name: Display Python version
+      debug:
+        msg: "Python {{ python_version.stdout }} is installed"
+
+    - name: Verify required variables are defined
+      assert:
+        that:
+          - ansible_host is defined
+          - ansible_user is defined
+        fail_msg: "Required connection variables are missing. Check inventory configuration."
+
+    - name: Gather system facts
+      setup:
+
+    - name: Display target system information
+      debug:
+        msg: |
+          Target: {{ ansible_host }}
+          User: {{ ansible_user }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          Architecture: {{ ansible_architecture }}
+
+  roles:
+    - role: common
+
+    - role: setup
+      when:
+        - (setup is not defined or setup)
+        - ansible_os_family != "Darwin"
+
+    - role: docker
+      when: docker is not defined or docker.enabled | default(true)
