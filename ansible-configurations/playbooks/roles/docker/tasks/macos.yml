@@ -32,6 +32,35 @@
   command: open -a Docker
   when: docker_daemon_check.rc != 0
 
+- name: Detect Rancher Desktop Docker socket
+  stat:
+    path: "{{ ansible_env.HOME }}/.rd/docker.sock"
+  register: rancher_socket
+
+- name: Detect Docker Desktop socket
+  stat:
+    path: "{{ ansible_env.HOME }}/.docker/run/docker.sock"
+  register: docker_desktop_socket
+
+- name: Set active Docker socket fact
+  set_fact:
+    active_docker_socket: >-
+      {{ ansible_env.HOME + '/.rd/docker.sock'
+         if rancher_socket.stat.exists and rancher_socket.stat.issock
+         else ansible_env.HOME + '/.docker/run/docker.sock' }}
+  when: >
+    (rancher_socket.stat.exists and rancher_socket.stat.issock) or
+    (docker_desktop_socket.stat.exists and docker_desktop_socket.stat.issock)
+
+- name: Repair /var/run/docker.sock symlink to active runtime
+  file:
+    src: "{{ active_docker_socket }}"
+    dest: /var/run/docker.sock
+    state: link
+    force: true
+  become: true
+  when: active_docker_socket is defined
+
 - name: Wait for Docker daemon to be ready
   command: docker info
   register: docker_daemon_wait
