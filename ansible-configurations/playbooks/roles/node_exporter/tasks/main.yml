@@ -3,7 +3,6 @@
   community.docker.docker_network:
     name: monitoring
     state: present
-  become: true
 
 - name: Run Node Exporter container
   community.docker.docker_container:
@@ -24,7 +23,6 @@
       - "--path.sysfs=/host/sys"
       - "--path.rootfs=/rootfs"
       - "--web.listen-address=:{{ node_exporter_port }}"
-  become: true
   notify: Restart node_exporter
 
 - name: Wait for node_exporter to be available
