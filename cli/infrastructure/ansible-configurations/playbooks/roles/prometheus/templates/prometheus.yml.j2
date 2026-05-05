@@ -2,11 +2,9 @@ global:
   scrape_interval: {{ prometheus.scrape_interval }}
   evaluation_interval: {{ prometheus.scrape_interval }}
 
+# App service devices push metrics via Grafana Alloy remote_write.
+# No static_configs for app services are needed here.
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:{{ prometheus.port }}']
-
-  - job_name: 'node'
-    static_configs:
-      - targets: ['node-exporter:{{ node_exporter.port }}']

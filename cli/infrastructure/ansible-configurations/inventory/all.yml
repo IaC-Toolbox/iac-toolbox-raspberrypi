@@ -2,10 +2,13 @@
 # ============================================
 # Ansible Inventory - Environment Variable Based
 # ============================================
-# Configure connection via .env file:
+# Configure connection via environment variables:
+#
+# Legacy single-host (backwards compatible):
 #   RPI_HOST=<your-host-ip-or-hostname>
 #   RPI_USER=pi
 #   RPI_SSH_KEY=~/.ssh/id_ed25519
+#   RPI_LOCAL=true  (set to use local connection instead of SSH)
 
 all:
   hosts:

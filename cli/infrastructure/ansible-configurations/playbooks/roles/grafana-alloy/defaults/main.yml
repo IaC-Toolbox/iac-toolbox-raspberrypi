@@ -1,0 +1,11 @@
+---
+# Default variables for grafana-alloy role (metrics push)
+alloy_version: "1.2.1"
+alloy_remote_write_url: "https://grafana.iac-toolbox.com/prometheus/api/v1/write"
+alloy_port: 12345
+alloy_config_dir: "/etc/alloy"
+alloy_base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/grafana-alloy"
+alloy_node_exporter_host: "node-exporter"
+
+# Port where node_exporter is running on this host (used by scrape config)
+node_exporter_port: 9100

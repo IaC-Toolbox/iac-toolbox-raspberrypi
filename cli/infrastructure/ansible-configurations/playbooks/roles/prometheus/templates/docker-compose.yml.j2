@@ -14,24 +14,7 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
-    networks:
-      - monitoring
-
-  node-exporter:
-    image: prom/node-exporter:{{ node_exporter.version }}
-    container_name: node-exporter
-    restart: unless-stopped
-    pid: host
-    ports:
-      - "{{ node_exporter.port }}:9100"
-    volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/rootfs:ro
-    command:
-      - '--path.procfs=/host/proc'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--enable-feature=remote-write-receiver'
     networks:
       - monitoring
 

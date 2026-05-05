@@ -1,0 +1,5 @@
+---
+- name: Restart node_exporter
+  shell: docker compose restart node-exporter
+  args:
+    chdir: "{{ node_exporter_base_dir }}"

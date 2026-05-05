@@ -1,10 +1,13 @@
 ---
 # Default variables for grafana role
 grafana:
-  enabled: true
+  enabled: false
   version: 'latest'
   base_dir: '{{ ansible_env.HOME }}/.iac-toolbox/grafana'
   port: 3000
   admin_user: 'admin'
   vault_path: 'kv/observability/grafana'
   domain: 'grafana.iac-toolbox.com'
+  provisioning_dir: '{{ ansible_env.HOME }}/.iac-toolbox/grafana/provisioning'
+  # Port of Prometheus instance (used by datasource provisioning)
+  prometheus_port: 9090
