@@ -3,14 +3,14 @@
   file:
     path: "{{ alloy_config_dir }}"
     state: directory
-    mode: "0755"
+    mode: '0755'
   become: true
 
 - name: Deploy Alloy config
   template:
     src: config.alloy.j2
     dest: "{{ alloy_config_dir }}/config.alloy"
-    mode: "0644"
+    mode: '0644'
   become: true
   notify: Restart grafana-alloy
 
