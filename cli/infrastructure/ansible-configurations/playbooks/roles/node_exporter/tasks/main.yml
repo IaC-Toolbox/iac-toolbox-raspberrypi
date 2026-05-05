@@ -1,0 +1,3 @@
+---
+# Node Exporter role tasks
+# This role is managed in ansible-configurations/playbooks/roles/node_exporter

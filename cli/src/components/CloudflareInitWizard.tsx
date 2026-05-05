@@ -184,7 +184,7 @@ export default function CloudflareInitWizard({
     const run = async () => {
       if (step === 'token') {
         const result = await _validateToken(pendingValue);
-        console.debug(">>> result: ", result);
+        console.debug('>>> result: ', result);
         if (cancelled) return;
         if (result.valid) {
           setToken(pendingValue);

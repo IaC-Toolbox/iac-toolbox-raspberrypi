@@ -1,0 +1,3 @@
+---
+# Grafana Alloy role tasks
+# This role is managed in ansible-configurations/playbooks/roles/grafana-alloy

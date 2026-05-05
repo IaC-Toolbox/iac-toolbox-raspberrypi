@@ -1,0 +1,13 @@
+---
+# ============================================
+# IaC Toolbox - Loki Playbook
+# ============================================
+
+- import_playbook: common.yml
+
+- name: Deploy Loki
+  hosts: all
+  become: false
+  roles:
+    - role: loki
+      when: loki is defined and loki.enabled
