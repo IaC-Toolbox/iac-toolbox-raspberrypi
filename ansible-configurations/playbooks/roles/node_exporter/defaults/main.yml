@@ -2,3 +2,4 @@
 # Default variables for node_exporter role
 node_exporter_version: "1.8.1"
 node_exporter_port: 9100
+node_exporter_base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/node-exporter"

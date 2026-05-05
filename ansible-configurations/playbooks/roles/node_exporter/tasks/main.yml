@@ -3,29 +3,29 @@
   community.docker.docker_network:
     name: monitoring
     state: present
-  become: true
 
-- name: Run Node Exporter container
-  community.docker.docker_container:
-    name: node-exporter
-    image: "prom/node-exporter:v{{ node_exporter_version }}"
-    state: started
-    restart_policy: always
-    networks:
-      - name: monitoring
-    ports:
-      - "{{ node_exporter_port }}:{{ node_exporter_port }}"
-    volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/rootfs:ro
-    command:
-      - "--path.procfs=/host/proc"
-      - "--path.sysfs=/host/sys"
-      - "--path.rootfs=/rootfs"
-      - "--web.listen-address=:{{ node_exporter_port }}"
-  become: true
+- name: Create node_exporter base directory
+  file:
+    path: "{{ node_exporter_base_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Deploy docker-compose file
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ node_exporter_base_dir }}/docker-compose.yml"
+    mode: "0644"
   notify: Restart node_exporter
+
+- name: Pre-pull Node Exporter image
+  community.docker.docker_image:
+    name: "prom/node-exporter:v{{ node_exporter_version }}"
+    source: pull
+
+- name: Start node-exporter via docker compose
+  shell: docker compose up -d
+  args:
+    chdir: "{{ node_exporter_base_dir }}"
 
 - name: Wait for node_exporter to be available
   uri:
