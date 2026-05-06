@@ -12,12 +12,13 @@ import { buildTargetEnv } from '../utils/targetConfig.js';
  */
 export async function runGrafanaInstall(
   destination: string,
-  profile: string
+  profile: string,
+  filePath?: string
 ): Promise<void> {
   // ── Missing Credentials Guard ─────────────────────────────
   console.log('◆  Reading Grafana credentials...');
   const creds = loadCredentials(profile);
-  const config = loadIacToolboxYaml(destination);
+  const config = loadIacToolboxYaml(destination, filePath);
 
   if (!creds.grafana_admin_password) {
     console.error('│  ✗ No credentials found');

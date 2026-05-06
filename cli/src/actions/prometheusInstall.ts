@@ -25,12 +25,13 @@ interface IacToolboxConfig {
  */
 export async function runPrometheusInstall(
   destination: string,
-  profile: string
+  profile: string,
+  filePath?: string
 ): Promise<void> {
   // ── Read Configuration ────────────────────────────────────
   console.log('◆  Reading Prometheus configuration...');
   const creds = loadCredentials(profile);
-  const config = loadIacToolboxYaml(destination) as IacToolboxConfig;
+  const config = loadIacToolboxYaml(destination, filePath) as IacToolboxConfig;
 
   // ── Missing Credentials Guard ─────────────────────────────
   if (!creds.grafana_admin_password) {

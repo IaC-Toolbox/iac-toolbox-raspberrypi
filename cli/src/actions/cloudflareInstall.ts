@@ -30,12 +30,13 @@ interface IacToolboxConfig {
  */
 export async function runCloudflareInstall(
   destination: string,
-  profile: string
+  profile: string,
+  filePath?: string
 ): Promise<void> {
   // -- Read Configuration ------------------------------------------------
   console.log('◆  Reading Cloudflare configuration...');
   const creds = loadCredentials(profile);
-  const config = loadIacToolboxYaml(destination) as IacToolboxConfig;
+  const config = loadIacToolboxYaml(destination, filePath) as IacToolboxConfig;
 
   // -- Missing Credentials Guard -----------------------------------------
   if (!creds.cloudflare_api_token) {

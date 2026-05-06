@@ -32,7 +32,7 @@ program
   .option('--profile <name>', 'Credential profile to use', 'default')
   .option(
     '--filePath <path>',
-    'Path to a per-device config file (skips wizard)'
+    'Path to a per-device config file'
   )
   .action(async (options: { profile: string; filePath?: string }) => {
     if (options.filePath) {
@@ -77,6 +77,10 @@ cloudflare
     'Path to infrastructure directory',
     'infrastructure'
   )
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
+  )
   .action(async (options: { profile: string; destination: string }) => {
     const { default: CloudflareInitWizard } = await import(
       './components/CloudflareInitWizard.js'
@@ -102,11 +106,15 @@ cloudflare
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .action(async (options: { profile: string; destination: string }) => {
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
+  )
+  .action(async (options: { profile: string; destination: string; filePath?: string }) => {
     const { runCloudflareInstall } = await import(
       './actions/cloudflareInstall.js'
     );
-    await runCloudflareInstall(options.destination, options.profile);
+    await runCloudflareInstall(options.destination, options.profile, options.filePath);
   });
 
 cloudflare
@@ -171,6 +179,10 @@ grafana
     'Path to infrastructure directory',
     'infrastructure'
   )
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
+  )
   .action(async (options: { profile: string; destination: string }) => {
     const { default: GrafanaInitWizard } = await import(
       './components/GrafanaInitWizard.js'
@@ -196,9 +208,13 @@ grafana
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .action(async (options: { profile: string; destination: string }) => {
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
+  )
+  .action(async (options: { profile: string; destination: string; filePath?: string }) => {
     const { runGrafanaInstall } = await import('./actions/grafanaInstall.js');
-    await runGrafanaInstall(options.destination, options.profile);
+    await runGrafanaInstall(options.destination, options.profile, options.filePath);
   });
 
 grafana
@@ -245,6 +261,10 @@ prometheus
     'Path to infrastructure directory',
     'infrastructure'
   )
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
+  )
   .action(async (options: { destination: string }) => {
     const { default: PrometheusInitWizard } = await import(
       './components/PrometheusInitWizard.js'
@@ -264,11 +284,15 @@ prometheus
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .action(async (options: { profile: string; destination: string }) => {
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
+  )
+  .action(async (options: { profile: string; destination: string; filePath?: string }) => {
     const { runPrometheusInstall } = await import(
       './actions/prometheusInstall.js'
     );
-    await runPrometheusInstall(options.destination, options.profile);
+    await runPrometheusInstall(options.destination, options.profile, options.filePath);
   });
 
 const metricsAgent = program
@@ -282,6 +306,10 @@ metricsAgent
     '--destination <path>',
     'Path to infrastructure directory',
     'infrastructure'
+  )
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
   )
   .action(async (options: { destination: string }) => {
     const { default: MetricsAgentInitWizard } = await import(
@@ -303,11 +331,15 @@ metricsAgent
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .action(async (options: { destination: string }) => {
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
+  )
+  .action(async (options: { destination: string; filePath?: string }) => {
     const { runMetricsAgentInstall } = await import(
       './actions/metricsAgentInstall.js'
     );
-    await runMetricsAgentInstall(options.destination);
+    await runMetricsAgentInstall(options.destination, options.filePath);
   });
 
 metricsAgent
@@ -396,6 +428,10 @@ target
     '--destination <path>',
     'Path to infrastructure directory',
     'infrastructure'
+  )
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
   )
   .action(async (options: { destination: string }) => {
     const { default: TargetInitWizard } = await import(

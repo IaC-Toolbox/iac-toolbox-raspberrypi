@@ -19,11 +19,12 @@ interface IacToolboxConfig {
  * Fails immediately if the remote_write URL is missing.
  */
 export async function runMetricsAgentInstall(
-  destination: string
+  destination: string,
+  filePath?: string
 ): Promise<void> {
   // ── Read Configuration ────────────────────────────────────
   console.log('◆  Reading metrics agent configuration...');
-  const config = loadIacToolboxYaml(destination) as IacToolboxConfig;
+  const config = loadIacToolboxYaml(destination, filePath) as IacToolboxConfig;
 
   const remoteWriteUrl = config.grafana_alloy?.alloy_remote_write_url;
 
