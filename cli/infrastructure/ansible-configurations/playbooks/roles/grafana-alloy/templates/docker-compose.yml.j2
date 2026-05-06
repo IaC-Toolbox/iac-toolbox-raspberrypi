@@ -1,0 +1,21 @@
+services:
+  grafana-alloy:
+    container_name: grafana-alloy
+    image: grafana/alloy:v{{ alloy_version }}
+    restart: always
+    ports:
+      - "{{ alloy_port }}:{{ alloy_port }}"
+    volumes:
+      - "{{ alloy_config_dir }}:{{ alloy_config_dir }}"
+    command:
+      - run
+      - "--server.http.listen-addr=0.0.0.0:{{ alloy_port }}"
+      - "--storage.path=/var/lib/alloy/data"
+      - "{{ alloy_config_dir }}/config.alloy"
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    name: monitoring
+    external: true

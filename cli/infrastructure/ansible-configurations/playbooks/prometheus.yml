@@ -1,0 +1,13 @@
+---
+# ============================================
+# IaC Toolbox - Prometheus Playbook
+# ============================================
+
+- import_playbook: common.yml
+
+- name: Deploy Prometheus
+  hosts: all
+  become: false
+  roles:
+    - role: prometheus
+      when: prometheus is defined and prometheus.enabled

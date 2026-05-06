@@ -1,39 +1,73 @@
 ---
-- name: Ensure monitoring Docker network exists
-  community.docker.docker_network:
-    name: monitoring
-    state: present
-
 - name: Create alloy config directory
   file:
     path: "{{ alloy_config_dir }}"
     state: directory
-    mode: '0755'
+    mode: "0755"
   become: true
 
 - name: Deploy Alloy config
   template:
     src: config.alloy.j2
     dest: "{{ alloy_config_dir }}/config.alloy"
-    mode: '0644'
+    mode: "0644"
   become: true
   notify: Restart grafana-alloy
 
-- name: Run Grafana Alloy container
-  community.docker.docker_container:
-    name: grafana-alloy
-    image: "grafana/alloy:v{{ alloy_version }}"
-    state: started
-    restart_policy: always
-    networks:
-      - name: monitoring
-    ports:
-      - "{{ alloy_port }}:{{ alloy_port }}"
-    volumes:
-      - "{{ alloy_config_dir }}:{{ alloy_config_dir }}"
-    command:
-      - run
-      - "--server.http.listen-addr=0.0.0.0:{{ alloy_port }}"
-      - "--storage.path=/var/lib/alloy/data"
-      - "{{ alloy_config_dir }}/config.alloy"
-  notify: Restart grafana-alloy
+    - name: Deploy Alloy config
+      template:
+        src: config.alloy.j2
+        dest: "{{ alloy_config_dir }}/config.alloy"
+        mode: "0644"
+      become: true
+      notify: Restart grafana-alloy
+
+    - name: Deploy docker-compose file
+      template:
+        src: docker-compose.yml.j2
+        dest: "{{ alloy_base_dir }}/docker-compose.yml"
+        mode: "0644"
+      notify: Restart grafana-alloy
+
+    - name: Pre-pull Grafana Alloy image
+      community.docker.docker_image:
+        name: "grafana/alloy:v{{ alloy_version }}"
+        source: pull
+
+    - name: Deploy grafana-alloy systemd service
+      template:
+        src: grafana-alloy.service.j2
+        dest: /etc/systemd/system/grafana-alloy.service
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+      notify:
+        - Reload systemd
+        - Restart grafana-alloy
+
+    - name: Enable and start grafana-alloy service
+      include_role:
+        name: service_ctl
+      vars:
+        svc_name: grafana-alloy
+        svc_action: started
+        svc_enabled: true
+
+    - name: Wait for grafana-alloy to be available
+      uri:
+        url: "http://localhost:{{ alloy_port }}/ready"
+        method: GET
+        status_code: 200
+      register: alloy_health
+      retries: 30
+      delay: 2
+      until: alloy_health.status == 200
+
+    - name: Display grafana-alloy status
+      debug:
+        msg:
+          - "Grafana Alloy {{ alloy_version }} is running"
+          - "Alloy UI: http://{{ ansible_host }}:{{ alloy_port }}"
+          - "Shipping metrics to: {{ alloy_remote_write_url }}"
+  tags: [grafana-alloy]

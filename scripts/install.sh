@@ -30,7 +30,7 @@ TERRAFORM_DIR="$IAC_ROOT/terraform/grafana-alerts"
 echo $IAC_ROOT
 RUN_ANSIBLE=true
 RUN_TERRAFORM=true
-ANSIBLE_TAGS=""
+ANSIBLE_PLAYBOOK="site.yml"
 RPI_LOCAL_MODE="${RPI_LOCAL:-false}"
 
 while [[ $# -gt 0 ]]; do
@@ -45,27 +45,27 @@ while [[ $# -gt 0 ]]; do
       ;;
     --vault)
       RUN_TERRAFORM=false
-      ANSIBLE_TAGS="vault"
+      ANSIBLE_PLAYBOOK="vault.yml"
       shift
       ;;
     --cloudflared)
       RUN_TERRAFORM=false
-      ANSIBLE_TAGS="cloudflare"
+      ANSIBLE_PLAYBOOK="cloudflare.yml"
       shift
       ;;
     --grafana)
       RUN_TERRAFORM=false
-      ANSIBLE_TAGS="grafana"
+      ANSIBLE_PLAYBOOK="grafana.yml"
       shift
       ;;
     --prometheus)
       RUN_TERRAFORM=false
-      ANSIBLE_TAGS="prometheus"
+      ANSIBLE_PLAYBOOK="prometheus.yml"
       shift
       ;;
     --metrics-agent)
       RUN_TERRAFORM=false
-      ANSIBLE_TAGS="node_exporter,grafana-alloy"
+      ANSIBLE_PLAYBOOK="metrics-agent.yml"
       shift
       ;;
     --local)
@@ -102,8 +102,8 @@ echo -e "${GREEN}IaC Toolbox Infrastructure Install${NC}"
 echo -e "${GREEN}========================================${NC}"
 if [ "$RUN_ANSIBLE" = false ]; then
   echo -e "${YELLOW}Mode: Terraform only (--terraform-only)${NC}"
-elif [ -n "$ANSIBLE_TAGS" ]; then
-  echo -e "${YELLOW}Mode: Ansible with tags: $ANSIBLE_TAGS${NC}"
+elif [ "$ANSIBLE_PLAYBOOK" != "site.yml" ]; then
+  echo -e "${YELLOW}Mode: Ansible playbook: $ANSIBLE_PLAYBOOK${NC}"
 elif [ "$RUN_TERRAFORM" = false ]; then
   echo -e "${YELLOW}Mode: Ansible only (--ansible-only)${NC}"
 else
@@ -193,7 +193,7 @@ if [ "$RUN_ANSIBLE" = true ]; then
     fi
   done
 
-  ANSIBLE_CMD=(ansible-playbook -i inventory/all.yml playbooks/main.yml)
+  ANSIBLE_CMD=(ansible-playbook -i inventory/all.yml "playbooks/$ANSIBLE_PLAYBOOK")
 
   # Load iac-toolbox.yml configuration file
   # Priority: 1) IAC_TOOLBOX_CONFIG env var, 2) infrastructure/ folder, 3) ~/.iac-toolbox/
@@ -221,9 +221,6 @@ if [ "$RUN_ANSIBLE" = true ]; then
   ANSIBLE_CMD+=(--extra-vars "project_root=${PROJECT_ROOT}")
   if [ -n "$SECRET_VARS" ]; then
     ANSIBLE_CMD+=(--extra-vars "$SECRET_VARS")
-  fi
-  if [ -n "$ANSIBLE_TAGS" ]; then
-    ANSIBLE_CMD+=(--tags "$ANSIBLE_TAGS")
   fi
 
   (

@@ -4,7 +4,7 @@
     that:
       - grafana.admin_password is defined
       - grafana.admin_password | length > 0
-    fail_msg: "GRAFANA_ADMIN_PASSWORD must be set in .env file"
+    fail_msg: "GRAFANA_ADMIN_PASSWORD must be provided — run: iac-toolbox grafana init && iac-toolbox grafana install"
 
 - name: Check if Vault is available (optional)
   command: docker ps --filter name=vault --filter status=running --format {% raw %}'{{.Names}}'{% endraw %}
@@ -56,6 +56,21 @@
     owner: "{{ ansible_user }}"
     mode: '0755'
 
+- name: Create Grafana provisioning datasources directory
+  file:
+    path: "{{ grafana.provisioning_dir }}/datasources"
+    state: directory
+    owner: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Deploy Prometheus datasource provisioning file
+  template:
+    src: datasource.yml.j2
+    dest: "{{ grafana.provisioning_dir }}/datasources/prometheus.yml"
+    owner: "{{ ansible_user }}"
+    mode: '0644'
+  notify: Restart grafana
+
 - name: Deploy docker-compose configuration
   template:
     src: docker-compose.yml.j2
@@ -96,6 +111,37 @@
   delay: 2
   until: grafana_health.status == 200
 
+- name: Get Node Exporter Full dashboard JSON from Grafana.com API
+  uri:
+    url: "https://grafana.com/api/dashboards/1860"
+    method: GET
+    return_content: true
+  register: node_exporter_dashboard_json
+
+- name: Import Node Exporter Full dashboard
+  uri:
+    url: "http://localhost:{{ grafana.port }}/api/dashboards/import"
+    method: POST
+    user: "{{ grafana.admin_user }}"
+    password: "{{ grafana.admin_password }}"
+    body_format: json
+    body:
+      dashboard: "{{ node_exporter_dashboard_json.json.json }}"
+      overwrite: true
+      inputs:
+        - name: "DS_PROMETHEUS"
+          type: "datasource"
+          pluginId: "prometheus"
+          value: "Prometheus"
+    force_basic_auth: true
+    status_code: 200
+  register: node_exporter_dashboard_imported
+
+- name: Display dashboard import message
+  debug:
+    msg: "Node Exporter Full dashboard imported at: http://localhost:{{ grafana.port }}{{ node_exporter_dashboard_imported.json.importedUrl }}"
+  when: node_exporter_dashboard_imported is changed
+
 - name: Display Grafana access information
   debug:
     msg:
@@ -106,5 +152,8 @@
       - "Remote URL: https://{{ grafana.domain }} (after Cloudflare tunnel configured)"
       - "Username: {{ grafana.admin_user }}"
       - "Password: {{ grafana.admin_password }}"
+      - ""
+      - "Prometheus datasource provisioned automatically."
+      - "Node Exporter Full dashboard imported (ID: 1860)."
       - ""
       - "Password is also backed up in Vault at {{ grafana.vault_path }} (if Vault is running)"
