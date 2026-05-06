@@ -1,0 +1,21 @@
+---
+- name: Reload systemd
+  systemd:
+    daemon_reload: true
+  become: true
+  when: ansible_facts['system'] == 'Linux'
+
+- name: Restart grafana-alloy macOS
+  shell: |
+    launchctl unload {{ ansible_env.HOME }}/Library/LaunchAgents/com.grafana.alloy.plist
+    launchctl load -w {{ ansible_env.HOME }}/Library/LaunchAgents/com.grafana.alloy.plist
+  when: ansible_facts['system'] == 'Darwin'
+  listen: Restart grafana-alloy
+
+- name: Restart grafana-alloy Linux
+  systemd:
+    name: grafana-alloy
+    state: restarted
+  become: true
+  when: ansible_facts['system'] == 'Linux'
+  listen: Restart grafana-alloy

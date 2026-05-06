@@ -1,0 +1,60 @@
+---
+- name: Set node_exporter architecture
+  set_fact:
+    node_exporter_arch: "{{ ansible_architecture | replace('x86_64', 'amd64') }}"
+
+- name: Download node_exporter binary
+  get_url:
+    url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.darwin-{{ node_exporter_arch }}.tar.gz"
+    dest: "/tmp/node_exporter-{{ node_exporter_version }}.darwin-{{ node_exporter_arch }}.tar.gz"
+    mode: '0644'
+
+- name: Extract node_exporter binary
+  command: tar -xzf "/tmp/node_exporter-{{ node_exporter_version }}.darwin-{{ node_exporter_arch }}.tar.gz" -C /tmp
+
+- name: Ensure node_exporter install directory exists
+  file:
+    path: "{{ node_exporter_base_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Install node_exporter binary
+  copy:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.darwin-{{ node_exporter_arch }}/node_exporter"
+    dest: "{{ node_exporter_base_dir }}/node_exporter"
+    mode: '0755'
+    remote_src: true
+  notify: Restart node_exporter
+
+- name: Ensure LaunchAgents directory exists
+  file:
+    path: "{{ ansible_env.HOME }}/Library/LaunchAgents"
+    state: directory
+    mode: '0755'
+
+- name: Deploy node_exporter launchd plist
+  template:
+    src: com.node-exporter.plist.j2
+    dest: "{{ ansible_env.HOME }}/Library/LaunchAgents/com.node-exporter.plist"
+    mode: '0644'
+  notify: Restart node_exporter
+
+- name: Load node_exporter launchd service
+  command: launchctl load -w {{ ansible_env.HOME }}/Library/LaunchAgents/com.node-exporter.plist
+  ignore_errors: true
+
+- name: Wait for node_exporter to be available
+  uri:
+    url: "http://localhost:{{ node_exporter_port }}/metrics"
+    method: GET
+    status_code: 200
+  register: node_exporter_health
+  retries: 30
+  delay: 2
+  until: node_exporter_health.status == 200
+
+- name: Display node_exporter status
+  debug:
+    msg:
+      - "Node Exporter {{ node_exporter_version }} is running"
+      - "Metrics available at: http://localhost:{{ node_exporter_port }}/metrics"

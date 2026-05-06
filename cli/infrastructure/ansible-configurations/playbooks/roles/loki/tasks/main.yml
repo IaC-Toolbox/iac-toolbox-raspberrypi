@@ -31,12 +31,14 @@
   community.docker.docker_image:
     name: "grafana/loki:{{ loki.version }}"
     source: pull
+    docker_host: "{{ active_docker_socket }}"
   become_user: "{{ ansible_user }}"
 
 - name: Pull Alloy container image
   community.docker.docker_image:
     name: "grafana/alloy:{{ alloy.version }}"
     source: pull
+    docker_host: "{{ active_docker_socket }}"
   become_user: "{{ ansible_user }}"
 
 - name: Deploy Loki systemd service

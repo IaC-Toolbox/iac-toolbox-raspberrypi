@@ -1,0 +1,11 @@
+---
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+  when: ansible_service_mgr == "systemd"
+
+- name: Restart grafana
+  systemd:
+    name: grafana
+    state: restarted
+  when: ansible_service_mgr == "systemd"

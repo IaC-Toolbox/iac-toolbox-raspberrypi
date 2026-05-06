@@ -1,0 +1,13 @@
+---
+# ============================================
+# IaC Toolbox - Vault Playbook
+# ============================================
+
+- import_playbook: common.yml
+
+- name: Deploy HashiCorp Vault
+  hosts: all
+  become: false
+  roles:
+    - role: vault
+      when: vault is defined and vault.enabled

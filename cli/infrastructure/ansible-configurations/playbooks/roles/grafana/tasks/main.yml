@@ -82,6 +82,7 @@
   community.docker.docker_image:
     name: "grafana/grafana:{{ grafana.version }}"
     source: pull
+    docker_host: "{{ active_docker_socket }}"
   become_user: "{{ ansible_user }}"
 
 - name: Deploy Grafana systemd service

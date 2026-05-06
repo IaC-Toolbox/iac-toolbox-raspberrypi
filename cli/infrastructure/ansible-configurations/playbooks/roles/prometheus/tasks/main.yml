@@ -24,6 +24,7 @@
   community.docker.docker_image:
     name: "prom/prometheus:{{ prometheus.version }}"
     source: pull
+    docker_host: "{{ active_docker_socket }}"
   become_user: "{{ ansible_user }}"
 
 - name: Deploy Prometheus systemd service

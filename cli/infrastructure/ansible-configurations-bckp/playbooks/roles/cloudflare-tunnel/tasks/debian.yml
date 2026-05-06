@@ -1,0 +1,37 @@
+---
+- name: Download cloudflared binary
+  get_url:
+    url: "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-{{ cloudflared_arch }}"
+    dest: /usr/local/bin/cloudflared
+    mode: '0755'
+
+- name: Verify cloudflared is executable
+  command: cloudflared --version
+  register: cloudflared_version
+  changed_when: false
+
+- name: Display cloudflared version
+  debug:
+    msg: "Cloudflared installed: {{ cloudflared_version.stdout }}"
+
+- name: Create systemd service
+  copy:
+    dest: /etc/systemd/system/cloudflared.service
+    content: |
+      [Unit]
+      Description=Cloudflare Tunnel
+      After=network.target
+
+      [Service]
+      Type=simple
+      User={{ ansible_user }}
+      ExecStart=/usr/local/bin/cloudflared --config {{ ansible_env.HOME }}/.iac-toolbox/cloudflared/config.yml tunnel run {{ cloudflare.tunnel_name }}
+      Restart=always
+      RestartSec=5s
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: '0644'
+  notify: Restart cloudflared
+
+- include_tasks: configure.yml

@@ -1,0 +1,12 @@
+---
+# Default variables for Loki role
+# These can be overridden in inventory/group_vars/all.yml
+
+loki_defaults:
+  version: "latest"
+  port: 3100
+  retention_hours: 168  # 7 days
+
+alloy_defaults:
+  version: "latest"
+  port: 12345

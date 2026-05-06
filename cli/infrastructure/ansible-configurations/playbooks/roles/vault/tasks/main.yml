@@ -58,6 +58,7 @@
     project_src: "{{ vault.base_dir }}"
     state: present
     pull: always
+    docker_host: "{{ active_docker_socket }}"
   become_user: "{{ ansible_user }}"
 
 - name: Wait for vault health check

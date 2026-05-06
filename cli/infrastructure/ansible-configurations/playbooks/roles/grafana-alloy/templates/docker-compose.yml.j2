@@ -6,12 +6,12 @@ services:
     ports:
       - "{{ alloy_port }}:{{ alloy_port }}"
     volumes:
-      - "{{ alloy_config_dir }}:{{ alloy_config_dir }}"
+      - "{{ alloy_base_dir }}/config.alloy:/etc/alloy/config.alloy"
     command:
       - run
       - "--server.http.listen-addr=0.0.0.0:{{ alloy_port }}"
       - "--storage.path=/var/lib/alloy/data"
-      - "{{ alloy_config_dir }}/config.alloy"
+      - "/etc/alloy/config.alloy"
     networks:
       - monitoring
 

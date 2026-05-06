@@ -1,0 +1,5 @@
+github_build_workflow:
+  enabled: false
+  docker_hub_username: ""
+  docker_image_name: ""
+  docker_hub_token: ""

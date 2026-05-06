@@ -1,0 +1,17 @@
+---
+- name: Restart cloudflared
+  systemd:
+    name: cloudflared
+    state: restarted
+  when: ansible_service_mgr == "systemd"
+
+- name: Restart cloudflared (launchd unload)
+  command: launchctl unload "{{ ansible_env.HOME }}/Library/LaunchAgents/com.cloudflare.cloudflared.plist"
+  listen: Restart cloudflared
+  when: ansible_service_mgr == "launchd"
+  failed_when: false
+
+- name: Restart cloudflared (launchd load)
+  command: launchctl load "{{ ansible_env.HOME }}/Library/LaunchAgents/com.cloudflare.cloudflared.plist"
+  listen: Restart cloudflared
+  when: ansible_service_mgr == "launchd"

@@ -1,6 +1,21 @@
 ---
-- name: Restart grafana-alloy
-  community.docker.docker_container:
+- name: Reload systemd
+  systemd:
+    daemon_reload: true
+  become: true
+  when: ansible_facts['system'] == 'Linux'
+
+- name: Restart grafana-alloy macOS
+  shell: docker compose restart
+  args:
+    chdir: "{{ alloy_base_dir }}"
+  when: ansible_facts['system'] == 'Darwin'
+  listen: Restart grafana-alloy
+
+- name: Restart grafana-alloy Linux
+  systemd:
     name: grafana-alloy
-    state: started
-    restart: true
+    state: restarted
+  become: true
+  when: ansible_facts['system'] == 'Linux'
+  listen: Restart grafana-alloy

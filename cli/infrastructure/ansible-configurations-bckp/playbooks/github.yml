@@ -1,0 +1,13 @@
+---
+# ============================================
+# IaC Toolbox - GitHub Playbook
+# ============================================
+
+- import_playbook: common.yml
+
+- name: Deploy GitHub Build Workflow
+  hosts: all
+  become: false
+  roles:
+    - role: github-build-workflow
+      when: github_build_workflow is defined and github_build_workflow.enabled

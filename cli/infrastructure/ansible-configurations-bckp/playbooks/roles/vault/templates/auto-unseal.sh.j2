@@ -1,0 +1,31 @@
+#!/bin/sh
+set -e
+
+INIT_FILE="/vault/data/vault-init.json"
+
+# Wait for Vault to be ready
+echo "Waiting for Vault..."
+max_attempts=30
+attempt=0
+
+while [ $attempt -lt $max_attempts ]; do
+  if vault status >/dev/null 2>&1 || [ $? -eq 2 ]; then
+    echo "Vault is ready"
+    break
+  fi
+  attempt=$((attempt + 1))
+  sleep 2
+done
+
+# Check if Vault is initialized
+if ! vault status -format=json | grep -q '"initialized":true'; then
+  echo "Initializing Vault..."
+  vault operator init -key-shares=1 -key-threshold=1 -format=json > "$INIT_FILE"
+  echo "Vault initialized! Credentials saved to $INIT_FILE"
+  echo "Ansible will handle unsealing..."
+else
+  echo "Vault already initialized"
+fi
+
+# Note: Unsealing is now handled by Ansible after this script completes
+vault status || true

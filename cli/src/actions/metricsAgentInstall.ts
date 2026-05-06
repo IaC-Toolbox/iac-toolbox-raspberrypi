@@ -1,6 +1,6 @@
 import { spawnSync } from 'child_process';
 import { loadIacToolboxYaml } from '../utils/grafanaConfig.js';
-import { pollHealth } from '../utils/healthCheck.js';
+import { pollDockerHealth, pollHealth } from '../utils/healthCheck.js';
 import { buildTargetEnv } from '../utils/targetConfig.js';
 
 interface IacToolboxConfig {
@@ -83,10 +83,15 @@ export async function runMetricsAgentInstall(
 
   console.log('│  ◜ Waiting for Grafana Alloy to be ready...');
 
-  const alloyHealthy = await pollHealth('http://localhost:12345/-/ready', {
-    retries: 30,
-    delayMs: 2000,
-  });
+  // On macOS, Alloy runs in Docker (Rancher Desktop) so localhost ports are
+  // not forwarded to the host. Use docker inspect instead of an HTTP check.
+  const isMacOS = process.platform === 'darwin';
+  const alloyHealthy = isMacOS
+    ? await pollDockerHealth('grafana-alloy', { retries: 30, delayMs: 2000 })
+    : await pollHealth('http://localhost:12345/-/ready', {
+        retries: 30,
+        delayMs: 2000,
+      });
 
   if (nodeExporterHealthy && alloyHealthy) {
     console.log('');
