@@ -1,22 +1,18 @@
 ---
-- block:
-    - name: Ensure monitoring Docker network exists
-      community.docker.docker_network:
-        name: monitoring
-        state: present
+- name: Create alloy config directory
+  file:
+    path: "{{ alloy_config_dir }}"
+    state: directory
+    mode: "0755"
+  become: true
 
-    - name: Create alloy base directory
-      file:
-        path: "{{ alloy_base_dir }}"
-        state: directory
-        mode: "0755"
-
-    - name: Create alloy config directory
-      file:
-        path: "{{ alloy_config_dir }}"
-        state: directory
-        mode: "0755"
-      become: true
+- name: Deploy Alloy config
+  template:
+    src: config.alloy.j2
+    dest: "{{ alloy_config_dir }}/config.alloy"
+    mode: "0644"
+  become: true
+  notify: Restart grafana-alloy
 
     - name: Deploy Alloy config
       template:

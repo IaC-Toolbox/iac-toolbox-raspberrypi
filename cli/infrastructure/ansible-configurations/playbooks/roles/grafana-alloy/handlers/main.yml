@@ -1,11 +1,6 @@
 ---
-- name: Reload systemd
-  systemd:
-    daemon_reload: true
-  become: true
-
 - name: Restart grafana-alloy
-  systemd:
+  community.docker.docker_container:
     name: grafana-alloy
-    state: restarted
-  become: true
+    state: started
+    restart: true

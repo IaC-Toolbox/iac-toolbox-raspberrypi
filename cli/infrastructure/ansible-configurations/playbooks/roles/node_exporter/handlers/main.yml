@@ -1,5 +1,7 @@
 ---
 - name: Restart node_exporter
-  shell: docker compose restart node-exporter
-  args:
-    chdir: "{{ node_exporter_base_dir }}"
+  community.docker.docker_container:
+    name: node-exporter
+    state: started
+    restart: true
+  become: true
