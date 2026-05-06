@@ -1,9 +1,0 @@
----
-# Default variables for vault role
-vault:
-  enabled: false
-  version: 'latest'
-  base_dir: '{{ ansible_env.HOME }}/.iac-toolbox/vault'
-  port: 8200
-  enable_kv: true
-  enable_audit: true

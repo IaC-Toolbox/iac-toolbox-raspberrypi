@@ -1,7 +1,0 @@
----
-- name: "Install {{ pkg_name }} via apt"
-  apt:
-    name: "{{ pkg_name }}"
-    state: present
-    update_cache: true
-  become: true

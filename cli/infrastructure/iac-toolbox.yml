@@ -33,16 +33,15 @@ prometheus:
   port: 9090
   scrape_interval: 15s
   retention: 15d
-  grafana_url: http://localhost:3000
+  grafana_url: https://grafana.iac-toolbox.com
 loki:
   enabled: false
 pagerduty:
   enabled: false
 target:
-  mode: local
-  # host: raspberry-4b.local
-  # user: vvasylkovskyi
-  # ssh_key: ~/.ssh/raspberrypi-4b
+  host: raspberry-4b.local
+  user: vvasylkovskyi
+  ssh_key: ~/.ssh/raspberrypi-4b
 node_exporter:
   enabled: true
 grafana_alloy:

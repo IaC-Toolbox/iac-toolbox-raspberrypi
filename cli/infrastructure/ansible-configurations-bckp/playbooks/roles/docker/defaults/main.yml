@@ -1,6 +1,0 @@
----
-# Docker role defaults
-docker_enabled: true
-
-# Default Docker socket path (Linux). Overridden on macOS by macos.yml socket detection.
-active_docker_socket: "unix:///var/run/docker.sock"
