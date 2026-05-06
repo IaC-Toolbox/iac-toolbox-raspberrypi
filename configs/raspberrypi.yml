@@ -1,0 +1,14 @@
+# Example app_service config — Raspberry Pi
+# Safe to commit — no secrets stored here.
+# Usage:
+#   iac-toolbox init    --filePath ./configs/raspberrypi.yml
+#   iac-toolbox install --filePath ./configs/raspberrypi.yml
+
+type: app_service
+host: raspberrypi.local
+ssh_user: pi
+secrets_backend: vault
+
+features:
+  - monitoring  # installs node_exporter + grafana-alloy
+  - cloudflare  # installs cloudflare-tunnel-api

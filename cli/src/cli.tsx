@@ -30,7 +30,16 @@ program
   .command('init', { isDefault: true })
   .description('Start the interactive wizard')
   .option('--profile <name>', 'Credential profile to use', 'default')
-  .action((options) => {
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file (skips wizard)'
+  )
+  .action(async (options: { profile: string; filePath?: string }) => {
+    if (options.filePath) {
+      const { runFilePathInit } = await import('./actions/filePathInstall.js');
+      await runFilePathInit(options.filePath);
+      return;
+    }
     render(<App profile={options.profile} />, {
       exitOnCtrlC: true,
       patchConsole: false,
@@ -407,12 +416,26 @@ program
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .action(async (options: { profile: string; destination: string }) => {
-    const { runStandaloneInstall } = await import(
-      './utils/standaloneInstall.js'
-    );
-    await runStandaloneInstall(options.destination, options.profile);
-  });
+  .option('--filePath <path>', 'Path to a per-device config file')
+  .action(
+    async (options: {
+      profile: string;
+      destination: string;
+      filePath?: string;
+    }) => {
+      if (options.filePath) {
+        const { runFilePathInstall } = await import(
+          './actions/filePathInstall.js'
+        );
+        await runFilePathInstall(options.filePath, options.destination);
+        return;
+      }
+      const { runStandaloneInstall } = await import(
+        './utils/standaloneInstall.js'
+      );
+      await runStandaloneInstall(options.destination, options.profile);
+    }
+  );
 
 program
   .command('uninstall')

@@ -21,9 +21,15 @@ interface IacToolboxYamlWithTarget {
 }
 
 /**
- * Resolve the path to iac-toolbox.yml from the destination directory.
+ * Resolve the path to iac-toolbox.yml.
+ *
+ * When an explicit `filePath` is provided (e.g. via --filePath flag) it takes
+ * priority. Otherwise falls back to `<destination>/iac-toolbox.yml`.
  */
-function resolveConfigPath(destination: string): string {
+function resolveConfigPath(destination: string, filePath?: string): string {
+  if (filePath) {
+    return path.resolve(filePath);
+  }
   return path.join(destination, 'iac-toolbox.yml');
 }
 
