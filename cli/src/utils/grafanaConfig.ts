@@ -64,9 +64,10 @@ export function loadIacToolboxYaml(destination: string, filePath?: string): IacT
  */
 export function updateGrafanaConfig(
   destination: string,
-  adminUser: string
+  adminUser: string,
+  filePath?: string
 ): void {
-  const configPath = resolveConfigPath(destination);
+  const configPath = filePath ?? resolveConfigPath(destination);
   let config: IacToolboxYaml = {};
 
   if (fs.existsSync(configPath)) {

@@ -27,23 +27,15 @@ vault:
 grafana:
   enabled: false
 prometheus:
-  enabled: true
-  version: latest
-  base_dir: ~/.iac-toolbox/observability
-  port: 9090
-  scrape_interval: 15s
-  retention: 15d
-  grafana_url: https://grafana.iac-toolbox.com
+  enabled: false
 loki:
   enabled: false
 pagerduty:
   enabled: false
 target:
-  host: raspberry-4b.local
-  user: vvasylkovskyi
-  ssh_key: ~/.ssh/raspberrypi-4b
+  mode: local
 node_exporter:
   enabled: true
 grafana_alloy:
   enabled: true
-  alloy_remote_write_url: https://grafana.iac-toolbox.com/prometheus/api/v1/write
+  alloy_remote_write_url: https://prometheus.iac-toolbox.com/api/v1/write

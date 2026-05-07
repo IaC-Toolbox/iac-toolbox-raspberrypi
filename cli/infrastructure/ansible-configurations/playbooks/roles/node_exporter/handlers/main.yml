@@ -7,8 +7,10 @@
   listen: Restart node_exporter
 
 - name: Restart node_exporter Linux
-  shell: docker compose restart node-exporter
-  args:
-    chdir: "{{ node_exporter_base_dir }}"
+  systemd:
+    name: node_exporter
+    state: restarted
+    daemon_reload: true
+  become: true
   when: ansible_facts['system'] == 'Linux'
   listen: Restart node_exporter

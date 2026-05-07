@@ -2,7 +2,6 @@ import { spawnSync } from 'child_process';
 import { loadCredentials } from '../utils/credentials.js';
 import { loadIacToolboxYaml } from '../utils/grafanaConfig.js';
 import { pollHealth } from '../utils/healthCheck.js';
-import { buildTargetEnv } from '../utils/targetConfig.js';
 
 interface CloudflareConfig {
   enabled?: boolean;
@@ -73,17 +72,17 @@ export async function runCloudflareInstall(
   console.log('◆  Installing Cloudflare Tunnel...');
   console.log('│  ══════════════════════════════════════');
 
-  const targetEnv = buildTargetEnv(destination);
   const env = {
     ...process.env,
-    ...targetEnv,
     CLOUDFLARE_API_TOKEN: creds.cloudflare_api_token,
     CLOUDFLARE_ACCOUNT_ID: config.cloudflare!.account_id!,
     CLOUDFLARE_ZONE_ID: config.cloudflare!.zone_id!,
   };
 
   const scriptPath = `${destination}/scripts/install.sh`;
-  const result = spawnSync('bash', [scriptPath, '--cloudflared', '--local'], {
+  const scriptArgs = [scriptPath, '--cloudflared'];
+  if (filePath) scriptArgs.push('--filePath', filePath);
+  const result = spawnSync('bash', scriptArgs, {
     env,
     stdio: 'inherit',
   });

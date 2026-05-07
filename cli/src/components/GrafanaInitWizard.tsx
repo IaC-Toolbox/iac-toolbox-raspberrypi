@@ -14,6 +14,7 @@ interface TextInputProps {
 interface GrafanaInitWizardProps {
   profile: string;
   destination: string;
+  filePath?: string;
   /** Injectable for testing — defaults to the real TextInput from ink-text-input */
   _TextInput?: (props: TextInputProps) => null;
   /** Injectable for testing — defaults to loadCredentials */
@@ -24,14 +25,15 @@ interface GrafanaInitWizardProps {
     profile: string
   ) => void;
   /** Injectable for testing — defaults to updateGrafanaConfig */
-  _updateGrafanaConfig?: (destination: string, adminUser: string) => void;
+  _updateGrafanaConfig?: (destination: string, adminUser: string, filePath?: string) => void;
 }
 
-type Step = 'username' | 'password' | 'confirm' | 'done';
+type Step = 'username' | 'password' | 'done';
 
 export default function GrafanaInitWizard({
   profile,
   destination,
+  filePath,
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
   _loadCredentials = loadCredentials,
   _saveCredentials = saveCredentials,
@@ -62,7 +64,7 @@ export default function GrafanaInitWizard({
         },
         profile
       );
-      _updateGrafanaConfig(destination, username);
+      _updateGrafanaConfig(destination, username, filePath);
       // Give Ink time to render final screen
       const timer = setTimeout(() => exit(), 100);
       return () => clearTimeout(timer);
@@ -73,6 +75,7 @@ export default function GrafanaInitWizard({
     username,
     profile,
     destination,
+    filePath,
     exit,
     _saveCredentials,
     _updateGrafanaConfig,
@@ -157,57 +160,6 @@ export default function GrafanaInitWizard({
               setPassword(trimmed);
               setInputValue('');
               setError(null);
-              setStep('confirm');
-            }}
-            mask="*"
-          />
-        </Box>
-      </Box>
-    );
-  }
-
-  if (step === 'confirm') {
-    return (
-      <Box flexDirection="column" paddingY={1}>
-        <Text bold color="cyan">
-          {'┌  IaC-Toolbox — Grafana Setup'}
-        </Text>
-        <Text bold>{'│'}</Text>
-        <Text dimColor>
-          {'◇  Grafana admin username: '}
-          {username}
-        </Text>
-        <Text dimColor>
-          {'◇  Grafana admin password: '}
-          {'********'}
-        </Text>
-        <Text bold>{'│'}</Text>
-        <Text bold>{'◆  Confirm password'}</Text>
-        {error && (
-          <Box paddingLeft={3}>
-            <Text color="red">
-              {'✗ '}
-              {error}
-            </Text>
-          </Box>
-        )}
-        <Box paddingLeft={3} marginTop={1}>
-          <Text>{'› '}</Text>
-          <InputComponent
-            value={inputValue}
-            onChange={(val) => {
-              setInputValue(val);
-              setError(null);
-            }}
-            onSubmit={(val) => {
-              const trimmed = val.trim();
-              if (trimmed !== password) {
-                setError('Passwords do not match — try again');
-                setInputValue('');
-                setPassword('');
-                setStep('password');
-                return;
-              }
               setStep('done');
             }}
             mask="*"
@@ -227,7 +179,8 @@ export default function GrafanaInitWizard({
       <Text>
         {'│  Username    '}
         {username}
-        {'           → iac-toolbox.yml'}
+        {'           → '}
+        {filePath ?? 'iac-toolbox.yml'}
       </Text>
       <Text>
         {'│  Password    ************    → ~/.iac-toolbox/credentials'}

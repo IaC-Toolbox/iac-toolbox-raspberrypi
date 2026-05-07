@@ -2,7 +2,6 @@ import { spawnSync } from 'child_process';
 import { loadCredentials } from '../utils/credentials.js';
 import { loadIacToolboxYaml } from '../utils/grafanaConfig.js';
 import { pollHealth } from '../utils/healthCheck.js';
-import { buildTargetEnv } from '../utils/targetConfig.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;
@@ -70,17 +69,17 @@ export async function runPrometheusInstall(
   console.log('◆  Installing Prometheus...');
   console.log('│  ══════════════════════════════════════');
 
-  const targetEnv = buildTargetEnv(destination);
   const env = {
     ...process.env,
-    ...targetEnv,
     GRAFANA_ADMIN_USER: adminUser,
     GRAFANA_ADMIN_PASSWORD: creds.grafana_admin_password,
     GRAFANA_PORT: grafanaPort,
   };
 
   const scriptPath = `${destination}/scripts/install.sh`;
-  const result = spawnSync('bash', [scriptPath, '--prometheus', '--local'], {
+  const scriptArgs = [scriptPath, '--prometheus'];
+  if (filePath) scriptArgs.push('--filePath', filePath);
+  const result = spawnSync('bash', scriptArgs, {
     env,
     stdio: 'inherit',
   });
@@ -98,9 +97,18 @@ export async function runPrometheusInstall(
   }
 
   // ── Post-Install Health Check ─────────────────────────────
+  const prometheusPort = (config.prometheus?.port as number | undefined) ?? 9090;
+  const prometheusDomain = config.prometheus?.domain as string | undefined;
+  const cloudflareEnabled =
+    config.cloudflare && (config.cloudflare as Record<string, unknown>).enabled;
+  const healthUrl =
+    cloudflareEnabled && prometheusDomain
+      ? `https://${prometheusDomain}/-/healthy`
+      : `http://localhost:${prometheusPort}/-/healthy`;
+
   console.log('│  ◜ Waiting for Prometheus to be healthy...');
 
-  const healthy = await pollHealth('http://localhost:9090/-/healthy', {
+  const healthy = await pollHealth(healthUrl, {
     retries: 30,
     delayMs: 2000,
   });
@@ -111,12 +119,16 @@ export async function runPrometheusInstall(
     console.log('│');
     console.log('│  ✔ Health check passed');
     console.log('│');
-    console.log('│  Prometheus URL      http://localhost:9090');
+    if (cloudflareEnabled && prometheusDomain) {
+      console.log(`│  Public URL          https://${prometheusDomain}`);
+    } else {
+      console.log(`│  Prometheus URL      http://localhost:${prometheusPort}`);
+    }
     console.log('│  Node Exporter URL   http://localhost:9100/metrics');
     console.log('│  Grafana datasource  auto-configured');
     console.log('│  Dashboard           Node Exporter Full (auto-imported)');
-    console.log('│  Retention           15d');
-    console.log('│  Scrape interval     15s');
+    console.log(`│  Retention           ${(config.prometheus?.retention as string | undefined) ?? '15d'}`);
+    console.log(`│  Scrape interval     ${(config.prometheus?.scrape_interval as string | undefined) ?? '15s'}`);
     console.log('│');
     console.log('│  Run `iac-toolbox prometheus uninstall` to remove');
     console.log('└');

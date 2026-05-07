@@ -1,7 +1,6 @@
 import { spawnSync } from 'child_process';
 import { loadIacToolboxYaml } from '../utils/grafanaConfig.js';
 import { pollDockerHealth, pollHealth } from '../utils/healthCheck.js';
-import { buildTargetEnv } from '../utils/targetConfig.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;
@@ -46,15 +45,15 @@ export async function runMetricsAgentInstall(
   console.log('◆  Installing metrics agent...');
   console.log('│  ════════════════════════════════════════');
 
-  const targetEnv = buildTargetEnv(destination);
   const env = {
     ...process.env,
-    ...targetEnv,
     ALLOY_REMOTE_WRITE_URL: remoteWriteUrl,
   };
 
   const scriptPath = `${destination}/scripts/install.sh`;
-  const result = spawnSync('bash', [scriptPath, '--metrics-agent', '--local'], {
+  const scriptArgs = [scriptPath, '--metrics-agent'];
+  if (filePath) scriptArgs.push('--filePath', filePath);
+  const result = spawnSync('bash', scriptArgs, {
     env,
     stdio: 'inherit',
   });

@@ -183,7 +183,7 @@ grafana
     '--filePath <path>',
     'Path to a per-device config file'
   )
-  .action(async (options: { profile: string; destination: string }) => {
+  .action(async (options: { profile: string; destination: string; filePath?: string }) => {
     const { default: GrafanaInitWizard } = await import(
       './components/GrafanaInitWizard.js'
     );
@@ -191,6 +191,7 @@ grafana
       <GrafanaInitWizard
         profile={options.profile}
         destination={options.destination}
+        filePath={options.filePath}
       />,
       {
         exitOnCtrlC: true,
@@ -265,14 +266,17 @@ prometheus
     '--filePath <path>',
     'Path to a per-device config file'
   )
-  .action(async (options: { destination: string }) => {
+  .action(async (options: { destination: string; filePath?: string }) => {
     const { default: PrometheusInitWizard } = await import(
       './components/PrometheusInitWizard.js'
     );
-    render(<PrometheusInitWizard destination={options.destination} />, {
-      exitOnCtrlC: true,
-      patchConsole: false,
-    });
+    render(
+      <PrometheusInitWizard
+        destination={options.destination}
+        filePath={options.filePath}
+      />,
+      { exitOnCtrlC: true, patchConsole: false }
+    );
   });
 
 prometheus

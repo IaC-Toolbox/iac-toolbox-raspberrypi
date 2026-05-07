@@ -116,3 +116,7 @@
   command: docker info
   register: docker_daemon_verify
   changed_when: false
+
+- name: Set active Docker socket fact
+  set_fact:
+    active_docker_socket: "unix:///var/run/docker.sock"

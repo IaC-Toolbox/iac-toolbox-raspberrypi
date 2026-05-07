@@ -1,6 +1,11 @@
-// Scrape Node Exporter via Docker DNS on the monitoring network
+// Scrape Node Exporter and tag metrics with this device's hostname
 prometheus.scrape "node_exporter" {
-  targets = [{ __address__ = "{{ alloy_node_exporter_host }}:{{ node_exporter_port }}" }]
+  targets = [{
+    __address__ = "{{ alloy_node_exporter_host }}:{{ node_exporter_port }}",
+    instance    = "{{ grafana_alloy.instance_name | default(ansible_hostname) }}",
+    job         = "node_exporter",
+  }]
+  scrape_interval = "15s"
   forward_to = [prometheus.remote_write.platform.receiver]
 }
 
