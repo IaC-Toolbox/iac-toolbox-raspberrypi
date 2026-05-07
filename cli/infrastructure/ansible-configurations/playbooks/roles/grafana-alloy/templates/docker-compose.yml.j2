@@ -14,10 +14,3 @@ services:
       - "/etc/alloy/config.alloy"
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    networks:
-      - monitoring
-
-networks:
-  monitoring:
-    name: monitoring
-    external: true
