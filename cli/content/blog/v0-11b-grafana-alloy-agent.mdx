@@ -561,6 +561,48 @@ Verify the datasource is pointing to `http://localhost:9090`:
 
 If the datasource was provisioned correctly by Ansible, this is typically a time range issue.
 
+### macOS Memory Panels Show N/A — Fixed with Alloy Relabeling
+
+The Node Exporter Full dashboard (ID 1860) is built for Linux and expects memory metric names sourced from `/proc/meminfo`. macOS doesn't have `/proc`, so Node Exporter exposes memory under different names:
+
+| Linux (dashboard expects) | macOS (Node Exporter exposes) |
+| ------------------------- | ----------------------------- |
+| `node_memory_MemTotal_bytes` | `node_memory_total_bytes` |
+| `node_memory_MemAvailable_bytes` | `node_memory_free_bytes` (approx) |
+| `node_memory_SwapTotal_bytes` | no equivalent (page counters only) |
+| `node_memory_SwapFree_bytes` | no equivalent |
+
+You can verify what your Mac exposes:
+```bash
+curl -s http://localhost:9100/metrics | grep "^node_memory"
+```
+
+Rather than editing the dashboard, the Ansible role handles this automatically using Alloy's `prometheus.relabel` component. The Alloy config template includes OS-conditional relabeling rules that rename macOS metrics to the Linux names before pushing to Prometheus:
+
+```river
+prometheus.relabel "node_exporter_compat" {
+  forward_to = [prometheus.remote_write.platform.receiver]
+
+  // Only applied on macOS (Darwin) — on Linux this block is empty
+  rule {
+    source_labels = ["__name__"]
+    regex         = "node_memory_total_bytes"
+    target_label  = "__name__"
+    replacement   = "node_memory_MemTotal_bytes"
+  }
+  rule {
+    source_labels = ["__name__"]
+    regex         = "node_memory_free_bytes"
+    target_label  = "__name__"
+    replacement   = "node_memory_MemAvailable_bytes"
+  }
+}
+```
+
+The scrape component forwards metrics through this relabel stage before remote_write. On Linux, the relabel component has no rules and passes metrics unchanged. On macOS, the two rules fire and the dashboard's RAM Used and RAM Total panels populate correctly.
+
+**Swap panels remain N/A on macOS.** macOS only exposes swap as page counters (`node_memory_swapins_total`, `node_memory_swapouts_total`), not as byte-sized gauges. There is no equivalent for `node_memory_SwapTotal_bytes`. This is a macOS kernel limitation — swap size panels will always be N/A for Mac devices.
+
 ## Summary
 
 You've upgraded from a single-device pull model to a scalable push-based pipeline.
