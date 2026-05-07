@@ -2,14 +2,14 @@
 title: Distributed Metrics with Grafana Alloy (Push-Based Pipeline)
 description: Replace pull-based Prometheus scraping with a push-based metrics pipeline using Grafana Alloy on each device — no inbound access required
 author: Viktor Vasylkovskyi
-date: "2025-12-15"
+date: '2025-12-15'
 ---
 
 **Previous:** [Prometheus Metrics Setup](./v0-11-prometheus-metrics-setup)
 
-The previous guide set up Prometheus to *pull* metrics from Node Exporter on a single device. That works fine when you have one Raspberry Pi — but it breaks down as soon as you add a second device or run into firewall restrictions.
+The previous guide set up Prometheus to _pull_ metrics from Node Exporter on a single device. That works fine when you have one Raspberry Pi — but it breaks down as soon as you add a second device or run into firewall restrictions.
 
-This guide upgrades the architecture: each device now runs **Grafana Alloy**, which scrapes Node Exporter locally and *pushes* metrics to a central Prometheus on the platform. Grafana visualises everything without ever needing inbound access to your devices.
+This guide upgrades the architecture: each device now runs **Grafana Alloy**, which scrapes Node Exporter locally and _pushes_ metrics to a central Prometheus on the platform. Grafana visualises everything without ever needing inbound access to your devices.
 
 ```mermaid
 graph LR
@@ -25,6 +25,7 @@ graph LR
 ```
 
 **What this tutorial covers:**
+
 - Why pull-based scraping doesn't scale
 - Deploying Grafana Alloy on each device via Ansible
 - Configuring Prometheus to accept pushed metrics
@@ -40,7 +41,7 @@ All configuration and Ansible roles are available in https://github.com/IaC-Tool
 
 The pull model from the previous guide has two hard problems as you scale:
 
-**1. Manual registration.** Every new device requires editing the Prometheus scrape config on the platform and re-running the playbook *targeting the platform*. With three devices that's manageable. With twenty it's a maintenance burden.
+**1. Manual registration.** Every new device requires editing the Prometheus scrape config on the platform and re-running the playbook _targeting the platform_. With three devices that's manageable. With twenty it's a maintenance burden.
 
 **2. Network access to devices.** Prometheus needs to reach port `9100` on every device. If a device is behind NAT or a firewall, or sits on a different network segment, scraping silently fails and you get no metrics — no errors, just missing data.
 
@@ -85,16 +86,17 @@ No inbound firewall rules needed on your devices.
 
 ## Components Overview
 
-| Component       | Role                                                     | Runs on        |
-| --------------- | -------------------------------------------------------- | -------------- |
-| `node_exporter` | Expose system metrics at `localhost:9100`                | Each device    |
-| `grafana-alloy` | Scrape Node Exporter, push via `remote_write`            | Each device    |
-| `prometheus`    | Accept pushed metrics, store time-series                 | Platform       |
-| `grafana`       | Visualise metrics, auto-provisioned datasource           | Platform       |
+| Component       | Role                                           | Runs on     |
+| --------------- | ---------------------------------------------- | ----------- |
+| `node_exporter` | Expose system metrics at `localhost:9100`      | Each device |
+| `grafana-alloy` | Scrape Node Exporter, push via `remote_write`  | Each device |
+| `prometheus`    | Accept pushed metrics, store time-series       | Platform    |
+| `grafana`       | Visualise metrics, auto-provisioned datasource | Platform    |
 
 ## What You Need
 
 Before starting:
+
 - Grafana already running on the platform (previous tutorial)
 - SSH access to your devices
 - The [iac-toolbox-raspberrypi](https://github.com/IaC-Toolbox/iac-toolbox-raspberrypi) repository
@@ -187,17 +189,17 @@ Set the remote_write endpoint and versions:
 
 ```yaml
 # Alloy config — points to your platform's Prometheus
-alloy_remote_write_url: "https://grafana.iac-toolbox.com/prometheus/api/v1/write"
+alloy_remote_write_url: 'https://grafana.iac-toolbox.com/prometheus/api/v1/write'
 node_exporter_port: 9100
-node_exporter_version: "1.8.1"
+node_exporter_version: '1.8.1'
 
 # Prometheus on the platform
-prometheus_version: "2.52.0"
+prometheus_version: '2.52.0'
 prometheus_port: 9090
 
 # Grafana on the platform
 grafana_port: 3000
-grafana_admin_password: "{{ vault_grafana_admin_password }}"
+grafana_admin_password: '{{ vault_grafana_admin_password }}'
 ```
 
 The `alloy_remote_write_url` is the only value that must match your actual platform domain.
@@ -214,6 +216,7 @@ source .env
 ```
 
 The playbook:
+
 1. Installs Grafana via Docker Compose (creates the `monitoring` network)
 2. Installs Prometheus via Docker Compose (joins the `monitoring` network as external)
 3. Enables `--web.enable-remote-write-receiver` on Prometheus
@@ -230,6 +233,7 @@ Now deploy Node Exporter and Grafana Alloy to your devices:
 ```
 
 The playbook:
+
 1. Installs Node Exporter as a native binary, creates a systemd unit, starts the service
 2. Deploys Grafana Alloy via Docker Compose
 3. Templates `config.alloy` with your remote_write URL
@@ -271,6 +275,7 @@ prometheus.remote_write "platform" {
 ```
 
 **What this does:**
+
 - `prometheus.scrape` — hits `localhost:9100/metrics` on a 15-second interval
 - `forward_to` — passes scraped metrics directly to the remote_write block
 - `prometheus.remote_write` — ships metrics to your platform over HTTPS
@@ -286,12 +291,13 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: "prometheus"
+  - job_name: 'prometheus'
     static_configs:
-      - targets: ["localhost:9090"]
+      - targets: ['localhost:9090']
 ```
 
 The key is the startup flag:
+
 ```
 --web.enable-remote-write-receiver
 ```
@@ -326,6 +332,7 @@ journalctl -u grafana-alloy -n 50 -f
 ```
 
 A healthy Alloy log looks like:
+
 ```
 level=info msg="Scrape completed" target=localhost:9100 duration=2.4ms
 level=info msg="remote_write batch sent" url=https://grafana.iac-toolbox.com/...
@@ -350,6 +357,7 @@ curl "http://localhost:9090/api/v1/query?query=node_memory_MemAvailable_bytes"
 ### Check in Grafana
 
 Open Grafana in your browser:
+
 ```
 https://grafana.iac-toolbox.com
 ```
@@ -365,6 +373,7 @@ Each device appears as a separate instance in the drop-down. No dashboard change
 This is where the push model pays off. To add `device-03`:
 
 1. Add it to inventory:
+
    ```ini
    [app_services]
    device-01 ansible_host=<device-01-ip>
@@ -373,6 +382,7 @@ This is where the push model pays off. To add `device-03`:
    ```
 
 2. Run the playbook targeting only the new device:
+
    ```bash
    ./run-playbook.sh playbooks/main.yml --limit device-03
    ```
@@ -490,16 +500,19 @@ All `instance` and `nodename` values should be identical pairs. Any mismatch mea
 ### Alloy Won't Start
 
 Check configuration syntax:
+
 ```bash
 grafana-alloy fmt /etc/alloy/config.alloy
 ```
 
 Check logs for errors:
+
 ```bash
 journalctl -u grafana-alloy -n 100
 ```
 
 Common causes:
+
 - `alloy_remote_write_url` is unreachable from the device (test with `curl <url>`)
 - Config template has a syntax error (re-run the Ansible role)
 - Node Exporter isn't running yet (check `systemctl status node_exporter`)
@@ -556,6 +569,7 @@ Work through each step in order. The first failure is where to focus.
 Check the time range (top right) — set it to **Last 15 minutes**.
 
 Verify the datasource is pointing to `http://localhost:9090`:
+
 1. **Connections** → **Data sources** → **Prometheus**
 2. Click **Save & test** — should show "Data source is working"
 
@@ -565,14 +579,15 @@ If the datasource was provisioned correctly by Ansible, this is typically a time
 
 The Node Exporter Full dashboard (ID 1860) is built for Linux and expects memory metric names sourced from `/proc/meminfo`. macOS doesn't have `/proc`, so Node Exporter exposes memory under different names:
 
-| Linux (dashboard expects) | macOS (Node Exporter exposes) |
-| ------------------------- | ----------------------------- |
-| `node_memory_MemTotal_bytes` | `node_memory_total_bytes` |
-| `node_memory_MemAvailable_bytes` | `node_memory_free_bytes` (approx) |
-| `node_memory_SwapTotal_bytes` | no equivalent (page counters only) |
-| `node_memory_SwapFree_bytes` | no equivalent |
+| Linux (dashboard expects)        | macOS (Node Exporter exposes)      |
+| -------------------------------- | ---------------------------------- |
+| `node_memory_MemTotal_bytes`     | `node_memory_total_bytes`          |
+| `node_memory_MemAvailable_bytes` | `node_memory_free_bytes` (approx)  |
+| `node_memory_SwapTotal_bytes`    | no equivalent (page counters only) |
+| `node_memory_SwapFree_bytes`     | no equivalent                      |
 
 You can verify what your Mac exposes:
+
 ```bash
 curl -s http://localhost:9100/metrics | grep "^node_memory"
 ```
@@ -604,6 +619,7 @@ The scrape component forwards metrics through this relabel stage before remote_w
 **Swap panels are also fixed — with a two-part approach.** macOS exposes swap as `node_memory_swap_total_bytes` and `node_memory_swap_used_bytes`, but the dashboard needs `node_memory_SwapTotal_bytes` and `node_memory_SwapFree_bytes`. The rename for total is straightforward, but free requires arithmetic (`total - used`), which Alloy relabeling can't do. The solution splits the work across two components:
 
 **Alloy (device side):** one more rename rule renames the total:
+
 ```river
 rule {
   source_labels = ["__name__"]
@@ -612,9 +628,11 @@ rule {
   replacement   = "node_memory_SwapTotal_bytes"
 }
 ```
+
 `node_memory_swap_used_bytes` passes through unchanged.
 
 **Prometheus (platform side):** a recording rule computes the missing free bytes:
+
 ```yaml
 groups:
   - name: macos_compat
@@ -631,6 +649,7 @@ This rule runs on the platform every 15 seconds. Prometheus derives `SwapFree` f
 You've upgraded from a single-device pull model to a scalable push-based pipeline.
 
 **What you accomplished:**
+
 - Grafana Alloy installed on each device, scraping Node Exporter and pushing to the platform
 - Prometheus running with `remote-write-receiver` enabled — no static scrape configs for devices
 - Grafana auto-provisioned with Prometheus datasource and Node Exporter dashboard
@@ -639,19 +658,23 @@ You've upgraded from a single-device pull model to a scalable push-based pipelin
 **Key files deployed:**
 
 On each device:
+
 - `~/.iac-toolbox/alloy/config.alloy` — Alloy scrape and remote_write config
 - `~/.iac-toolbox/alloy/docker-compose.yml` — Docker Compose definition
 
 On the platform:
+
 - `~/.iac-toolbox/observability/prometheus.yml` — minimal config, remote_write receiver enabled
 - `~/.iac-toolbox/grafana/provisioning/datasources/prometheus.yml` — auto-provisioned datasource
 
 **Access:**
+
 - **Grafana Dashboard**: https://grafana.iac-toolbox.com/d/rYdddlPWk/node-exporter-full
 - **Prometheus API** (on platform): `http://localhost:9090/api/v1/query?query=up`
 - **Alloy logs** (on device): `journalctl -u grafana-alloy -f`
 
 **What makes this different from the pull model:**
+
 - No inbound firewall rules needed on devices
 - Adding devices requires only an inventory change — no platform edits
 - Each device manages its own metrics pipeline independently

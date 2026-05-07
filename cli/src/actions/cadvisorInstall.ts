@@ -119,9 +119,7 @@ export async function runCAdvisorInstall(
     console.error('◆  cAdvisor install failed');
     console.error('│');
     if (!cadvisorHealthy) {
-      console.error(
-        '│  ✗ cAdvisor health check did not pass after 60 seconds'
-      );
+      console.error('│  ✗ cAdvisor health check did not pass after 60 seconds');
     }
     if (!alloyHealthy) {
       console.error(

@@ -31,10 +31,14 @@ export default function CAdvisorInitWizard({
         {'◆  cAdvisor will be added to your Grafana Alloy metrics pipeline.'}
       </Text>
       <Text>
-        {'│  Per-container CPU, memory, network, and filesystem metrics will be'}
+        {
+          '│  Per-container CPU, memory, network, and filesystem metrics will be'
+        }
       </Text>
       <Text>
-        {'│  available in Prometheus alongside your existing Node Exporter data.'}
+        {
+          '│  available in Prometheus alongside your existing Node Exporter data.'
+        }
       </Text>
       <Text bold>{'│'}</Text>
       <Text bold color="green">
