@@ -1,0 +1,20 @@
+---
+# ============================================
+# IaC Toolbox - cAdvisor Playbook
+# ============================================
+# Deploys cAdvisor and wires it into Grafana Alloy.
+# Prerequisite: metrics-agent already deployed (grafana-alloy running).
+
+- import_playbook: common.yml
+
+- name: Deploy cAdvisor
+  hosts: all
+  become: false
+  roles:
+    - role: grafana-alloy
+      when: grafana_alloy is defined and grafana_alloy.enabled
+      # Re-runs the Alloy role to apply the monitoring network + cadvisor scrape block
+      # before starting the cAdvisor container. All tasks are idempotent.
+
+    - role: cadvisor
+      when: cadvisor is defined and cadvisor.enabled

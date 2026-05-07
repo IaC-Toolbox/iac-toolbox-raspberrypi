@@ -30,10 +30,7 @@ program
   .command('init', { isDefault: true })
   .description('Start the interactive wizard')
   .option('--profile <name>', 'Credential profile to use', 'default')
-  .option(
-    '--filePath <path>',
-    'Path to a per-device config file'
-  )
+  .option('--filePath <path>', 'Path to a per-device config file')
   .action(async (options: { profile: string; filePath?: string }) => {
     if (options.filePath) {
       const { runFilePathInit } = await import('./actions/filePathInstall.js');
@@ -77,10 +74,7 @@ cloudflare
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .option(
-    '--filePath <path>',
-    'Path to a per-device config file'
-  )
+  .option('--filePath <path>', 'Path to a per-device config file')
   .action(async (options: { profile: string; destination: string }) => {
     const { default: CloudflareInitWizard } = await import(
       './components/CloudflareInitWizard.js'
@@ -106,16 +100,23 @@ cloudflare
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .option(
-    '--filePath <path>',
-    'Path to a per-device config file'
-  )
-  .action(async (options: { profile: string; destination: string; filePath?: string }) => {
-    const { runCloudflareInstall } = await import(
-      './actions/cloudflareInstall.js'
-    );
-    await runCloudflareInstall(options.destination, options.profile, options.filePath);
-  });
+  .option('--filePath <path>', 'Path to a per-device config file')
+  .action(
+    async (options: {
+      profile: string;
+      destination: string;
+      filePath?: string;
+    }) => {
+      const { runCloudflareInstall } = await import(
+        './actions/cloudflareInstall.js'
+      );
+      await runCloudflareInstall(
+        options.destination,
+        options.profile,
+        options.filePath
+      );
+    }
+  );
 
 cloudflare
   .command('uninstall')
@@ -179,26 +180,29 @@ grafana
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .option(
-    '--filePath <path>',
-    'Path to a per-device config file'
-  )
-  .action(async (options: { profile: string; destination: string; filePath?: string }) => {
-    const { default: GrafanaInitWizard } = await import(
-      './components/GrafanaInitWizard.js'
-    );
-    render(
-      <GrafanaInitWizard
-        profile={options.profile}
-        destination={options.destination}
-        filePath={options.filePath}
-      />,
-      {
-        exitOnCtrlC: true,
-        patchConsole: false,
-      }
-    );
-  });
+  .option('--filePath <path>', 'Path to a per-device config file')
+  .action(
+    async (options: {
+      profile: string;
+      destination: string;
+      filePath?: string;
+    }) => {
+      const { default: GrafanaInitWizard } = await import(
+        './components/GrafanaInitWizard.js'
+      );
+      render(
+        <GrafanaInitWizard
+          profile={options.profile}
+          destination={options.destination}
+          filePath={options.filePath}
+        />,
+        {
+          exitOnCtrlC: true,
+          patchConsole: false,
+        }
+      );
+    }
+  );
 
 grafana
   .command('install')
@@ -209,14 +213,21 @@ grafana
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .option(
-    '--filePath <path>',
-    'Path to a per-device config file'
-  )
-  .action(async (options: { profile: string; destination: string; filePath?: string }) => {
-    const { runGrafanaInstall } = await import('./actions/grafanaInstall.js');
-    await runGrafanaInstall(options.destination, options.profile, options.filePath);
-  });
+  .option('--filePath <path>', 'Path to a per-device config file')
+  .action(
+    async (options: {
+      profile: string;
+      destination: string;
+      filePath?: string;
+    }) => {
+      const { runGrafanaInstall } = await import('./actions/grafanaInstall.js');
+      await runGrafanaInstall(
+        options.destination,
+        options.profile,
+        options.filePath
+      );
+    }
+  );
 
 grafana
   .command('uninstall')
@@ -262,10 +273,7 @@ prometheus
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .option(
-    '--filePath <path>',
-    'Path to a per-device config file'
-  )
+  .option('--filePath <path>', 'Path to a per-device config file')
   .action(async (options: { destination: string; filePath?: string }) => {
     const { default: PrometheusInitWizard } = await import(
       './components/PrometheusInitWizard.js'
@@ -288,16 +296,23 @@ prometheus
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .option(
-    '--filePath <path>',
-    'Path to a per-device config file'
-  )
-  .action(async (options: { profile: string; destination: string; filePath?: string }) => {
-    const { runPrometheusInstall } = await import(
-      './actions/prometheusInstall.js'
-    );
-    await runPrometheusInstall(options.destination, options.profile, options.filePath);
-  });
+  .option('--filePath <path>', 'Path to a per-device config file')
+  .action(
+    async (options: {
+      profile: string;
+      destination: string;
+      filePath?: string;
+    }) => {
+      const { runPrometheusInstall } = await import(
+        './actions/prometheusInstall.js'
+      );
+      await runPrometheusInstall(
+        options.destination,
+        options.profile,
+        options.filePath
+      );
+    }
+  );
 
 const metricsAgent = program
   .command('metrics-agent')
@@ -311,10 +326,7 @@ metricsAgent
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .option(
-    '--filePath <path>',
-    'Path to a per-device config file'
-  )
+  .option('--filePath <path>', 'Path to a per-device config file')
   .action(async (options: { destination: string }) => {
     const { default: MetricsAgentInitWizard } = await import(
       './components/MetricsAgentInitWizard.js'
@@ -335,10 +347,7 @@ metricsAgent
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .option(
-    '--filePath <path>',
-    'Path to a per-device config file'
-  )
+  .option('--filePath <path>', 'Path to a per-device config file')
   .action(async (options: { destination: string; filePath?: string }) => {
     const { runMetricsAgentInstall } = await import(
       './actions/metricsAgentInstall.js'
@@ -354,6 +363,57 @@ metricsAgent
     const result = spawnSync(
       'bash',
       ['infrastructure/scripts/uninstall-metrics-agent.sh', '--local'],
+      { stdio: 'inherit' }
+    );
+    process.exit(result.status ?? 1);
+  });
+
+const cadvisor = program
+  .command('cadvisor')
+  .description('Manage cAdvisor container metrics agent');
+
+cadvisor
+  .command('init')
+  .description('Enable cAdvisor in iac-toolbox.yml')
+  .option(
+    '--destination <path>',
+    'Path to infrastructure directory',
+    'infrastructure'
+  )
+  .action(async (options: { destination: string }) => {
+    const { default: CAdvisorInitWizard } = await import(
+      './components/CAdvisorInitWizard.js'
+    );
+    render(<CAdvisorInitWizard destination={options.destination} />, {
+      exitOnCtrlC: true,
+      patchConsole: false,
+    });
+  });
+
+cadvisor
+  .command('install')
+  .description(
+    'Install or reinstall cAdvisor (requires metrics-agent already installed)'
+  )
+  .option('--profile <name>', 'Credential profile to use', 'default')
+  .option(
+    '--destination <path>',
+    'Path to infrastructure directory',
+    'infrastructure'
+  )
+  .action(async (options: { profile: string; destination: string }) => {
+    const { runCAdvisorInstall } = await import('./actions/cadvisorInstall.js');
+    await runCAdvisorInstall(options.destination, options.profile);
+  });
+
+cadvisor
+  .command('uninstall')
+  .description('Remove cAdvisor from this device')
+  .action(async () => {
+    const { spawnSync } = await import('child_process');
+    const result = spawnSync(
+      'bash',
+      ['infrastructure/scripts/uninstall-cadvisor.sh', '--local'],
       { stdio: 'inherit' }
     );
     process.exit(result.status ?? 1);
@@ -433,10 +493,7 @@ target
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .option(
-    '--filePath <path>',
-    'Path to a per-device config file'
-  )
+  .option('--filePath <path>', 'Path to a per-device config file')
   .action(async (options: { destination: string }) => {
     const { default: TargetInitWizard } = await import(
       './components/TargetInitWizard.js'

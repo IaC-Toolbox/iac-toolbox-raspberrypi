@@ -1,0 +1,22 @@
+services:
+  {{ cadvisor_container_name }}:
+    image: {{ cadvisor_image }}:{{ cadvisor_version }}
+    container_name: {{ cadvisor_container_name }}
+    restart: always
+    privileged: true
+    devices:
+      - /dev/kmsg
+    ports:
+      - "127.0.0.1:{{ cadvisor_port }}:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    external: true       # lifecycle owned by the grafana-alloy compose project
