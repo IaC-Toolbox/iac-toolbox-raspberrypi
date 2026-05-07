@@ -1,11 +1,6 @@
 ---
-- name: Reload systemd
-  systemd:
-    daemon_reload: yes
-  when: ansible_service_mgr == "systemd"
-
 - name: Restart prometheus
-  systemd:
-    name: prometheus
-    state: restarted
-  when: ansible_service_mgr == "systemd"
+  command: docker compose restart prometheus
+  args:
+    chdir: "{{ prometheus.base_dir }}"
+  become_user: "{{ ansible_user }}"

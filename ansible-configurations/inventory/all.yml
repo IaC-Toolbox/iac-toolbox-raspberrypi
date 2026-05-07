@@ -1,21 +1,21 @@
----
 # ============================================
-# Ansible Inventory - Environment Variable Based
+# Ansible Inventory - Config File Based
 # ============================================
-# Configure connection via environment variables:
+# Target connection is driven by the `target` section of the config YAML file
+# passed via --extra-vars "@<file>". Example:
 #
-# Legacy single-host (backwards compatible):
-#   RPI_HOST=<your-host-ip-or-hostname>
-#   RPI_USER=pi
-#   RPI_SSH_KEY=~/.ssh/id_ed25519
-#   RPI_LOCAL=true  (set to use local connection instead of SSH)
+#   target:
+#     mode: local          # or: remote
+#     host: raspberry-4b.local
+#     user: vvasylkovskyi
+#     ssh_key: ~/.ssh/raspberrypi-4b
 
 all:
   hosts:
     iac-toolbox-target:
-      ansible_connection: "{{ 'local' if (lookup('env', 'RPI_LOCAL') | default('false', true) | lower) in ['1', 'true', 'yes', 'on'] else 'ssh' }}"
-      ansible_host: "{{ lookup('env', 'RPI_HOST') | default('localhost', true) }}"
-      ansible_user: "{{ lookup('env', 'RPI_USER') | default('pi', true) }}"
-      ansible_ssh_private_key_file: "{{ lookup('env', 'RPI_SSH_KEY') | default('~/.ssh/id_ed25519', true) }}"
+      ansible_connection: "{{ 'local' if (target.mode | default('local')) == 'local' else 'ssh' }}"
+      ansible_host: "{{ target.host | default('localhost') }}"
+      ansible_user: "{{ target.user | default('pi') }}"
+      ansible_ssh_private_key_file: "{{ target.ssh_key | default('~/.ssh/id_ed25519') }}"
       ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
       ansible_python_interpreter: auto_silent
