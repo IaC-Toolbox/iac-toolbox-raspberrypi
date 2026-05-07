@@ -601,7 +601,30 @@ prometheus.relabel "node_exporter_compat" {
 
 The scrape component forwards metrics through this relabel stage before remote_write. On Linux, the relabel component has no rules and passes metrics unchanged. On macOS, the two rules fire and the dashboard's RAM Used and RAM Total panels populate correctly.
 
-**Swap panels remain N/A on macOS.** macOS only exposes swap as page counters (`node_memory_swapins_total`, `node_memory_swapouts_total`), not as byte-sized gauges. There is no equivalent for `node_memory_SwapTotal_bytes`. This is a macOS kernel limitation — swap size panels will always be N/A for Mac devices.
+**Swap panels are also fixed — with a two-part approach.** macOS exposes swap as `node_memory_swap_total_bytes` and `node_memory_swap_used_bytes`, but the dashboard needs `node_memory_SwapTotal_bytes` and `node_memory_SwapFree_bytes`. The rename for total is straightforward, but free requires arithmetic (`total - used`), which Alloy relabeling can't do. The solution splits the work across two components:
+
+**Alloy (device side):** one more rename rule renames the total:
+```river
+rule {
+  source_labels = ["__name__"]
+  regex         = "node_memory_swap_total_bytes"
+  target_label  = "__name__"
+  replacement   = "node_memory_SwapTotal_bytes"
+}
+```
+`node_memory_swap_used_bytes` passes through unchanged.
+
+**Prometheus (platform side):** a recording rule computes the missing free bytes:
+```yaml
+groups:
+  - name: macos_compat
+    interval: 15s
+    rules:
+      - record: node_memory_SwapFree_bytes
+        expr: node_memory_SwapTotal_bytes - node_memory_swap_used_bytes
+```
+
+This rule runs on the platform every 15 seconds. Prometheus derives `SwapFree` from the two macOS metrics, and the dashboard query (`SwapTotal - SwapFree`) resolves to `swap_used_bytes` — the correct value. The recording rule is safe to deploy unconditionally: if no macOS devices are pushing data, the expression produces no output and there is no side effect on Linux metrics.
 
 ## Summary
 
