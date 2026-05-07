@@ -42,10 +42,10 @@
   roles:
     - role: common
 
-    - role: setup
-      when:
-        - (setup is not defined or setup)
-        - ansible_os_family != "Darwin"
+    # - role: setup
+    #   when:
+    #     - (setup is not defined or setup)
+    #     - ansible_os_family != "Darwin"
 
     - role: docker
       when: docker is not defined or docker.enabled | default(true)

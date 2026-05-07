@@ -31,10 +31,10 @@ enabled without an `alloy` config, it would fail similarly.
 Add `| default(...)` fallbacks in the playbook template for every variable reference that
 can legitimately be absent from user-supplied extra-vars:
 
-| Reference | Default |
-|---|---|
-| `node_exporter.port` | `9100` |
-| `alloy.domain` | `''` |
+| Reference            | Default |
+| -------------------- | ------- |
+| `node_exporter.port` | `9100`  |
+| `alloy.domain`       | `''`    |
 
 This makes the completion message resilient to partial configs without changing any
 business logic. Defaults match the role defaults so the displayed values are accurate

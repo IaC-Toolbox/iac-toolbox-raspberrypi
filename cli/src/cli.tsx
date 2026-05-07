@@ -30,7 +30,16 @@ program
   .command('init', { isDefault: true })
   .description('Start the interactive wizard')
   .option('--profile <name>', 'Credential profile to use', 'default')
-  .action((options) => {
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
+  )
+  .action(async (options: { profile: string; filePath?: string }) => {
+    if (options.filePath) {
+      const { runFilePathInit } = await import('./actions/filePathInstall.js');
+      await runFilePathInit(options.filePath);
+      return;
+    }
     render(<App profile={options.profile} />, {
       exitOnCtrlC: true,
       patchConsole: false,
@@ -68,6 +77,10 @@ cloudflare
     'Path to infrastructure directory',
     'infrastructure'
   )
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
+  )
   .action(async (options: { profile: string; destination: string }) => {
     const { default: CloudflareInitWizard } = await import(
       './components/CloudflareInitWizard.js'
@@ -93,11 +106,15 @@ cloudflare
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .action(async (options: { profile: string; destination: string }) => {
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
+  )
+  .action(async (options: { profile: string; destination: string; filePath?: string }) => {
     const { runCloudflareInstall } = await import(
       './actions/cloudflareInstall.js'
     );
-    await runCloudflareInstall(options.destination, options.profile);
+    await runCloudflareInstall(options.destination, options.profile, options.filePath);
   });
 
 cloudflare
@@ -162,7 +179,11 @@ grafana
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .action(async (options: { profile: string; destination: string }) => {
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
+  )
+  .action(async (options: { profile: string; destination: string; filePath?: string }) => {
     const { default: GrafanaInitWizard } = await import(
       './components/GrafanaInitWizard.js'
     );
@@ -170,6 +191,7 @@ grafana
       <GrafanaInitWizard
         profile={options.profile}
         destination={options.destination}
+        filePath={options.filePath}
       />,
       {
         exitOnCtrlC: true,
@@ -187,9 +209,13 @@ grafana
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .action(async (options: { profile: string; destination: string }) => {
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
+  )
+  .action(async (options: { profile: string; destination: string; filePath?: string }) => {
     const { runGrafanaInstall } = await import('./actions/grafanaInstall.js');
-    await runGrafanaInstall(options.destination, options.profile);
+    await runGrafanaInstall(options.destination, options.profile, options.filePath);
   });
 
 grafana
@@ -236,14 +262,21 @@ prometheus
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .action(async (options: { destination: string }) => {
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
+  )
+  .action(async (options: { destination: string; filePath?: string }) => {
     const { default: PrometheusInitWizard } = await import(
       './components/PrometheusInitWizard.js'
     );
-    render(<PrometheusInitWizard destination={options.destination} />, {
-      exitOnCtrlC: true,
-      patchConsole: false,
-    });
+    render(
+      <PrometheusInitWizard
+        destination={options.destination}
+        filePath={options.filePath}
+      />,
+      { exitOnCtrlC: true, patchConsole: false }
+    );
   });
 
 prometheus
@@ -255,11 +288,15 @@ prometheus
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .action(async (options: { profile: string; destination: string }) => {
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
+  )
+  .action(async (options: { profile: string; destination: string; filePath?: string }) => {
     const { runPrometheusInstall } = await import(
       './actions/prometheusInstall.js'
     );
-    await runPrometheusInstall(options.destination, options.profile);
+    await runPrometheusInstall(options.destination, options.profile, options.filePath);
   });
 
 const metricsAgent = program
@@ -273,6 +310,10 @@ metricsAgent
     '--destination <path>',
     'Path to infrastructure directory',
     'infrastructure'
+  )
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
   )
   .action(async (options: { destination: string }) => {
     const { default: MetricsAgentInitWizard } = await import(
@@ -294,11 +335,15 @@ metricsAgent
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .action(async (options: { destination: string }) => {
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
+  )
+  .action(async (options: { destination: string; filePath?: string }) => {
     const { runMetricsAgentInstall } = await import(
       './actions/metricsAgentInstall.js'
     );
-    await runMetricsAgentInstall(options.destination);
+    await runMetricsAgentInstall(options.destination, options.filePath);
   });
 
 metricsAgent
@@ -388,6 +433,10 @@ target
     'Path to infrastructure directory',
     'infrastructure'
   )
+  .option(
+    '--filePath <path>',
+    'Path to a per-device config file'
+  )
   .action(async (options: { destination: string }) => {
     const { default: TargetInitWizard } = await import(
       './components/TargetInitWizard.js'
@@ -407,12 +456,26 @@ program
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .action(async (options: { profile: string; destination: string }) => {
-    const { runStandaloneInstall } = await import(
-      './utils/standaloneInstall.js'
-    );
-    await runStandaloneInstall(options.destination, options.profile);
-  });
+  .option('--filePath <path>', 'Path to a per-device config file')
+  .action(
+    async (options: {
+      profile: string;
+      destination: string;
+      filePath?: string;
+    }) => {
+      if (options.filePath) {
+        const { runFilePathInstall } = await import(
+          './actions/filePathInstall.js'
+        );
+        await runFilePathInstall(options.filePath, options.destination);
+        return;
+      }
+      const { runStandaloneInstall } = await import(
+        './utils/standaloneInstall.js'
+      );
+      await runStandaloneInstall(options.destination, options.profile);
+    }
+  );
 
 program
   .command('uninstall')

@@ -1,6 +1,10 @@
 ---
 # Default variables for grafana role
-grafana:
+# grafana_defaults is the canonical set of defaults. It is used both as the
+# fallback value for `grafana` and as the base dict for the merge task in
+# tasks/main.yml, so that a partial `grafana:` dict from --extra-vars does not
+# silently drop keys like base_dir, version, etc.
+grafana_defaults:
   enabled: false
   version: 'latest'
   base_dir: '{{ ansible_env.HOME }}/.iac-toolbox/grafana'
@@ -11,3 +15,4 @@ grafana:
   provisioning_dir: '{{ ansible_env.HOME }}/.iac-toolbox/grafana/provisioning'
   # Port of Prometheus instance (used by datasource provisioning)
   prometheus_port: 9090
+

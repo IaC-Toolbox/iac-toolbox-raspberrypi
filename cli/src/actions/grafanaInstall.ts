@@ -2,7 +2,6 @@ import { spawnSync } from 'child_process';
 import { loadCredentials } from '../utils/credentials.js';
 import { loadIacToolboxYaml } from '../utils/grafanaConfig.js';
 import { pollHealth } from '../utils/healthCheck.js';
-import { buildTargetEnv } from '../utils/targetConfig.js';
 
 /**
  * Run `iac-toolbox grafana install`.
@@ -12,12 +11,13 @@ import { buildTargetEnv } from '../utils/targetConfig.js';
  */
 export async function runGrafanaInstall(
   destination: string,
-  profile: string
+  profile: string,
+  filePath?: string
 ): Promise<void> {
   // ── Missing Credentials Guard ─────────────────────────────
   console.log('◆  Reading Grafana credentials...');
   const creds = loadCredentials(profile);
-  const config = loadIacToolboxYaml(destination);
+  const config = loadIacToolboxYaml(destination, filePath);
 
   if (!creds.grafana_admin_password) {
     console.error('│  ✗ No credentials found');
@@ -41,16 +41,16 @@ export async function runGrafanaInstall(
   console.log('◆  Installing Grafana...');
   console.log('│  ══════════════════════════════════════');
 
-  const targetEnv = buildTargetEnv(destination);
   const env = {
     ...process.env,
-    ...targetEnv,
     GRAFANA_ADMIN_USER: adminUser,
     GRAFANA_ADMIN_PASSWORD: creds.grafana_admin_password,
   };
 
   const scriptPath = `${destination}/scripts/install.sh`;
-  const result = spawnSync('bash', [scriptPath, '--grafana', '--local'], {
+  const scriptArgs = [scriptPath, '--grafana'];
+  if (filePath) scriptArgs.push('--filePath', filePath);
+  const result = spawnSync('bash', scriptArgs, {
     env,
     stdio: 'inherit',
   });
@@ -68,9 +68,18 @@ export async function runGrafanaInstall(
   }
 
   // ── Post-Install Health Check ─────────────────────────────
+  const grafanaPort = (config.grafana?.port as number | undefined) ?? 3000;
+  const grafanaDomain = config.grafana?.domain as string | undefined;
+  const cloudflareEnabled =
+    config.cloudflare && (config.cloudflare as Record<string, unknown>).enabled;
+  const healthUrl =
+    cloudflareEnabled && grafanaDomain
+      ? `https://${grafanaDomain}/api/health`
+      : `http://localhost:${grafanaPort}/api/health`;
+
   console.log('│  ◜ Waiting for Grafana to be healthy...');
 
-  const healthy = await pollHealth('http://localhost:3000/api/health', {
+  const healthy = await pollHealth(healthUrl, {
     retries: 30,
     delayMs: 2000,
   });
@@ -81,15 +90,10 @@ export async function runGrafanaInstall(
     console.log('│');
     console.log('│  ✔ Health check passed');
     console.log('│');
-    console.log('│  Local URL    http://localhost:3000');
-    // Show public URL only if cloudflare is configured
-    if (
-      config.cloudflare &&
-      (config.cloudflare as Record<string, unknown>).enabled
-    ) {
-      const grafanaDomain =
-        (config.grafana?.domain as string) || 'grafana.iac-toolbox.com';
+    if (cloudflareEnabled && grafanaDomain) {
       console.log(`│  Public URL   https://${grafanaDomain}`);
+    } else {
+      console.log(`│  Local URL    http://localhost:${grafanaPort}`);
     }
     console.log(`│  Username     ${adminUser}`);
     console.log('│  Password     saved to ~/.iac-toolbox/credentials');

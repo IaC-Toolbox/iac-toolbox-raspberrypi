@@ -7,6 +7,7 @@ interface IacToolboxYaml {
   [key: string]: unknown;
   prometheus?: {
     grafana_url?: string;
+    domain?: string;
     [key: string]: unknown;
   };
   grafana?: {
@@ -20,14 +21,27 @@ interface IacToolboxYaml {
  * Returns undefined if the key is not set.
  */
 export function loadPrometheusGrafanaUrl(
-  destination: string
+  destination: string,
+  filePath?: string
 ): string | undefined {
-  const config = loadIacToolboxYaml(destination) as IacToolboxYaml;
+  const config = loadIacToolboxYaml(destination, filePath) as IacToolboxYaml;
   return config.prometheus?.grafana_url as string | undefined;
 }
 
 /**
- * Update the prometheus section of iac-toolbox.yml with the grafana_url.
+ * Load the prometheus.domain from iac-toolbox.yml.
+ * Returns undefined if the key is not set.
+ */
+export function loadPrometheusDomain(
+  destination: string,
+  filePath?: string
+): string | undefined {
+  const config = loadIacToolboxYaml(destination, filePath) as IacToolboxYaml;
+  return config.prometheus?.domain as string | undefined;
+}
+
+/**
+ * Update the prometheus section of iac-toolbox.yml with grafana_url and domain.
  *
  * Also writes `grafana.port` when the URL uses a non-default port,
  * so the Ansible role picks it up via `@iac-toolbox.yml`.
@@ -36,9 +50,13 @@ export function loadPrometheusGrafanaUrl(
  */
 export function updatePrometheusConfig(
   destination: string,
-  grafanaUrl: string
+  grafanaUrl: string,
+  domain: string,
+  filePath?: string
 ): void {
-  const configPath = resolveConfigPath(destination);
+  const configPath = filePath
+    ? path.resolve(filePath)
+    : resolveConfigPath(destination);
   let config: IacToolboxYaml = {};
 
   if (fs.existsSync(configPath)) {
@@ -54,6 +72,7 @@ export function updatePrometheusConfig(
   config.prometheus = {
     ...(config.prometheus || {}),
     grafana_url: grafanaUrl,
+    domain,
   };
 
   // Parse port from URL and write to grafana.port if non-default

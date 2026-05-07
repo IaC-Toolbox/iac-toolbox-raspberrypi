@@ -60,7 +60,7 @@ describe('loadPrometheusGrafanaUrl', () => {
 // ---------------------------------------------------------------------------
 describe('updatePrometheusConfig', () => {
   it('creates new config with prometheus section when file does not exist', () => {
-    updatePrometheusConfig(tmpDir, 'http://localhost:3000');
+    updatePrometheusConfig(tmpDir, 'http://localhost:3000', 'prometheus.iac-toolbox.com');
 
     const configPath = path.join(tmpDir, 'iac-toolbox.yml');
     expect(fs.existsSync(configPath)).toBe(true);
@@ -78,7 +78,7 @@ describe('updatePrometheusConfig', () => {
     });
     fs.writeFileSync(configPath, existing);
 
-    updatePrometheusConfig(tmpDir, 'http://localhost:3000');
+    updatePrometheusConfig(tmpDir, 'http://localhost:3000', 'prometheus.iac-toolbox.com');
 
     const content = fs.readFileSync(configPath, 'utf-8');
     const parsed = yaml.load(content) as Record<string, unknown>;
@@ -94,7 +94,7 @@ describe('updatePrometheusConfig', () => {
   });
 
   it('writes grafana.port when URL has a non-default port', () => {
-    updatePrometheusConfig(tmpDir, 'http://grafana.local:4000');
+    updatePrometheusConfig(tmpDir, 'http://grafana.local:4000', 'prometheus.iac-toolbox.com');
 
     const configPath = path.join(tmpDir, 'iac-toolbox.yml');
     const content = fs.readFileSync(configPath, 'utf-8');
@@ -104,7 +104,7 @@ describe('updatePrometheusConfig', () => {
   });
 
   it('does not write grafana.port when URL uses default port 3000', () => {
-    updatePrometheusConfig(tmpDir, 'http://localhost:3000');
+    updatePrometheusConfig(tmpDir, 'http://localhost:3000', 'prometheus.iac-toolbox.com');
 
     const configPath = path.join(tmpDir, 'iac-toolbox.yml');
     const content = fs.readFileSync(configPath, 'utf-8');
@@ -115,7 +115,7 @@ describe('updatePrometheusConfig', () => {
   });
 
   it('adds header comment to generated config', () => {
-    updatePrometheusConfig(tmpDir, 'http://localhost:3000');
+    updatePrometheusConfig(tmpDir, 'http://localhost:3000', 'prometheus.iac-toolbox.com');
 
     const configPath = path.join(tmpDir, 'iac-toolbox.yml');
     const content = fs.readFileSync(configPath, 'utf-8');

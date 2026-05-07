@@ -42,8 +42,8 @@ export function resolveConfigPath(destination: string): string {
  * Load and parse the iac-toolbox.yml file.
  * Returns an empty object if the file does not exist.
  */
-export function loadIacToolboxYaml(destination: string): IacToolboxYaml {
-  const configPath = resolveConfigPath(destination);
+export function loadIacToolboxYaml(destination: string, filePath?: string): IacToolboxYaml {
+  const configPath = filePath ?? resolveConfigPath(destination);
   if (!fs.existsSync(configPath)) {
     return {};
   }
@@ -64,9 +64,10 @@ export function loadIacToolboxYaml(destination: string): IacToolboxYaml {
  */
 export function updateGrafanaConfig(
   destination: string,
-  adminUser: string
+  adminUser: string,
+  filePath?: string
 ): void {
-  const configPath = resolveConfigPath(destination);
+  const configPath = filePath ?? resolveConfigPath(destination);
   let config: IacToolboxYaml = {};
 
   if (fs.existsSync(configPath)) {

@@ -3,6 +3,7 @@
   systemd:
     name: cloudflared
     state: restarted
+  become: true
   when: ansible_service_mgr == "systemd"
 
 - name: Restart cloudflared (launchd unload)

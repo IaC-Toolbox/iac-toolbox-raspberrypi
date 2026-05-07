@@ -32,9 +32,18 @@ RUN_ANSIBLE=true
 RUN_TERRAFORM=true
 ANSIBLE_PLAYBOOK="site.yml"
 RPI_LOCAL_MODE="${RPI_LOCAL:-false}"
+FILE_PATH_ARG=""
 
 while [[ $# -gt 0 ]]; do
   case $1 in
+    --filePath=*)
+      FILE_PATH_ARG="${1#*=}"
+      shift
+      ;;
+    --filePath)
+      FILE_PATH_ARG="$2"
+      shift 2
+      ;;
     --ansible-only)
       RUN_TERRAFORM=false
       shift
@@ -84,6 +93,7 @@ while [[ $# -gt 0 ]]; do
       echo "  --prometheus       Deploy only Prometheus metrics collection"
       echo "  --metrics-agent    Deploy only Node Exporter + Grafana Alloy"
       echo "  --local            Run Ansible locally on this machine instead of SSH"
+      echo "  --filePath <path>  Path to a per-device config file (overrides iac-toolbox.yml lookup)"
       echo "  -h, --help         Show this help message"
       echo ""
       echo "Default: Run both Ansible and Terraform"
@@ -196,10 +206,18 @@ if [ "$RUN_ANSIBLE" = true ]; then
   ANSIBLE_CMD=(ansible-playbook -i inventory/all.yml "playbooks/$ANSIBLE_PLAYBOOK")
 
   # Load iac-toolbox.yml configuration file
-  # Priority: 1) IAC_TOOLBOX_CONFIG env var, 2) infrastructure/ folder, 3) ~/.iac-toolbox/
+  # Priority: 1) --filePath flag, 2) IAC_TOOLBOX_CONFIG env var, 3) infrastructure/ folder, 4) ~/.iac-toolbox/
   IAC_CONFIG_FILE=""
-  if [ -n "$IAC_TOOLBOX_CONFIG" ] && [ -f "$IAC_TOOLBOX_CONFIG" ]; then
-    IAC_CONFIG_FILE="$IAC_TOOLBOX_CONFIG"
+  if [ -n "$FILE_PATH_ARG" ]; then
+    if [ -f "$FILE_PATH_ARG" ]; then
+      IAC_CONFIG_FILE="$(realpath "$FILE_PATH_ARG")"
+      echo -e "${GREEN}✓ Using configuration from --filePath: $IAC_CONFIG_FILE${NC}"
+    else
+      echo -e "${RED}Error: --filePath file not found: $FILE_PATH_ARG${NC}"
+      exit 1
+    fi
+  elif [ -n "$IAC_TOOLBOX_CONFIG" ] && [ -f "$IAC_TOOLBOX_CONFIG" ]; then
+    IAC_CONFIG_FILE="$(realpath "$IAC_TOOLBOX_CONFIG")"
     echo -e "${GREEN}✓ Using configuration from IAC_TOOLBOX_CONFIG: $IAC_CONFIG_FILE${NC}"
   else
     for config_path in \
@@ -216,7 +234,7 @@ if [ "$RUN_ANSIBLE" = true ]; then
   if [ -n "$IAC_CONFIG_FILE" ]; then
     ANSIBLE_CMD+=(--extra-vars "@$IAC_CONFIG_FILE")
   else
-    echo -e "${YELLOW}⚠ No iac-toolbox.yml configuration file found. Using role defaults.${NC}"
+    echo -e "${YELLOW}⚠ No iac-toolbox.yml configuration file found. Use --filePath to specify one, or run init first. Using role defaults.${NC}"
   fi
   ANSIBLE_CMD+=(--extra-vars "project_root=${PROJECT_ROOT}")
   if [ -n "$SECRET_VARS" ]; then
