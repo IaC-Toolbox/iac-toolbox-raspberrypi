@@ -1,0 +1,6 @@
+---
+cadvisor_version: "v0.49.1"
+cadvisor_image: "gcr.io/cadvisor/cadvisor"
+cadvisor_port: 8080
+cadvisor_container_name: cadvisor
+cadvisor_base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/cadvisor"

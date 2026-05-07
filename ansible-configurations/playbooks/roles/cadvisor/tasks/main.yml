@@ -1,0 +1,51 @@
+---
+- name: Ensure cAdvisor base directory exists
+  file:
+    path: "{{ cadvisor_base_dir }}"
+    state: directory
+    mode: '0755'
+  when: cadvisor is defined and cadvisor.enabled
+
+- name: Deploy cAdvisor docker-compose file
+  template:
+    src: docker-compose.cadvisor.yml.j2
+    dest: "{{ cadvisor_base_dir }}/docker-compose.yml"
+    mode: '0644'
+  when: cadvisor is defined and cadvisor.enabled
+
+- name: Pull cAdvisor image
+  community.docker.docker_image:
+    name: "{{ cadvisor_image }}:{{ cadvisor_version }}"
+    source: pull
+    docker_host: "{{ active_docker_socket }}"
+  when: cadvisor is defined and cadvisor.enabled
+
+- name: Start cAdvisor via docker compose
+  shell: docker compose up -d
+  args:
+    chdir: "{{ cadvisor_base_dir }}"
+  when: cadvisor is defined and cadvisor.enabled
+
+- name: Wait for cAdvisor to be healthy
+  uri:
+    url: "http://localhost:{{ cadvisor_port }}/healthz"
+    method: GET
+    status_code: 200
+  register: cadvisor_health
+  retries: 30
+  delay: 2
+  until: cadvisor_health.status == 200
+  when: cadvisor is defined and cadvisor.enabled
+
+- name: Stop and remove cAdvisor
+  community.docker.docker_compose_v2:
+    project_src: "{{ cadvisor_base_dir }}"
+    state: absent
+  when: cadvisor is not defined or not cadvisor.enabled | default(false)
+
+- name: Display cAdvisor status
+  debug:
+    msg:
+      - "cAdvisor {{ cadvisor_version }} is running"
+      - "cAdvisor metrics: http://localhost:{{ cadvisor_port }}/metrics"
+  when: cadvisor is defined and cadvisor.enabled

@@ -359,6 +359,45 @@ metricsAgent
     process.exit(result.status ?? 1);
   });
 
+const cadvisor = program
+  .command('cadvisor')
+  .description('Manage cAdvisor container metrics agent');
+
+cadvisor
+  .command('init')
+  .description('Enable cAdvisor in iac-toolbox.yml')
+  .option('--destination <path>', 'Path to infrastructure directory', 'infrastructure')
+  .action(async (options: { destination: string }) => {
+    const { default: CAdvisorInitWizard } = await import('./components/CAdvisorInitWizard.js');
+    render(<CAdvisorInitWizard destination={options.destination} />, {
+      exitOnCtrlC: true,
+      patchConsole: false,
+    });
+  });
+
+cadvisor
+  .command('install')
+  .description('Install or reinstall cAdvisor (requires metrics-agent already installed)')
+  .option('--profile <name>', 'Credential profile to use', 'default')
+  .option('--destination <path>', 'Path to infrastructure directory', 'infrastructure')
+  .action(async (options: { profile: string; destination: string }) => {
+    const { runCAdvisorInstall } = await import('./actions/cadvisorInstall.js');
+    await runCAdvisorInstall(options.destination, options.profile);
+  });
+
+cadvisor
+  .command('uninstall')
+  .description('Remove cAdvisor from this device')
+  .action(async () => {
+    const { spawnSync } = await import('child_process');
+    const result = spawnSync(
+      'bash',
+      ['infrastructure/scripts/uninstall-cadvisor.sh', '--local'],
+      { stdio: 'inherit' }
+    );
+    process.exit(result.status ?? 1);
+  });
+
 const githubBuildWorkflow = program
   .command('github-build-workflow')
   .description('Manage GitHub Build Workflow templates');
