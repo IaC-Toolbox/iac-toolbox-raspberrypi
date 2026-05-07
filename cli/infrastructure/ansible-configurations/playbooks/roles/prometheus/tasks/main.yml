@@ -24,6 +24,13 @@
     owner: "{{ ansible_user }}"
     mode: '0644'
 
+- name: Deploy Prometheus recording rules
+  template:
+    src: macos_compat_rules.yml.j2
+    dest: "{{ prometheus.base_dir }}/macos_compat_rules.yml"
+    owner: "{{ ansible_user }}"
+    mode: '0644'
+
 - name: Pull Prometheus container image
   community.docker.docker_image:
     name: "prom/prometheus:{{ prometheus.version }}"

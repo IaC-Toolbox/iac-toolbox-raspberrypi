@@ -31,6 +31,14 @@ prometheus.relabel "node_exporter_compat" {
     target_label  = "__name__"
     replacement   = "node_memory_MemAvailable_bytes"
   }
+  // node_memory_SwapTotal_bytes: rename to Linux name for dashboard compatibility.
+  // SwapFree is computed on the Prometheus side via a recording rule (swap_total - swap_used).
+  rule {
+    source_labels = ["__name__"]
+    regex         = "node_memory_swap_total_bytes"
+    target_label  = "__name__"
+    replacement   = "node_memory_SwapTotal_bytes"
+  }
 {% endif %}
 }
 

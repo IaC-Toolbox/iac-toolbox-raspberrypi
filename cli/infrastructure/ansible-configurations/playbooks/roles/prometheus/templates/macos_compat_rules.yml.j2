@@ -1,0 +1,10 @@
+groups:
+  - name: macos_compat
+    interval: {{ prometheus.scrape_interval }}
+    rules:
+      # macOS Node Exporter exposes swap_used_bytes but not swap_free_bytes.
+      # The Node Exporter Full dashboard needs SwapFree to compute SWAP Used %.
+      # Alloy renames swap_total_bytes → SwapTotal_bytes on macOS.
+      # This rule derives the missing SwapFree from those two metrics.
+      - record: node_memory_SwapFree_bytes
+        expr: node_memory_SwapTotal_bytes - node_memory_swap_used_bytes
