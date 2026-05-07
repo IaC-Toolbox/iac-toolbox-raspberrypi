@@ -1,4 +1,8 @@
 ---
+- name: Merge prometheus config with role defaults
+  set_fact:
+    prometheus: "{{ prometheus_defaults | combine(prometheus, recursive=True) }}"
+
 - name: Create Prometheus base directory
   file:
     path: "{{ prometheus.base_dir }}"
@@ -20,6 +24,13 @@
     owner: "{{ ansible_user }}"
     mode: '0644'
 
+- name: Deploy Prometheus recording rules
+  template:
+    src: macos_compat_rules.yml.j2
+    dest: "{{ prometheus.base_dir }}/macos_compat_rules.yml"
+    owner: "{{ ansible_user }}"
+    mode: '0644'
+
 - name: Pull Prometheus container image
   community.docker.docker_image:
     name: "prom/prometheus:{{ prometheus.version }}"
@@ -27,22 +38,11 @@
     docker_host: "{{ active_docker_socket }}"
   become_user: "{{ ansible_user }}"
 
-- name: Deploy Prometheus systemd service
-  template:
-    src: prometheus.service.j2
-    dest: /etc/systemd/system/prometheus.service
-    mode: '0644'
-  notify: Reload systemd
-  when: ansible_service_mgr == "systemd"
-
-- name: Enable and start Prometheus service
-  include_role:
-    name: service_ctl
-  vars:
-    svc_name: prometheus
-    svc_action: started
-    svc_enabled: true
-  when: ansible_service_mgr == "systemd"
+- name: Start Prometheus via docker compose
+  command: docker compose up -d
+  args:
+    chdir: "{{ prometheus.base_dir }}"
+  become_user: "{{ ansible_user }}"
 
 - name: Wait for Prometheus to be healthy
   uri:

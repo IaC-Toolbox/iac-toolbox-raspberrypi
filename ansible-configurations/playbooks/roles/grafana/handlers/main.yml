@@ -1,11 +1,6 @@
 ---
-- name: Reload systemd
-  systemd:
-    daemon_reload: yes
-  when: ansible_service_mgr == "systemd"
-
 - name: Restart grafana
-  systemd:
-    name: grafana
-    state: restarted
-  when: ansible_service_mgr == "systemd"
+  command: docker compose restart grafana
+  args:
+    chdir: "{{ grafana.base_dir }}"
+  become_user: "{{ ansible_user }}"

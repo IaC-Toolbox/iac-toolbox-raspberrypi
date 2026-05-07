@@ -31,6 +31,14 @@ prometheus.relabel "node_exporter_compat" {
     target_label  = "__name__"
     replacement   = "node_memory_MemAvailable_bytes"
   }
+  // node_memory_SwapTotal_bytes: rename to Linux name for dashboard compatibility.
+  // SwapFree is computed on the Prometheus side via a recording rule (swap_total - swap_used).
+  rule {
+    source_labels = ["__name__"]
+    regex         = "node_memory_swap_total_bytes"
+    target_label  = "__name__"
+    replacement   = "node_memory_SwapTotal_bytes"
+  }
 {% endif %}
 }
 
@@ -40,17 +48,3 @@ prometheus.remote_write "platform" {
     url = "{{ alloy_remote_write_url }}"
   }
 }
-
-viktorvasylkovskyi@Mac cli % curl -s http://localhost:9100/metrics | grep -i swap
-# HELP node_memory_swap_total_bytes Memory information field swap_total_bytes.
-# TYPE node_memory_swap_total_bytes gauge
-node_memory_swap_total_bytes 6.442450944e+09
-# HELP node_memory_swap_used_bytes Memory information field swap_used_bytes.
-# TYPE node_memory_swap_used_bytes gauge
-node_memory_swap_used_bytes 4.942987264e+09
-# HELP node_memory_swapped_in_bytes_total Memory information field swapped_in_bytes_total.
-# TYPE node_memory_swapped_in_bytes_total counter
-node_memory_swapped_in_bytes_total 1.625343148032e+12
-# HELP node_memory_swapped_out_bytes_total Memory information field swapped_out_bytes_total.
-# TYPE node_memory_swapped_out_bytes_total counter
-node_memory_swapped_out_bytes_total 1.6472244224e+10
