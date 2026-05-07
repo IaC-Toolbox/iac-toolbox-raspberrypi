@@ -1,9 +1,4 @@
 ---
-- name: Set macOS node_exporter target
-  set_fact:
-    alloy_node_exporter_host: "host.docker.internal"
-  when: ansible_facts['system'] == 'Darwin'
-
 - name: Ensure alloy base directory exists
   file:
     path: "{{ alloy_base_dir }}"
@@ -24,59 +19,18 @@
     mode: '0644'
   notify: Restart grafana-alloy
 
-- name: Pull Grafana Alloy image
-  community.docker.docker_image:
-    name: "grafana/alloy:v{{ alloy_version }}"
-    source: pull
-    docker_host: "{{ active_docker_socket }}"
-
-- name: Deploy grafana-alloy systemd service
-  template:
-    src: grafana-alloy.service.j2
-    dest: /etc/systemd/system/grafana-alloy.service
-    owner: root
-    group: root
-    mode: "0644"
-  become: true
-  when: ansible_facts['system'] == 'Linux'
-  notify:
-    - Reload systemd
-    - Restart grafana-alloy
-
-- name: Enable and start grafana-alloy service
-  include_role:
-    name: service_ctl
-  vars:
-    svc_name: grafana-alloy
-    svc_action: started
-    svc_enabled: true
-  when: ansible_facts['system'] == 'Linux'
-
 - name: Start Grafana Alloy via docker compose
   shell: docker compose up -d
   args:
     chdir: "{{ alloy_base_dir }}"
-  when: ansible_facts['system'] == 'Darwin'
 
-- name: Wait for grafana-alloy to be available (Linux)
-  uri:
-    url: "http://localhost:{{ alloy_port }}/ready"
-    method: GET
-    status_code: 200
-  register: alloy_health
-  retries: 30
-  delay: 2
-  until: alloy_health.status == 200
-  when: ansible_facts['system'] == 'Linux'
-
-- name: Wait for grafana-alloy container to be running (macOS)
+- name: Wait for grafana-alloy container to be running
   shell: docker inspect --format="{{ '{{' }}.State.Running{{ '}}' }}" grafana-alloy
   register: alloy_container_state
   retries: 15
   delay: 2
   until: alloy_container_state.stdout == "true"
   changed_when: false
-  when: ansible_facts['system'] == 'Darwin'
 
 - name: Display grafana-alloy status
   debug:

@@ -1,6 +1,6 @@
 ---
 # Default variables for prometheus role
-prometheus:
+prometheus_defaults:
   enabled: false
   version: "latest"
   base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/prometheus"
@@ -8,3 +8,6 @@ prometheus:
   scrape_interval: "15s"
   retention: "15d"
   remote_write_receiver: true
+  domain: ""
+
+prometheus: "{{ prometheus_defaults }}"
