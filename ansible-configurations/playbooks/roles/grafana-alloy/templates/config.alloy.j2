@@ -1,6 +1,37 @@
+// Scrape Node Exporter and tag metrics with this device's hostname
 prometheus.scrape "node_exporter" {
-  targets = [{ __address__ = "{{ alloy_node_exporter_host }}:{{ node_exporter_port }}" }]
+  targets = [{
+    __address__ = "{{ alloy_node_exporter_host }}:{{ node_exporter_port }}",
+    instance    = "{{ grafana_alloy.instance_name | default(ansible_hostname) }}",
+    job         = "node_exporter",
+  }]
+  scrape_interval = "15s"
+  forward_to     = [prometheus.relabel.node_exporter_compat.receiver]
+}
+
+// Rename metrics for dashboard compatibility.
+// On macOS, Node Exporter uses different memory metric names than Linux.
+// These rules rename them to the Linux names expected by Node Exporter Full (dashboard ID 1860).
+prometheus.relabel "node_exporter_compat" {
   forward_to = [prometheus.remote_write.platform.receiver]
+
+{% if ansible_facts['system'] == 'Darwin' %}
+  // node_memory_MemTotal_bytes: total physical RAM
+  rule {
+    source_labels = ["__name__"]
+    regex         = "node_memory_total_bytes"
+    target_label  = "__name__"
+    replacement   = "node_memory_MemTotal_bytes"
+  }
+  // node_memory_MemAvailable_bytes: approximate — macOS "free" only.
+  // Active + wired + inactive pages will appear as "used", which slightly overstates usage.
+  rule {
+    source_labels = ["__name__"]
+    regex         = "node_memory_free_bytes"
+    target_label  = "__name__"
+    replacement   = "node_memory_MemAvailable_bytes"
+  }
+{% endif %}
 }
 
 // Push metrics to the central Prometheus instance on the platform
