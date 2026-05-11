@@ -76,6 +76,11 @@ while [[ $# -gt 0 ]]; do
       ANSIBLE_PLAYBOOK="metrics-agent.yml"
       shift
       ;;
+    --cadvisor)
+      RUN_TERRAFORM=false
+      ANSIBLE_PLAYBOOK="cadvisor.yml"
+      shift
+      ;;
     -h|--help)
       echo "Usage: $0 [OPTIONS]"
       echo ""
@@ -87,6 +92,7 @@ while [[ $# -gt 0 ]]; do
       echo "  --grafana          Deploy only Grafana observability stack"
       echo "  --prometheus       Deploy only Prometheus metrics collection"
       echo "  --metrics-agent    Deploy only Node Exporter + Grafana Alloy"
+      echo "  --cadvisor         Deploy only cAdvisor container metrics agent"
       echo "  --local            Run Ansible locally on this machine instead of SSH"
       echo "  --filePath <path>  Path to a per-device config file (overrides iac-toolbox.yml lookup)"
       echo "  -h, --help         Show this help message"

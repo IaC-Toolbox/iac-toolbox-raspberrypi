@@ -7,6 +7,8 @@ services:
       - "{{ alloy_port }}:{{ alloy_port }}"
     volumes:
       - "{{ alloy_base_dir }}/config.alloy:/etc/alloy/config.alloy"
+    networks:
+      - monitoring
     command:
       - run
       - "--server.http.listen-addr=0.0.0.0:{{ alloy_port }}"
@@ -14,3 +16,8 @@ services:
       - "/etc/alloy/config.alloy"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+networks:
+  monitoring:
+    name: monitoring
+    driver: bridge

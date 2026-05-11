@@ -4,22 +4,24 @@ import { updateCAdvisorConfig } from '../utils/cadvisorConfig.js';
 
 interface CAdvisorInitWizardProps {
   destination: string;
+  filePath?: string;
   /** Injectable for testing — defaults to updateCAdvisorConfig */
-  _updateCAdvisorConfig?: (destination: string) => void;
+  _updateCAdvisorConfig?: (destination: string, filePath?: string) => void;
 }
 
 export default function CAdvisorInitWizard({
   destination,
+  filePath,
   _updateCAdvisorConfig = updateCAdvisorConfig,
 }: CAdvisorInitWizardProps) {
   const { exit } = useApp();
 
   useEffect(() => {
-    _updateCAdvisorConfig(destination);
+    _updateCAdvisorConfig(destination, filePath);
     // Give Ink time to render final screen
     const timer = setTimeout(() => exit(), 100);
     return () => clearTimeout(timer);
-  }, [destination, exit, _updateCAdvisorConfig]);
+  }, [destination, filePath, exit, _updateCAdvisorConfig]);
 
   return (
     <Box flexDirection="column" paddingY={1}>
@@ -44,7 +46,7 @@ export default function CAdvisorInitWizard({
       <Text bold color="green">
         {'◇  cAdvisor enabled'}
       </Text>
-      <Text>{'│  cadvisor.enabled    true    → iac-toolbox.yml'}</Text>
+      <Text>{'│  cadvisor.enabled    true    → '}{filePath ?? 'iac-toolbox.yml'}</Text>
       <Text bold>{'│'}</Text>
       <Text>{'│  ℹ  To install cAdvisor, run:'}</Text>
       <Text bold>{'│'}</Text>

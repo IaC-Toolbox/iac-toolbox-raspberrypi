@@ -21,8 +21,8 @@ export function isCAdvisorEnabled(destination: string): boolean {
  * Write cadvisor.enabled = true to iac-toolbox.yml.
  * Preserves all other content in the file.
  */
-export function updateCAdvisorConfig(destination: string): void {
-  const configPath = resolveConfigPath(destination);
+export function updateCAdvisorConfig(destination: string, filePath?: string): void {
+  const configPath = filePath ?? resolveConfigPath(destination);
   let config: IacToolboxYaml = {};
 
   if (fs.existsSync(configPath)) {

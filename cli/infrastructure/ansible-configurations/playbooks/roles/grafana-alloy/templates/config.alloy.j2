@@ -9,6 +9,19 @@ prometheus.scrape "node_exporter" {
   forward_to     = [prometheus.relabel.node_exporter_compat.receiver]
 }
 
+{% if cadvisor is defined and cadvisor.enabled | default(false) %}
+// cAdvisor — per-container metrics (CPU, memory, network, filesystem)
+prometheus.scrape "cadvisor" {
+  targets = [{
+    __address__ = "{{ cadvisor_container_name | default('cadvisor') }}:8080",
+    instance    = "{{ grafana_alloy.instance_name | default(ansible_hostname) }}",
+    job         = "cadvisor",
+  }]
+  scrape_interval = "15s"
+  forward_to      = [prometheus.remote_write.platform.receiver]
+}
+{% endif %}
+
 // Rename metrics for dashboard compatibility.
 // On macOS, Node Exporter uses different memory metric names than Linux.
 // These rules rename them to the Linux names expected by Node Exporter Full (dashboard ID 1860).

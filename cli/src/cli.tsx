@@ -380,11 +380,12 @@ cadvisor
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .action(async (options: { destination: string }) => {
+  .option('--filePath <path>', 'Path to a per-device config file')
+  .action(async (options: { destination: string; filePath?: string }) => {
     const { default: CAdvisorInitWizard } = await import(
       './components/CAdvisorInitWizard.js'
     );
-    render(<CAdvisorInitWizard destination={options.destination} />, {
+    render(<CAdvisorInitWizard destination={options.destination} filePath={options.filePath} />, {
       exitOnCtrlC: true,
       patchConsole: false,
     });
@@ -401,9 +402,10 @@ cadvisor
     'Path to infrastructure directory',
     'infrastructure'
   )
-  .action(async (options: { profile: string; destination: string }) => {
+  .option('--filePath <path>', 'Path to a per-device config file')
+  .action(async (options: { profile: string; destination: string; filePath?: string }) => {
     const { runCAdvisorInstall } = await import('./actions/cadvisorInstall.js');
-    await runCAdvisorInstall(options.destination, options.profile);
+    await runCAdvisorInstall(options.destination, options.profile, options.filePath);
   });
 
 cadvisor
