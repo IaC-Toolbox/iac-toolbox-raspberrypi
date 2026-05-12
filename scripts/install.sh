@@ -57,6 +57,16 @@ while [[ $# -gt 0 ]]; do
       ANSIBLE_PLAYBOOK="vault.yml"
       shift
       ;;
+    --observability-platform)
+      RUN_TERRAFORM=false
+      ANSIBLE_PLAYBOOK="observability_platform.yml"
+      shift
+      ;;
+    --cadvisor)
+      RUN_TERRAFORM=false
+      ANSIBLE_PLAYBOOK="cadvisor.yml"
+      shift
+      ;;
     --cloudflared)
       RUN_TERRAFORM=false
       ANSIBLE_PLAYBOOK="cloudflare.yml"
@@ -87,11 +97,13 @@ while [[ $# -gt 0 ]]; do
       echo "Options:"
       echo "  --ansible-only     Run only Ansible playbook (infrastructure)"
       echo "  --terraform-only   Run only Terraform (Grafana alerts)"
-      echo "  --vault            Deploy only HashiCorp Vault"
-      echo "  --cloudflared      Deploy only Cloudflare tunnel"
-      echo "  --grafana          Deploy only Grafana observability stack"
-      echo "  --prometheus       Deploy only Prometheus metrics collection"
-      echo "  --metrics-agent    Deploy only Node Exporter + Grafana Alloy"
+      echo "  --vault                   Deploy only HashiCorp Vault"
+      echo "  --observability-platform  Deploy full observability stack in one Ansible run"
+      echo "  --cadvisor                Deploy only cAdvisor"
+      echo "  --cloudflared             Deploy only Cloudflare tunnel"
+      echo "  --grafana                 Deploy only Grafana observability stack"
+      echo "  --prometheus              Deploy only Prometheus metrics collection"
+      echo "  --metrics-agent           Deploy only Node Exporter + Grafana Alloy"
       echo "  --local            Run Ansible locally on this machine instead of SSH"
       echo "  --filePath <path>  Path to a per-device config file (overrides iac-toolbox.yml lookup)"
       echo "  -h, --help         Show this help message"

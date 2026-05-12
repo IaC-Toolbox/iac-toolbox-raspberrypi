@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:{{ cadvisor_version }}
+    container_name: cadvisor
+    restart: unless-stopped
+    privileged: true
+    ports:
+      - "{{ cadvisor.port | default(cadvisor_port) }}:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
