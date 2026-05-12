@@ -25,7 +25,11 @@ interface GrafanaInitWizardProps {
     profile: string
   ) => void;
   /** Injectable for testing — defaults to updateGrafanaConfig */
-  _updateGrafanaConfig?: (destination: string, adminUser: string, filePath?: string) => void;
+  _updateGrafanaConfig?: (
+    destination: string,
+    adminUser: string,
+    filePath?: string
+  ) => void;
 }
 
 type Step = 'username' | 'password' | 'done';

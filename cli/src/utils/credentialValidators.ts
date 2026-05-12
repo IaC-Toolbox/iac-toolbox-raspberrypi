@@ -197,8 +197,10 @@ const validators: Record<
   github_runner_token: validateStringValue,
   github_runner_repo_url: validateStringValue,
   cloudflare_tunnel_token: validateCloudflareToken,
+  cloudflare_api_token: validateCloudflareToken,
   vault_token: validateVaultToken,
   grafana_api_key: validateGrafanaApiKey,
+  grafana_admin_password: validateStringValue,
   pagerduty_key: validatePagerDutyKey,
 };
 
