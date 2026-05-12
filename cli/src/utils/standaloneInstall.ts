@@ -7,6 +7,7 @@ import {
   installScriptExists,
 } from './installRunner.js';
 import { buildTargetEnv } from './targetConfig.js';
+import { print } from './print.js';
 
 /**
  * Check if iac-toolbox.yml exists at the expected path.
@@ -29,7 +30,7 @@ export async function runStandaloneInstall(
   // Validate config file exists
   const configPath = path.join(destination, 'iac-toolbox.yml');
   if (!configFileExists(destination)) {
-    console.error(
+    print.error(
       `Configuration file not found at ${configPath}. Run 'iac-toolbox init' first.`
     );
     process.exit(1);
@@ -38,7 +39,7 @@ export async function runStandaloneInstall(
   // Validate install script exists
   const installScriptPath = path.join(destination, 'scripts', 'install.sh');
   if (!installScriptExists(destination)) {
-    console.error(
+    print.error(
       `install.sh not found at ${installScriptPath}. Ensure infrastructure files are present.`
     );
     process.exit(1);

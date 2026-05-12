@@ -1,3 +1,5 @@
+import { print } from './print.js';
+
 export interface CloudflareConfig {
   enabled?: boolean;
   domains?: Array<{
@@ -44,43 +46,41 @@ export function printSummaryNoCloudflare(
   const prometheusPort = config.prometheus?.port ?? 9090;
   const cadvisorPort = (config.cadvisor?.port as number | undefined) ?? 8080;
 
-  console.log('');
-  console.log('◆  Observability stack installed');
-  console.log('│');
-  console.log('│  ✔ Node Exporter  running  (:9100)');
-  console.log('│  ✔ Grafana Alloy  running  (:12345)');
-  console.log(`│  ✔ Prometheus     running  (:${prometheusPort})`);
-  console.log(`│  ✔ cAdvisor       running  (:${cadvisorPort})`);
-  console.log(`│  ✔ Grafana        running  (:${grafanaPort})`);
-  console.log('│');
-  console.log('│  Services available at:');
-  console.log(
-    `│    Node Exporter    http://${host}:9100     (host metrics endpoint)`
+  print.blank();
+  print.step('Observability stack installed');
+  print.pipe();
+  print.success('Node Exporter  running  (:9100)');
+  print.success('Grafana Alloy  running  (:12345)');
+  print.success(`Prometheus     running  (:${prometheusPort})`);
+  print.success(`cAdvisor       running  (:${cadvisorPort})`);
+  print.success(`Grafana        running  (:${grafanaPort})`);
+  print.pipe();
+  print.pipe('Services available at:');
+  print.pipe(
+    `  Node Exporter    http://${host}:9100     (host metrics endpoint)`
   );
-  console.log(
-    `│    Grafana Alloy    http://${host}:12345    (pipeline graph UI)`
-  );
-  console.log(`│    Prometheus       http://${host}:${prometheusPort}`);
-  console.log(`│    cAdvisor         http://${host}:${cadvisorPort}`);
-  console.log(`│    Grafana          http://${host}:${grafanaPort}`);
-  console.log('│');
+  print.pipe(`  Grafana Alloy    http://${host}:12345    (pipeline graph UI)`);
+  print.pipe(`  Prometheus       http://${host}:${prometheusPort}`);
+  print.pipe(`  cAdvisor         http://${host}:${cadvisorPort}`);
+  print.pipe(`  Grafana          http://${host}:${grafanaPort}`);
+  print.pipe();
 
   const isRemote = config.target?.mode === 'remote';
   if (isRemote) {
-    console.log('│  SSH tunnel shortcut (access from your laptop):');
-    console.log(`│    ssh -L ${grafanaPort}:localhost:${grafanaPort} \\`);
-    console.log(`│        -L ${prometheusPort}:localhost:${prometheusPort} \\`);
-    console.log('│        -L 12345:localhost:12345 \\');
-    console.log(`│        ${config.target?.user ?? 'pi'}@${host}`);
-    console.log('│');
+    print.pipe('SSH tunnel shortcut (access from your laptop):');
+    print.pipe(`  ssh -L ${grafanaPort}:localhost:${grafanaPort} \\`);
+    print.pipe(`      -L ${prometheusPort}:localhost:${prometheusPort} \\`);
+    print.pipe('      -L 12345:localhost:12345 \\');
+    print.pipe(`      ${config.target?.user ?? 'pi'}@${host}`);
+    print.pipe();
   }
 
-  console.log('│  Login: admin / <password in ~/.iac-toolbox/credentials>');
-  console.log('│');
-  console.log('│  Suggested dashboards (Grafana → Dashboards → Import):');
-  console.log('│    Node Exporter Full        ID 1860');
-  console.log('│    Docker Container Metrics  ID 193');
-  console.log('└');
+  print.pipe('Login: admin / <password in ~/.iac-toolbox/credentials>');
+  print.pipe();
+  print.pipe('Suggested dashboards (Grafana → Dashboards → Import):');
+  print.pipe('  Node Exporter Full        ID 1860');
+  print.pipe('  Docker Container Metrics  ID 193');
+  print.close();
 }
 
 /**
@@ -97,40 +97,40 @@ export function printSummaryWithCloudflare(
   const prometheusDomain = config.prometheus?.domain as string | undefined;
   const domains = config.cloudflare?.domains ?? [];
 
-  console.log('');
-  console.log('◆  Observability stack installed');
-  console.log('│');
-  console.log('│  ✔ Node Exporter       running  (:9100)');
-  console.log('│  ✔ Grafana Alloy       running  (:12345)');
-  console.log(`│  ✔ Prometheus          running  (:${prometheusPort})`);
-  console.log(`│  ✔ cAdvisor            running  (:${cadvisorPort})`);
-  console.log(`│  ✔ Grafana             running  (:${grafanaPort})`);
-  console.log('│  ✔ Cloudflare Tunnel   active');
+  print.blank();
+  print.step('Observability stack installed');
+  print.pipe();
+  print.success('Node Exporter       running  (:9100)');
+  print.success('Grafana Alloy       running  (:12345)');
+  print.success(`Prometheus          running  (:${prometheusPort})`);
+  print.success(`cAdvisor            running  (:${cadvisorPort})`);
+  print.success(`Grafana             running  (:${grafanaPort})`);
+  print.success('Cloudflare Tunnel   active');
   for (const d of domains) {
-    console.log(`│       ${d.hostname}    → :${d.service_port}`);
+    print.pipe(`    ${d.hostname}    → :${d.service_port}`);
   }
-  console.log('│');
-  console.log('│  Services available at:');
-  console.log(`│    Node Exporter    http://${host}:9100     (LAN only)`);
-  console.log(`│    Grafana Alloy    http://${host}:12345    (LAN only)`);
+  print.pipe();
+  print.pipe('Services available at:');
+  print.pipe(`  Node Exporter    http://${host}:9100     (LAN only)`);
+  print.pipe(`  Grafana Alloy    http://${host}:12345    (LAN only)`);
   if (prometheusDomain) {
-    console.log(`│    Prometheus       https://${prometheusDomain}`);
+    print.pipe(`  Prometheus       https://${prometheusDomain}`);
   } else {
-    console.log(`│    Prometheus       http://${host}:${prometheusPort}`);
+    print.pipe(`  Prometheus       http://${host}:${prometheusPort}`);
   }
-  console.log(
-    `│    cAdvisor         http://${host}:${cadvisorPort}     (LAN only)`
+  print.pipe(
+    `  cAdvisor         http://${host}:${cadvisorPort}     (LAN only)`
   );
   if (grafanaDomain) {
-    console.log(`│    Grafana          https://${grafanaDomain}`);
+    print.pipe(`  Grafana          https://${grafanaDomain}`);
   } else {
-    console.log(`│    Grafana          http://${host}:${grafanaPort}`);
+    print.pipe(`  Grafana          http://${host}:${grafanaPort}`);
   }
-  console.log('│');
-  console.log('│  Login: admin / <password in ~/.iac-toolbox/credentials>');
-  console.log('│');
-  console.log('│  Suggested dashboards (Grafana → Dashboards → Import):');
-  console.log('│    Node Exporter Full        ID 1860');
-  console.log('│    Docker Container Metrics  ID 193');
-  console.log('└');
+  print.pipe();
+  print.pipe('Login: admin / <password in ~/.iac-toolbox/credentials>');
+  print.pipe();
+  print.pipe('Suggested dashboards (Grafana → Dashboards → Import):');
+  print.pipe('  Node Exporter Full        ID 1860');
+  print.pipe('  Docker Container Metrics  ID 193');
+  print.close();
 }

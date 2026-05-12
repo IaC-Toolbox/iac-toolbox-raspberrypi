@@ -1,5 +1,6 @@
 import { spawnSync } from 'child_process';
 import { loadIacToolboxYaml } from '../utils/grafanaConfig.js';
+import { print } from '../utils/print.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;
@@ -22,26 +23,26 @@ export async function runCAdvisorInstall(
   void profile; // reserved for future credential profile support
 
   // ── Read Configuration ────────────────────────────────────
-  console.log('◆  Reading cAdvisor configuration...');
+  print.step('Reading cAdvisor configuration...');
   const config = loadIacToolboxYaml(destination, filePath) as IacToolboxConfig;
 
   // ── Guard: cadvisor.enabled ───────────────────────────────
   if (config.cadvisor?.enabled !== true) {
-    console.error('│  ✗ cAdvisor not enabled');
-    console.error('│');
-    console.error(
-      '│  Set cadvisor.enabled: true in iac-toolbox.yml to install cAdvisor.'
+    print.error('cAdvisor not enabled');
+    print.pipe();
+    print.pipe(
+      'Set cadvisor.enabled: true in iac-toolbox.yml to install cAdvisor.'
     );
-    console.error('└');
+    print.closeError();
     process.exit(1);
   }
 
-  console.log('│  ✔ Configuration loaded');
-  console.log('│');
+  print.success('Configuration loaded');
+  print.pipe();
 
   // ── Ansible Invocation ────────────────────────────────────
-  console.log('◆  Installing cAdvisor...');
-  console.log('│  ════════════════════════════════════════');
+  print.step('Installing cAdvisor...');
+  print.divider();
 
   const scriptPath = `${destination}/scripts/install.sh`;
   const scriptArgs = [scriptPath, '--cadvisor'];
@@ -52,24 +53,24 @@ export async function runCAdvisorInstall(
   });
 
   if (result.status !== 0) {
-    console.error('');
-    console.error('◆  cAdvisor install failed');
-    console.error('│');
-    console.error('│  ✗ Ansible playbook exited with errors');
-    console.error('│  Check output above for details');
-    console.error('│');
-    console.error('│  To retry: iac-toolbox cadvisor install');
-    console.error('└');
+    print.blank();
+    print.step('cAdvisor install failed');
+    print.pipe();
+    print.error('Ansible playbook exited with errors');
+    print.pipe('Check output above for details');
+    print.pipe();
+    print.pipe('To retry: iac-toolbox cadvisor install');
+    print.closeError();
     process.exit(result.status ?? 1);
   }
 
-  console.log('');
-  console.log('◆  cAdvisor installed successfully');
-  console.log('│');
-  console.log('│  ✔ cAdvisor running');
-  console.log('│');
-  console.log('│  cAdvisor URL    http://localhost:8080');
-  console.log('│');
-  console.log('│  Run `iac-toolbox cadvisor uninstall` to remove');
-  console.log('└');
+  print.blank();
+  print.step('cAdvisor installed successfully');
+  print.pipe();
+  print.success('cAdvisor running');
+  print.pipe();
+  print.pipe('cAdvisor URL    http://localhost:8080');
+  print.pipe();
+  print.pipe('Run `iac-toolbox cadvisor uninstall` to remove');
+  print.close();
 }
