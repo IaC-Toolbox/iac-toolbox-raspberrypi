@@ -449,6 +449,31 @@ target
   });
 
 program
+  .command('apply')
+  .description('Install the full observability stack from a config file')
+  .option('--profile <name>', 'Credential profile to use', 'default')
+  .option(
+    '--destination <path>',
+    'Path to infrastructure directory',
+    'infrastructure'
+  )
+  .option('--filePath <path>', 'Path to iac-toolbox.yml', './iac-toolbox.yml')
+  .action(
+    async (options: {
+      profile: string;
+      destination: string;
+      filePath: string;
+    }) => {
+      const { runApplyInstall } = await import('./actions/applyInstall.js');
+      await runApplyInstall(
+        options.destination,
+        options.profile,
+        options.filePath
+      );
+    }
+  );
+
+program
   .command('install')
   .description('Run install script using existing configuration')
   .option('--profile <name>', 'Credential profile to use', 'default')
