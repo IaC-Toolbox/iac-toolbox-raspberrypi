@@ -81,10 +81,15 @@ const VALID_ZONE_ID = 'b'.repeat(32);
 const defaultProps = {
   profile: 'default',
   output: './iac-toolbox.yml',
-  _generateConfig: jest.fn<(inputs: unknown) => string>().mockReturnValue('yaml-content'),
+  _generateConfig: jest
+    .fn<(inputs: unknown) => string>()
+    .mockReturnValue('yaml-content'),
   _generatePassword: jest.fn<() => string>().mockReturnValue('TestPass123!'),
-  _saveCredentials: jest.fn<(creds: Record<string, string>, profile: string) => void>(),
-  _testSshConnection: jest.fn<(host: string, user: string, key: string) => Promise<boolean>>().mockResolvedValue(true),
+  _saveCredentials:
+    jest.fn<(creds: Record<string, string>, profile: string) => void>(),
+  _testSshConnection: jest
+    .fn<(host: string, user: string, key: string) => Promise<boolean>>()
+    .mockResolvedValue(true),
   _writeFile: jest.fn<(path: string, content: string) => void>(),
 };
 
@@ -670,7 +675,8 @@ describe('InitWizard', () => {
     it('advances to done after valid api token', async () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
-      const saveCredsFn = jest.fn<(creds: Record<string, string>, profile: string) => void>();
+      const saveCredsFn =
+        jest.fn<(creds: Record<string, string>, profile: string) => void>();
       const writeFileFn = jest.fn<(path: string, content: string) => void>();
       const { lastFrame } = render(
         <InitWizard
@@ -750,7 +756,8 @@ describe('InitWizard', () => {
     it('calls saveCredentials with grafana_admin_password on done', async () => {
       const selectHelper = makeSelectInputHelper();
       const { TextInput } = makeTextInputHelper();
-      const saveCredsFn = jest.fn<(creds: Record<string, string>, profile: string) => void>();
+      const saveCredsFn =
+        jest.fn<(creds: Record<string, string>, profile: string) => void>();
       render(
         <InitWizard
           {...defaultProps}
@@ -842,7 +849,8 @@ describe('InitWizard', () => {
     it('includes cloudflare_api_token in saved credentials when cloudflare enabled', async () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
-      const saveCredsFn = jest.fn<(creds: Record<string, string>, profile: string) => void>();
+      const saveCredsFn =
+        jest.fn<(creds: Record<string, string>, profile: string) => void>();
       render(
         <InitWizard
           {...defaultProps}
@@ -880,7 +888,8 @@ describe('InitWizard', () => {
     it('does not include cloudflare_api_token in saved credentials when cloudflare disabled', async () => {
       const selectHelper = makeSelectInputHelper();
       const { TextInput } = makeTextInputHelper();
-      const saveCredsFn = jest.fn<(creds: Record<string, string>, profile: string) => void>();
+      const saveCredsFn =
+        jest.fn<(creds: Record<string, string>, profile: string) => void>();
       render(
         <InitWizard
           {...defaultProps}
@@ -898,7 +907,9 @@ describe('InitWizard', () => {
       await new Promise((r) => setTimeout(r, 200));
 
       expect(saveCredsFn).toHaveBeenCalledWith(
-        expect.not.objectContaining({ cloudflare_api_token: expect.any(String) }),
+        expect.not.objectContaining({
+          cloudflare_api_token: expect.any(String),
+        }),
         'default'
       );
     });

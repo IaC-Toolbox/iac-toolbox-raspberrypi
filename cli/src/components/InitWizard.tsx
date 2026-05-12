@@ -40,8 +40,15 @@ export interface InitWizardProps {
   _TextInput?: (props: TextInputProps) => null;
   _generateConfig?: (inputs: WizardInputs) => string;
   _generatePassword?: () => string;
-  _saveCredentials?: (credentials: Record<string, string>, profile: string) => void;
-  _testSshConnection?: (host: string, user: string, sshKey: string) => Promise<boolean>;
+  _saveCredentials?: (
+    credentials: Record<string, string>,
+    profile: string
+  ) => void;
+  _testSshConnection?: (
+    host: string,
+    user: string,
+    sshKey: string
+  ) => Promise<boolean>;
   _writeFile?: (path: string, content: string) => void;
 }
 
@@ -70,7 +77,10 @@ const TARGET_MODE_OPTIONS: SelectItem[] = [
 ];
 
 const CLOUDFLARE_OPTIONS: SelectItem[] = [
-  { label: 'No   (local ports only — access via LAN or SSH tunnel)', value: 'no' },
+  {
+    label: 'No   (local ports only — access via LAN or SSH tunnel)',
+    value: 'no',
+  },
   { label: 'Yes  (public HTTPS at your domain)', value: 'yes' },
 ];
 
@@ -146,7 +156,9 @@ export default function InitWizard({
   const [sshFailed, setSshFailed] = useState(false);
 
   const InputComponent = _TextInput;
-  const SelectComponent = _SelectInput as unknown as (props: SelectInputProps) => null;
+  const SelectComponent = _SelectInput as unknown as (
+    props: SelectInputProps
+  ) => null;
 
   // --- SSH connection test effect ---
   useEffect(() => {
@@ -258,7 +270,10 @@ export default function InitWizard({
         <Text bold>{'◆  SSH connection string'}</Text>
         {error && (
           <Box paddingLeft={3}>
-            <Text color="red">{'✗ '}{error}</Text>
+            <Text color="red">
+              {'✗ '}
+              {error}
+            </Text>
           </Box>
         )}
         <Box paddingLeft={3} marginTop={1}>
@@ -272,14 +287,18 @@ export default function InitWizard({
             onSubmit={(val) => {
               const trimmed = val.trim();
               if (!trimmed.includes('@')) {
-                setError('Invalid format — expected user@host (e.g. pi@192.168.1.50)');
+                setError(
+                  'Invalid format — expected user@host (e.g. pi@192.168.1.50)'
+                );
                 return;
               }
               const atIdx = trimmed.indexOf('@');
               const parsedUser = trimmed.substring(0, atIdx).trim();
               const parsedHost = trimmed.substring(atIdx + 1).trim();
               if (!parsedUser || !parsedHost) {
-                setError('Invalid format — expected user@host (e.g. pi@192.168.1.50)');
+                setError(
+                  'Invalid format — expected user@host (e.g. pi@192.168.1.50)'
+                );
                 return;
               }
               setSshUser(parsedUser);
@@ -305,7 +324,10 @@ export default function InitWizard({
       <Box flexDirection="column" paddingY={1}>
         {header}
         <Text dimColor>{'◇  Target: remote'}</Text>
-        <Text dimColor>{'◇  Connection: '}{connectionString}</Text>
+        <Text dimColor>
+          {'◇  Connection: '}
+          {connectionString}
+        </Text>
         <Text bold>{'│'}</Text>
         <Text bold>{'◆  SSH private key path'}</Text>
         {sshFailed && (
@@ -314,16 +336,26 @@ export default function InitWizard({
               <Text color="red">{'✗ SSH connection failed'}</Text>
             </Box>
             <Box paddingLeft={3}>
-              <Text>{'Could not reach '}{connectionString}{' with '}{sshKey}</Text>
+              <Text>
+                {'Could not reach '}
+                {connectionString}
+                {' with '}
+                {sshKey}
+              </Text>
             </Box>
             <Box paddingLeft={3}>
-              <Text>{'Check that the host is reachable and the key is loaded.'}</Text>
+              <Text>
+                {'Check that the host is reachable and the key is loaded.'}
+              </Text>
             </Box>
           </>
         )}
         {error && (
           <Box paddingLeft={3}>
-            <Text color="red">{'✗ '}{error}</Text>
+            <Text color="red">
+              {'✗ '}
+              {error}
+            </Text>
           </Box>
         )}
         <Box paddingLeft={3} marginTop={1}>
@@ -361,9 +393,16 @@ export default function InitWizard({
       <Box flexDirection="column" paddingY={1}>
         {header}
         <Text dimColor>{'◇  Target: remote'}</Text>
-        <Text dimColor>{'◇  Connection: '}{connectionString}</Text>
+        <Text dimColor>
+          {'◇  Connection: '}
+          {connectionString}
+        </Text>
         <Text bold>{'│'}</Text>
-        <Text>{'◜  Pinging '}{connectionString}{'...'}</Text>
+        <Text>
+          {'◜  Pinging '}
+          {connectionString}
+          {'...'}
+        </Text>
         <Text dimColor>{'│  (this may take up to 10 seconds)'}</Text>
       </Box>
     );
@@ -378,16 +417,26 @@ export default function InitWizard({
       <Box flexDirection="column" paddingY={1}>
         {header}
         <Text dimColor>{'◇  Target: remote'}</Text>
-        <Text dimColor>{'◇  Connection: '}{connectionString}</Text>
+        <Text dimColor>
+          {'◇  Connection: '}
+          {connectionString}
+        </Text>
         <Text bold>{'│'}</Text>
         <Box paddingLeft={3}>
           <Text color="red">{'✗ SSH connection failed'}</Text>
         </Box>
         <Box paddingLeft={3}>
-          <Text>{'Could not reach '}{connectionString}{' with '}{sshKey}</Text>
+          <Text>
+            {'Could not reach '}
+            {connectionString}
+            {' with '}
+            {sshKey}
+          </Text>
         </Box>
         <Box paddingLeft={3}>
-          <Text>{'Check that the host is reachable and the key is loaded.'}</Text>
+          <Text>
+            {'Check that the host is reachable and the key is loaded.'}
+          </Text>
         </Box>
         <Text bold>{'│'}</Text>
         <Text bold>{'◆  SSH private key path'}</Text>
@@ -418,16 +467,19 @@ export default function InitWizard({
 
   if (step === 'cloudflare_gate') {
     const targetBreadcrumb =
-      targetMode === 'remote'
-        ? `remote  ${connectionString}`
-        : 'localhost';
+      targetMode === 'remote' ? `remote  ${connectionString}` : 'localhost';
 
     return (
       <Box flexDirection="column" paddingY={1}>
         {header}
-        <Text dimColor>{'◇  Target: '}{targetBreadcrumb}</Text>
+        <Text dimColor>
+          {'◇  Target: '}
+          {targetBreadcrumb}
+        </Text>
         <Text bold>{'│'}</Text>
-        <Text bold>{'◆  Enable Cloudflare Tunnel for public HTTPS access?'}</Text>
+        <Text bold>
+          {'◆  Enable Cloudflare Tunnel for public HTTPS access?'}
+        </Text>
         <Box paddingLeft={3} marginTop={1}>
           <SelectComponent
             items={CLOUDFLARE_OPTIONS}
@@ -453,20 +505,24 @@ export default function InitWizard({
 
   if (step === 'domain') {
     const targetBreadcrumb =
-      targetMode === 'remote'
-        ? `remote  ${connectionString}`
-        : 'localhost';
+      targetMode === 'remote' ? `remote  ${connectionString}` : 'localhost';
 
     return (
       <Box flexDirection="column" paddingY={1}>
         {header}
-        <Text dimColor>{'◇  Target: '}{targetBreadcrumb}</Text>
+        <Text dimColor>
+          {'◇  Target: '}
+          {targetBreadcrumb}
+        </Text>
         <Text dimColor>{'◇  Cloudflare: enabled'}</Text>
         <Text bold>{'│'}</Text>
         <Text bold>{'◆  Your domain (e.g. example.com)'}</Text>
         {error && (
           <Box paddingLeft={3}>
-            <Text color="red">{'✗ '}{error}</Text>
+            <Text color="red">
+              {'✗ '}
+              {error}
+            </Text>
           </Box>
         )}
         <Box paddingLeft={3} marginTop={1}>
@@ -480,7 +536,9 @@ export default function InitWizard({
             onSubmit={(val) => {
               const trimmed = val.trim();
               if (!trimmed || !trimmed.includes('.')) {
-                setError('Domain must not be empty and must contain at least one dot');
+                setError(
+                  'Domain must not be empty and must contain at least one dot'
+                );
                 return;
               }
               setDomain(trimmed);
@@ -502,12 +560,18 @@ export default function InitWizard({
     return (
       <Box flexDirection="column" paddingY={1}>
         {header}
-        <Text dimColor>{'◇  Domain: '}{domain}</Text>
+        <Text dimColor>
+          {'◇  Domain: '}
+          {domain}
+        </Text>
         <Text bold>{'│'}</Text>
         <Text bold>{'◆  Cloudflare Account ID'}</Text>
         {error && (
           <Box paddingLeft={3}>
-            <Text color="red">{'✗ '}{error}</Text>
+            <Text color="red">
+              {'✗ '}
+              {error}
+            </Text>
           </Box>
         )}
         <Box paddingLeft={3} marginTop={1}>
@@ -525,7 +589,9 @@ export default function InitWizard({
                 return;
               }
               if (!HEX_32_REGEX.test(trimmed)) {
-                setError('Account ID must be exactly 32 hexadecimal characters');
+                setError(
+                  'Account ID must be exactly 32 hexadecimal characters'
+                );
                 return;
               }
               setAccountId(trimmed);
@@ -547,12 +613,19 @@ export default function InitWizard({
     return (
       <Box flexDirection="column" paddingY={1}>
         {header}
-        <Text dimColor>{'◇  Account ID: '}{accountId.substring(0, 8)}{'...'}</Text>
+        <Text dimColor>
+          {'◇  Account ID: '}
+          {accountId.substring(0, 8)}
+          {'...'}
+        </Text>
         <Text bold>{'│'}</Text>
         <Text bold>{'◆  Cloudflare Zone ID'}</Text>
         {error && (
           <Box paddingLeft={3}>
-            <Text color="red">{'✗ '}{error}</Text>
+            <Text color="red">
+              {'✗ '}
+              {error}
+            </Text>
           </Box>
         )}
         <Box paddingLeft={3} marginTop={1}>
@@ -592,12 +665,19 @@ export default function InitWizard({
     return (
       <Box flexDirection="column" paddingY={1}>
         {header}
-        <Text dimColor>{'◇  Zone ID: '}{zoneId.substring(0, 8)}{'...'}</Text>
+        <Text dimColor>
+          {'◇  Zone ID: '}
+          {zoneId.substring(0, 8)}
+          {'...'}
+        </Text>
         <Text bold>{'│'}</Text>
         <Text bold>{'◆  Cloudflare API Token'}</Text>
         {error && (
           <Box paddingLeft={3}>
-            <Text color="red">{'✗ '}{error}</Text>
+            <Text color="red">
+              {'✗ '}
+              {error}
+            </Text>
           </Box>
         )}
         <Box paddingLeft={3} marginTop={1}>
@@ -639,36 +719,71 @@ export default function InitWizard({
       </Text>
       <Text bold>{'│'}</Text>
       {isRemote && (
-        <Text dimColor>{'◇  Target: remote  '}{connectionString}</Text>
+        <Text dimColor>
+          {'◇  Target: remote  '}
+          {connectionString}
+        </Text>
       )}
-      {!isRemote && (
-        <Text dimColor>{'◇  Target: localhost'}</Text>
-      )}
+      {!isRemote && <Text dimColor>{'◇  Target: localhost'}</Text>}
       <Text dimColor>
-        {'◇  Cloudflare: '}{cloudflareEnabled ? 'enabled' : 'disabled'}
+        {'◇  Cloudflare: '}
+        {cloudflareEnabled ? 'enabled' : 'disabled'}
       </Text>
       <Text bold>{'│'}</Text>
       <Text dimColor>{'◇  Configuration saved'}</Text>
       <Text bold>{'│'}</Text>
-      <Text>{'│  Written to '}{output}</Text>
+      <Text>
+        {'│  Written to '}
+        {output}
+      </Text>
       <Text bold>{'│'}</Text>
-      <Text>{'│  Grafana admin password: '}{grafanaPassword}</Text>
-      <Text dimColor>{'│  (also stored in ~/.iac-toolbox/credentials — retrievable any time)'}</Text>
+      <Text>
+        {'│  Grafana admin password: '}
+        {grafanaPassword}
+      </Text>
+      <Text dimColor>
+        {
+          '│  (also stored in ~/.iac-toolbox/credentials — retrievable any time)'
+        }
+      </Text>
       <Text bold>{'│'}</Text>
       <Text>{'│  After apply, your stack will be available at:'}</Text>
       {isRemote && cfDisabled && (
         <>
-          <Text>{'│    Node Exporter    http://'}{sshHost}{':9100'}</Text>
-          <Text>{'│    Grafana Alloy    http://'}{sshHost}{':12345'}</Text>
-          <Text>{'│    Prometheus       http://'}{sshHost}{':9090'}</Text>
-          <Text>{'│    cAdvisor         http://'}{sshHost}{':8080'}</Text>
-          <Text>{'│    Grafana          http://'}{sshHost}{':3000'}</Text>
+          <Text>
+            {'│    Node Exporter    http://'}
+            {sshHost}
+            {':9100'}
+          </Text>
+          <Text>
+            {'│    Grafana Alloy    http://'}
+            {sshHost}
+            {':12345'}
+          </Text>
+          <Text>
+            {'│    Prometheus       http://'}
+            {sshHost}
+            {':9090'}
+          </Text>
+          <Text>
+            {'│    cAdvisor         http://'}
+            {sshHost}
+            {':8080'}
+          </Text>
+          <Text>
+            {'│    Grafana          http://'}
+            {sshHost}
+            {':3000'}
+          </Text>
           <Text bold>{'│'}</Text>
           <Text>{'│  SSH tunnel shortcut (access from your laptop):'}</Text>
           <Text>{'│    ssh -L 3000:localhost:3000 \\'}</Text>
           <Text>{'│        -L 9090:localhost:9090 \\'}</Text>
           <Text>{'│        -L 12345:localhost:12345 \\'}</Text>
-          <Text>{'│        '}{connectionString}</Text>
+          <Text>
+            {'│        '}
+            {connectionString}
+          </Text>
         </>
       )}
       {!isRemote && cfDisabled && (
@@ -684,28 +799,53 @@ export default function InitWizard({
         <>
           {isRemote && (
             <>
-              <Text>{'│    Node Exporter    http://'}{sshHost}{':9100     (host service)'}</Text>
-              <Text>{'│    Grafana Alloy    http://'}{sshHost}{':12345    (pipeline UI)'}</Text>
+              <Text>
+                {'│    Node Exporter    http://'}
+                {sshHost}
+                {':9100     (host service)'}
+              </Text>
+              <Text>
+                {'│    Grafana Alloy    http://'}
+                {sshHost}
+                {':12345    (pipeline UI)'}
+              </Text>
             </>
           )}
           {!isRemote && (
             <>
-              <Text>{'│    Node Exporter    http://localhost:9100     (host service)'}</Text>
-              <Text>{'│    Grafana Alloy    http://localhost:12345    (pipeline UI)'}</Text>
+              <Text>
+                {
+                  '│    Node Exporter    http://localhost:9100     (host service)'
+                }
+              </Text>
+              <Text>
+                {
+                  '│    Grafana Alloy    http://localhost:12345    (pipeline UI)'
+                }
+              </Text>
             </>
           )}
-          <Text>{'│    Prometheus       https://prometheus.'}{domain}</Text>
+          <Text>
+            {'│    Prometheus       https://prometheus.'}
+            {domain}
+          </Text>
           <Text>
             {isRemote
               ? `│    cAdvisor         http://${sshHost}:8080     (LAN only)`
               : '│    cAdvisor         http://localhost:8080     (LAN only)'}
           </Text>
-          <Text>{'│    Grafana          https://grafana.'}{domain}</Text>
+          <Text>
+            {'│    Grafana          https://grafana.'}
+            {domain}
+          </Text>
         </>
       )}
       <Text bold>{'│'}</Text>
       <Text dimColor>{'│  ℹ  Run to install:'}</Text>
-      <Text>{'│     iac-toolbox apply --filePath='}{output}</Text>
+      <Text>
+        {'│     iac-toolbox apply --filePath='}
+        {output}
+      </Text>
       <Text bold>{'└'}</Text>
     </Box>
   );

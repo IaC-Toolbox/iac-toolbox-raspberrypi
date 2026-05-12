@@ -379,9 +379,7 @@ export function generateConfig(inputs: WizardInputs): string {
     lines.push('grafana:');
     lines.push('  enabled: true');
     lines.push('  version: latest');
-    lines.push(
-      '  base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/grafana"'
-    );
+    lines.push('  base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/grafana"');
     lines.push('  port: 3000');
     lines.push(`  domain: grafana.${inputs.domain}`);
     lines.push(
@@ -395,9 +393,7 @@ export function generateConfig(inputs: WizardInputs): string {
     lines.push('prometheus:');
     lines.push('  enabled: true');
     lines.push('  version: latest');
-    lines.push(
-      '  base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/prometheus"'
-    );
+    lines.push('  base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/prometheus"');
     lines.push(`  domain: prometheus.${inputs.domain}`);
     lines.push('  port: 9090');
     lines.push('  scrape_interval: 15s');
@@ -410,9 +406,7 @@ export function generateConfig(inputs: WizardInputs): string {
     lines.push('grafana:');
     lines.push('  enabled: true');
     lines.push('  version: latest');
-    lines.push(
-      '  base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/grafana"'
-    );
+    lines.push('  base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/grafana"');
     lines.push('  port: 3000');
     lines.push('  domain: ""');
     lines.push(
@@ -426,9 +420,7 @@ export function generateConfig(inputs: WizardInputs): string {
     lines.push('prometheus:');
     lines.push('  enabled: true');
     lines.push('  version: latest');
-    lines.push(
-      '  base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/prometheus"'
-    );
+    lines.push('  base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/prometheus"');
     lines.push('  domain: ""');
     lines.push('  port: 9090');
     lines.push('  scrape_interval: 15s');

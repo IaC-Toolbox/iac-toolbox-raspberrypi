@@ -1,5 +1,12 @@
 import { describe, it, expect } from '@jest/globals';
-import { generateConfigYaml, generateEnvFile, generateConfig, generatePassword, deriveTunnelName, deriveRemoteWriteUrl } from './configGenerator.js';
+import {
+  generateConfigYaml,
+  generateEnvFile,
+  generateConfig,
+  generatePassword,
+  deriveTunnelName,
+  deriveRemoteWriteUrl,
+} from './configGenerator.js';
 import type { WizardConfig, WizardInputs } from './configGenerator.js';
 
 describe('generateConfigYaml', () => {
@@ -240,7 +247,9 @@ describe('generateConfig', () => {
 
   it('includes local alloy remote_write URL when cloudflare disabled', () => {
     const result = generateConfig(remoteNoCloudflare);
-    expect(result).toContain('alloy_remote_write_url: http://localhost:9090/api/v1/write');
+    expect(result).toContain(
+      'alloy_remote_write_url: http://localhost:9090/api/v1/write'
+    );
   });
 
   it('includes grafana and prometheus sections', () => {

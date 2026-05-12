@@ -97,7 +97,8 @@ export async function runPrometheusInstall(
   }
 
   // ── Post-Install Health Check ─────────────────────────────
-  const prometheusPort = (config.prometheus?.port as number | undefined) ?? 9090;
+  const prometheusPort =
+    (config.prometheus?.port as number | undefined) ?? 9090;
   const prometheusDomain = config.prometheus?.domain as string | undefined;
   const cloudflareEnabled =
     config.cloudflare && (config.cloudflare as Record<string, unknown>).enabled;
@@ -127,8 +128,12 @@ export async function runPrometheusInstall(
     console.log('│  Node Exporter URL   http://localhost:9100/metrics');
     console.log('│  Grafana datasource  auto-configured');
     console.log('│  Dashboard           Node Exporter Full (auto-imported)');
-    console.log(`│  Retention           ${(config.prometheus?.retention as string | undefined) ?? '15d'}`);
-    console.log(`│  Scrape interval     ${(config.prometheus?.scrape_interval as string | undefined) ?? '15s'}`);
+    console.log(
+      `│  Retention           ${(config.prometheus?.retention as string | undefined) ?? '15d'}`
+    );
+    console.log(
+      `│  Scrape interval     ${(config.prometheus?.scrape_interval as string | undefined) ?? '15s'}`
+    );
     console.log('│');
     console.log('│  Run `iac-toolbox prometheus uninstall` to remove');
     console.log('└');
