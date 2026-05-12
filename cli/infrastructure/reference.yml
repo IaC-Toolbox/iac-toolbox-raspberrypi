@@ -18,8 +18,6 @@ cloudflare:
     - hostname: prometheus.iac-toolbox.com
       service_port: 9090
       service: http://localhost:9090
-vault:
-  enabled: false
 grafana:
   enabled: true
   version: latest
@@ -31,9 +29,6 @@ grafana:
   prometheus_domain: prometheus.iac-toolbox.com
   admin_user: admin
   admin_password: "{{ grafana_admin_password }}"
-grafana_alloy:
-  enabled: true
-  alloy_remote_write_url: https://prometheus.iac-toolbox.com/api/v1/write
 prometheus:
   enabled: true
   version: latest
@@ -43,15 +38,14 @@ prometheus:
   scrape_interval: 15s
   retention: 15d
   grafana_url: https://grafana.iac-toolbox.com
-loki:
-  enabled: false
-pagerduty:
-  enabled: false
 target:
   mode: remote
   host: raspberry-4b.local
   user: vvasylkovskyi
   ssh_key: ~/.ssh/raspberrypi-4b
+grafana_alloy:
+  enabled: true
+  alloy_remote_write_url: https://prometheus.iac-toolbox.com/api/v1/write
 node_exporter:
   enabled: true
 cadvisor:

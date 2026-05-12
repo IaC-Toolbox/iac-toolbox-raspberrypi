@@ -1,3 +1,4 @@
+import { spawnSync } from 'child_process';
 import { loadIacToolboxYaml } from '../utils/grafanaConfig.js';
 import { loadCredentials } from '../utils/credentials.js';
 import {
@@ -9,34 +10,7 @@ import {
   printSummaryWithCloudflare,
   type ApplySummaryConfig,
 } from '../utils/applySummary.js';
-import { runMetricsAgentInstall } from './metricsAgentInstall.js';
-import { runPrometheusInstall } from './prometheusInstall.js';
-import { runGrafanaInstall } from './grafanaInstall.js';
-import { runCloudflareInstall } from './cloudflareInstall.js';
-
-/** Run a single install step. Returns false if the step throws. */
-async function runStep(fn: () => Promise<void>): Promise<boolean> {
-  try {
-    await fn();
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/** Print the failure block when an install step exits non-zero. */
-function printStepFailure(stepName: string, command: string): void {
-  console.error('│');
-  console.error(`│  ✗ Install failed at: ${stepName}`);
-  console.error('│  Check Ansible output above for details.');
-  console.error('│');
-  console.error('│  To retry from this step:');
-  console.error(`│     iac-toolbox ${command}`);
-  console.error('│');
-  console.error('│  To retry the full apply:');
-  console.error('│     iac-toolbox apply --filePath=./iac-toolbox.yml');
-  console.error('└');
-}
+import { print } from '../utils/print.js';
 
 /**
  * Validate config, credentials, SSH (remote only), and Docker.
@@ -50,26 +24,22 @@ async function runPreflightChecks(
   const configIsEmpty =
     !config || (typeof config === 'object' && Object.keys(config).length === 0);
   if (configIsEmpty) {
-    console.error(`│  ✗ Config not found: ${filePath}`);
-    console.error('│');
-    console.error(
-      '│  Run `iac-toolbox init` first to generate iac-toolbox.yml'
-    );
-    console.error('└');
+    print.error(`Config not found: ${filePath}`);
+    print.pipe();
+    print.pipe('Run `iac-toolbox init` first to generate iac-toolbox.yml');
+    print.closeError();
     process.exit(1);
   }
-  console.log(`│  ✔ Config loaded: ${filePath}`);
+  print.success(`Config loaded: ${filePath}`);
 
   if (!grafanaAdminPassword) {
-    console.error('│  ✗ Credentials missing: grafana_admin_password not found');
-    console.error('│');
-    console.error(
-      '│  Run `iac-toolbox grafana init` first to set up credentials.'
-    );
-    console.error('└');
+    print.error('Credentials missing: grafana_admin_password not found');
+    print.pipe();
+    print.pipe('Run `iac-toolbox grafana init` first to set up credentials.');
+    print.closeError();
     process.exit(1);
   }
-  console.log('│  ✔ Credentials loaded from ~/.iac-toolbox/credentials');
+  print.success('Credentials loaded from ~/.iac-toolbox/credentials');
 
   const targetMode = config.target?.mode ?? 'local';
   const targetHost = (config.target?.host as string | undefined) ?? 'localhost';
@@ -78,23 +48,17 @@ async function runPreflightChecks(
     (config.target?.ssh_key as string | undefined) ?? '~/.ssh/id_ed25519';
 
   if (targetMode === 'remote') {
-    process.stdout.write(
-      `│  ◜ Testing SSH connection to ${targetUser}@${targetHost}...\n`
-    );
+    print.waiting(`Testing SSH connection to ${targetUser}@${targetHost}...`);
     const sshOk = await testSshConnection(targetHost, targetUser, targetSshKey);
     if (!sshOk) {
-      console.error(
-        `│  ✗ SSH connection failed to ${targetUser}@${targetHost}`
-      );
-      console.error('│');
-      console.error(
-        '│  Ensure the host is reachable and the SSH key is correct.'
-      );
-      console.error('│  Fix connectivity, then re-run apply.');
-      console.error('└');
+      print.error(`SSH connection failed to ${targetUser}@${targetHost}`);
+      print.pipe();
+      print.pipe('Ensure the host is reachable and the SSH key is correct.');
+      print.pipe('Fix connectivity, then re-run apply.');
+      print.closeError();
       process.exit(1);
     }
-    console.log('│  ✔ SSH connection successful');
+    print.success('SSH connection successful');
   }
 
   const dockerOk = checkDockerAvailable(
@@ -104,90 +68,67 @@ async function runPreflightChecks(
     targetSshKey
   );
   if (!dockerOk) {
-    console.error('│  ✗ Docker not available on target');
-    console.error('│');
-    console.error('│  Ensure Docker is installed and running on the target.');
-    console.error('└');
+    print.error('Docker not available on target');
+    print.pipe();
+    print.pipe('Ensure Docker is installed and running on the target.');
+    print.closeError();
     process.exit(1);
   }
-  console.log('│  ✔ Docker available on target');
-  console.log('└');
+  print.success('Docker available on target');
+  print.close();
 
   return { targetMode, targetHost };
 }
 
 /**
- * Run the install sequence and return whether Cloudflare was installed.
- * Calls process.exit(1) with a retry hint on the first failure.
+ * Run the full observability stack via a single `observability_platform.yml`
+ * Ansible run. Returns whether Cloudflare was enabled in the config.
  */
-async function runInstallSequence(
+function runInstallSequence(
   destination: string,
-  profile: string,
   filePath: string,
-  config: ApplySummaryConfig
-): Promise<boolean> {
-  const metricsOk = await runStep(() =>
-    runMetricsAgentInstall(destination, filePath)
-  );
-  if (!metricsOk) {
-    printStepFailure(
-      'metrics-agent',
-      'metrics-agent install --filePath=./iac-toolbox.yml'
-    );
-    process.exit(1);
-  }
+  config: ApplySummaryConfig,
+  creds: ReturnType<typeof loadCredentials>
+): boolean {
+  const scriptPath = `${destination}/scripts/install.sh`;
 
-  const prometheusOk = await runStep(() =>
-    runPrometheusInstall(destination, profile, filePath)
-  );
-  if (!prometheusOk) {
-    printStepFailure(
-      'prometheus',
-      'prometheus install --filePath=./iac-toolbox.yml'
-    );
-    process.exit(1);
-  }
+  const env: NodeJS.ProcessEnv = { ...process.env };
+  if (creds.grafana_admin_user)
+    env.GRAFANA_ADMIN_USER = creds.grafana_admin_user;
+  if (creds.grafana_admin_password)
+    env.GRAFANA_ADMIN_PASSWORD = creds.grafana_admin_password;
+  if (creds.cloudflare_api_token)
+    env.CLOUDFLARE_API_TOKEN = creds.cloudflare_api_token;
 
-  if (config.cadvisor?.enabled !== false) {
-    const { runCAdvisorInstall } = await import('./cadvisorInstall.js');
-    const cadvisorOk = await runStep(() =>
-      runCAdvisorInstall(destination, profile, filePath)
-    );
-    if (!cadvisorOk) {
-      printStepFailure(
-        'cadvisor',
-        'cadvisor install --filePath=./iac-toolbox.yml'
-      );
-      process.exit(1);
+  const alloyUrl = (
+    config as Record<string, unknown> & {
+      grafana_alloy?: { alloy_remote_write_url?: string };
     }
-  }
+  ).grafana_alloy?.alloy_remote_write_url;
+  if (alloyUrl) env.ALLOY_REMOTE_WRITE_URL = alloyUrl;
 
-  const grafanaOk = await runStep(() =>
-    runGrafanaInstall(destination, profile, filePath)
+  const result = spawnSync(
+    'bash',
+    [scriptPath, '--observability-platform', '--filePath', filePath],
+    { env, stdio: 'inherit' }
   );
-  if (!grafanaOk) {
-    printStepFailure('grafana', 'grafana install --filePath=./iac-toolbox.yml');
-    process.exit(1);
+
+  if (result.status !== 0) {
+    print.blank();
+    print.step('Observability stack install failed');
+    print.pipe();
+    print.error('Ansible playbook exited with errors');
+    print.pipe('Check output above for details');
+    print.pipe();
+    print.pipe('To retry: iac-toolbox apply --filePath=./iac-toolbox.yml');
+    print.closeError();
+    process.exit(result.status ?? 1);
   }
 
-  const cloudflareEnabled =
+  return Boolean(
     config.cloudflare &&
-    (config.cloudflare as { enabled?: boolean }).enabled === true;
-
-  if (cloudflareEnabled) {
-    const cloudflareOk = await runStep(() =>
-      runCloudflareInstall(destination, profile, filePath)
-    );
-    if (!cloudflareOk) {
-      printStepFailure(
-        'cloudflare',
-        'cloudflare install --filePath=./iac-toolbox.yml'
-      );
-      process.exit(1);
-    }
-  }
-
-  return Boolean(cloudflareEnabled);
+      (config.cloudflare as { enabled?: boolean }).enabled === true
+  );
 }
 
 /**
@@ -195,7 +136,7 @@ async function runInstallSequence(
  *
  * Orchestrates:
  *   1. Pre-flight checks (config, credentials, SSH, Docker)
- *   2. Install sequence: metrics-agent → prometheus → cadvisor → grafana → cloudflare
+ *   2. Single Ansible run via observability_platform.yml
  *   3. Post-install summary
  */
 export async function runApplyInstall(
@@ -203,7 +144,7 @@ export async function runApplyInstall(
   profile: string,
   filePath: string
 ): Promise<void> {
-  console.log('◆  Pre-flight checks');
+  print.step('Pre-flight checks');
 
   const config = loadIacToolboxYaml(
     destination,
@@ -217,11 +158,11 @@ export async function runApplyInstall(
     creds.grafana_admin_password
   );
 
-  const cloudflareEnabled = await runInstallSequence(
+  const cloudflareEnabled = runInstallSequence(
     destination,
-    profile,
     filePath,
-    config
+    config,
+    creds
   );
 
   const displayHost = targetMode === 'remote' ? targetHost : 'localhost';

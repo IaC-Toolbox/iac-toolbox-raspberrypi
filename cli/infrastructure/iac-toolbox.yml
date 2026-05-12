@@ -28,10 +28,6 @@ grafana:
   enabled: false
 prometheus:
   enabled: false
-loki:
-  enabled: false
-pagerduty:
-  enabled: false
 target:
   mode: local
 node_exporter:
@@ -39,3 +35,5 @@ node_exporter:
 grafana_alloy:
   enabled: true
   alloy_remote_write_url: https://prometheus.iac-toolbox.com/api/v1/write
+cadvisor:
+  enabled: true
