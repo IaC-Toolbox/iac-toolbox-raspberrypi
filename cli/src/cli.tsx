@@ -448,6 +448,9 @@ target
     });
   });
 
+const { buildApplyCommand } = await import('./commands/applyCommand.js');
+program.addCommand(buildApplyCommand());
+
 program
   .command('install')
   .description('Run install script using existing configuration')
