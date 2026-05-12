@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { render } from 'ink';
-import App from './app.js';
 import CredentialSetDialog from './components/CredentialSetDialog.js';
 import { validateArchitecture } from './validators/architecture.js';
 
@@ -28,19 +27,12 @@ program
 
 program
   .command('init', { isDefault: true })
-  .description('Start the interactive wizard')
+  .description('Start the observability setup wizard')
   .option('--profile <name>', 'Credential profile to use', 'default')
-  .option(
-    '--filePath <path>',
-    'Path to a per-device config file'
-  )
-  .action(async (options: { profile: string; filePath?: string }) => {
-    if (options.filePath) {
-      const { runFilePathInit } = await import('./actions/filePathInstall.js');
-      await runFilePathInit(options.filePath);
-      return;
-    }
-    render(<App profile={options.profile} />, {
+  .option('--output <path>', 'Path to write config file', './iac-toolbox.yml')
+  .action(async (options: { profile: string; output: string }) => {
+    const { default: InitWizard } = await import('./components/InitWizard.js');
+    render(<InitWizard profile={options.profile} output={options.output} />, {
       exitOnCtrlC: true,
       patchConsole: false,
     });

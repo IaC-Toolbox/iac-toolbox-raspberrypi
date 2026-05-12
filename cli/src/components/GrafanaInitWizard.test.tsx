@@ -160,7 +160,7 @@ describe('GrafanaInitWizard', () => {
     expect(frame).toContain('Password must not be empty');
   });
 
-  it('transitions to confirm step after valid password', async () => {
+  it('transitions to done after valid password', async () => {
     const helper = makeTextInputHelper();
     const { lastFrame } = render(
       <GrafanaInitWizard
@@ -179,43 +179,13 @@ describe('GrafanaInitWizard', () => {
 
     // Submit password
     helper.submit('secret123');
-    await new Promise((r) => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 200));
 
     const frame = lastFrame() ?? '';
-    expect(frame).toContain('Confirm password');
+    expect(frame).toContain('Grafana credentials saved');
   });
 
-  it('shows error and returns to password step on mismatch', async () => {
-    const helper = makeTextInputHelper();
-    const { lastFrame } = render(
-      <GrafanaInitWizard
-        profile="default"
-        destination="/tmp/dest"
-        _TextInput={helper.TextInput}
-        _loadCredentials={() => ({})}
-        _saveCredentials={() => {}}
-        _updateGrafanaConfig={() => {}}
-      />
-    );
-
-    // Submit username
-    helper.submit('admin');
-    await new Promise((r) => setTimeout(r, 50));
-
-    // Submit password
-    helper.submit('secret123');
-    await new Promise((r) => setTimeout(r, 50));
-
-    // Submit non-matching confirmation
-    helper.submit('wrong456');
-    await new Promise((r) => setTimeout(r, 50));
-
-    const frame = lastFrame() ?? '';
-    // Should be back on password step
-    expect(frame).toContain('Grafana admin password');
-  });
-
-  it('shows done screen and calls save functions on matching confirmation', async () => {
+  it('shows done screen and calls save functions after password', async () => {
     const helper = makeTextInputHelper();
     const saveCreds = jest.fn();
     const updateConfig = jest.fn();
@@ -236,11 +206,7 @@ describe('GrafanaInitWizard', () => {
 
     // Submit password
     helper.submit('secret123');
-    await new Promise((r) => setTimeout(r, 50));
-
-    // Submit matching confirmation
-    helper.submit('secret123');
-    await new Promise((r) => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 200));
 
     const frame = lastFrame() ?? '';
     expect(frame).toContain('Grafana credentials saved');
@@ -253,7 +219,7 @@ describe('GrafanaInitWizard', () => {
       },
       'default'
     );
-    expect(updateConfig).toHaveBeenCalledWith('/tmp/dest', 'admin');
+    expect(updateConfig).toHaveBeenCalledWith('/tmp/dest', 'admin', undefined);
   });
 
   it('pre-fills username from existing credentials', () => {
@@ -353,9 +319,7 @@ describe('GrafanaInitWizard', () => {
     helper.submit('admin');
     await new Promise((r) => setTimeout(r, 50));
     helper.submit('pass123');
-    await new Promise((r) => setTimeout(r, 50));
-    helper.submit('pass123');
-    await new Promise((r) => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 200));
 
     expect(saveCreds).toHaveBeenCalledWith(expect.any(Object), 'production');
   });
