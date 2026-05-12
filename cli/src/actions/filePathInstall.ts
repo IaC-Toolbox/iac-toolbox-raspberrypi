@@ -6,6 +6,7 @@ import {
   installScriptExists,
 } from '../utils/installRunner.js';
 import { buildTargetEnv } from '../utils/targetConfig.js';
+import { print } from '../utils/print.js';
 
 /**
  * Run the install using a per-device config file path.
@@ -18,12 +19,12 @@ export async function runFilePathInstall(
   destination: string = 'infrastructure'
 ): Promise<void> {
   if (!fs.existsSync(filePath)) {
-    console.error(`Config file not found: ${filePath}`);
+    print.error(`Config file not found: ${filePath}`);
     process.exit(1);
   }
 
   if (!installScriptExists(destination)) {
-    console.error(
+    print.error(
       `install.sh not found in ${destination}. Ensure infrastructure files are present.`
     );
     process.exit(1);
