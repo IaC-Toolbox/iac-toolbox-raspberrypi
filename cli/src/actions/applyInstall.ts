@@ -1,126 +1,20 @@
-import { spawnSync } from 'child_process';
 import { loadIacToolboxYaml } from '../utils/grafanaConfig.js';
 import { loadCredentials } from '../utils/credentials.js';
+import {
+  testSshConnection,
+  checkDockerAvailable,
+} from '../utils/preflightChecks.js';
+import {
+  printSummaryNoCloudflare,
+  printSummaryWithCloudflare,
+  type ApplySummaryConfig,
+} from '../utils/applySummary.js';
 import { runMetricsAgentInstall } from './metricsAgentInstall.js';
 import { runPrometheusInstall } from './prometheusInstall.js';
 import { runGrafanaInstall } from './grafanaInstall.js';
 import { runCloudflareInstall } from './cloudflareInstall.js';
 
-interface TargetConfig {
-  mode?: string;
-  host?: string;
-  user?: string;
-  ssh_key?: string;
-}
-
-interface CloudflareConfig {
-  enabled?: boolean;
-  domains?: Array<{
-    hostname: string;
-    service_port: number;
-    service: string;
-  }>;
-  [key: string]: unknown;
-}
-
-interface IacToolboxApplyConfig {
-  [key: string]: unknown;
-  target?: TargetConfig;
-  grafana?: {
-    port?: number;
-    domain?: string;
-    [key: string]: unknown;
-  };
-  prometheus?: {
-    port?: number;
-    domain?: string;
-    [key: string]: unknown;
-  };
-  cadvisor?: {
-    enabled?: boolean;
-    port?: number;
-    [key: string]: unknown;
-  };
-  cloudflare?: CloudflareConfig;
-}
-
-/**
- * Test SSH connectivity to a remote host.
- * Returns true if the connection succeeds.
- */
-async function testSshConnection(
-  host: string,
-  user: string,
-  sshKey: string
-): Promise<boolean> {
-  const result = spawnSync(
-    'ssh',
-    [
-      '-i',
-      sshKey,
-      '-o',
-      'StrictHostKeyChecking=no',
-      '-o',
-      'UserKnownHostsFile=/dev/null',
-      '-o',
-      'ConnectTimeout=10',
-      '-o',
-      'BatchMode=yes',
-      `${user}@${host}`,
-      'echo ok',
-    ],
-    { encoding: 'utf-8' }
-  );
-  return result.status === 0;
-}
-
-/**
- * Check whether Docker is available on the target.
- *
- * For remote targets, runs `docker info` over SSH.
- * For localhost, runs `docker info` directly.
- */
-function checkDockerAvailable(
-  mode: string,
-  host?: string,
-  user?: string,
-  sshKey?: string
-): boolean {
-  if (mode === 'remote' && host && user && sshKey) {
-    const result = spawnSync(
-      'ssh',
-      [
-        '-i',
-        sshKey,
-        '-o',
-        'StrictHostKeyChecking=no',
-        '-o',
-        'UserKnownHostsFile=/dev/null',
-        '-o',
-        'ConnectTimeout=10',
-        '-o',
-        'BatchMode=yes',
-        `${user}@${host}`,
-        'docker info > /dev/null 2>&1',
-      ],
-      { encoding: 'utf-8' }
-    );
-    return result.status === 0;
-  }
-
-  // local mode
-  const result = spawnSync('docker', ['info'], {
-    encoding: 'utf-8',
-    stdio: 'pipe',
-  });
-  return result.status === 0;
-}
-
-/**
- * Run a single install step and handle failure output.
- * Returns false if the step fails (process.exit is NOT called here so callers
- * can print the retry hint before exiting).
- */
+/** Run a single install step. Returns false if the step throws. */
 async function runStep(fn: () => Promise<void>): Promise<boolean> {
   try {
     await fn();
@@ -130,9 +24,7 @@ async function runStep(fn: () => Promise<void>): Promise<boolean> {
   }
 }
 
-/**
- * Print the failure block when an install step exits non-zero.
- */
+/** Print the failure block when an install step exits non-zero. */
 function printStepFailure(stepName: string, command: string): void {
   console.error('│');
   console.error(`│  ✗ Install failed at: ${stepName}`);
@@ -147,129 +39,14 @@ function printStepFailure(stepName: string, command: string): void {
 }
 
 /**
- * Print post-install summary when Cloudflare is disabled.
+ * Validate config, credentials, SSH (remote only), and Docker.
+ * Returns target connection info. Calls process.exit(1) on any failure.
  */
-function printSummaryNoCloudflare(
-  config: IacToolboxApplyConfig,
-  host: string
-): void {
-  const grafanaPort = config.grafana?.port ?? 3000;
-  const prometheusPort = config.prometheus?.port ?? 9090;
-  const cadvisorPort = (config.cadvisor?.port as number | undefined) ?? 8080;
-
-  console.log('');
-  console.log('◆  Observability stack installed');
-  console.log('│');
-  console.log('│  ✔ Node Exporter  running  (:9100)');
-  console.log('│  ✔ Grafana Alloy  running  (:12345)');
-  console.log(`│  ✔ Prometheus     running  (:${prometheusPort})`);
-  console.log(`│  ✔ cAdvisor       running  (:${cadvisorPort})`);
-  console.log(`│  ✔ Grafana        running  (:${grafanaPort})`);
-  console.log('│');
-  console.log('│  Services available at:');
-  console.log(
-    `│    Node Exporter    http://${host}:9100     (host metrics endpoint)`
-  );
-  console.log(
-    `│    Grafana Alloy    http://${host}:12345    (pipeline graph UI)`
-  );
-  console.log(`│    Prometheus       http://${host}:${prometheusPort}`);
-  console.log(`│    cAdvisor         http://${host}:${cadvisorPort}`);
-  console.log(`│    Grafana          http://${host}:${grafanaPort}`);
-  console.log('│');
-
-  const isRemote = config.target?.mode === 'remote';
-  if (isRemote) {
-    console.log('│  SSH tunnel shortcut (access from your laptop):');
-    console.log(`│    ssh -L ${grafanaPort}:localhost:${grafanaPort} \\`);
-    console.log(`│        -L ${prometheusPort}:localhost:${prometheusPort} \\`);
-    console.log('│        -L 12345:localhost:12345 \\');
-    console.log(`│        ${config.target?.user ?? 'pi'}@${host}`);
-    console.log('│');
-  }
-
-  console.log('│  Login: admin / <password in ~/.iac-toolbox/credentials>');
-  console.log('│');
-  console.log('│  Suggested dashboards (Grafana → Dashboards → Import):');
-  console.log('│    Node Exporter Full        ID 1860');
-  console.log('│    Docker Container Metrics  ID 193');
-  console.log('└');
-}
-
-/**
- * Print post-install summary when Cloudflare is enabled.
- */
-function printSummaryWithCloudflare(
-  config: IacToolboxApplyConfig,
-  host: string
-): void {
-  const grafanaPort = config.grafana?.port ?? 3000;
-  const prometheusPort = config.prometheus?.port ?? 9090;
-  const cadvisorPort = (config.cadvisor?.port as number | undefined) ?? 8080;
-  const grafanaDomain = config.grafana?.domain as string | undefined;
-  const prometheusDomain = config.prometheus?.domain as string | undefined;
-  const domains = config.cloudflare?.domains ?? [];
-
-  console.log('');
-  console.log('◆  Observability stack installed');
-  console.log('│');
-  console.log('│  ✔ Node Exporter       running  (:9100)');
-  console.log('│  ✔ Grafana Alloy       running  (:12345)');
-  console.log(`│  ✔ Prometheus          running  (:${prometheusPort})`);
-  console.log(`│  ✔ cAdvisor            running  (:${cadvisorPort})`);
-  console.log(`│  ✔ Grafana             running  (:${grafanaPort})`);
-  console.log('│  ✔ Cloudflare Tunnel   active');
-  for (const d of domains) {
-    console.log(`│       ${d.hostname}    → :${d.service_port}`);
-  }
-  console.log('│');
-  console.log('│  Services available at:');
-  console.log(`│    Node Exporter    http://${host}:9100     (LAN only)`);
-  console.log(`│    Grafana Alloy    http://${host}:12345    (LAN only)`);
-  if (prometheusDomain) {
-    console.log(`│    Prometheus       https://${prometheusDomain}`);
-  } else {
-    console.log(`│    Prometheus       http://${host}:${prometheusPort}`);
-  }
-  console.log(
-    `│    cAdvisor         http://${host}:${cadvisorPort}     (LAN only)`
-  );
-  if (grafanaDomain) {
-    console.log(`│    Grafana          https://${grafanaDomain}`);
-  } else {
-    console.log(`│    Grafana          http://${host}:${grafanaPort}`);
-  }
-  console.log('│');
-  console.log('│  Login: admin / <password in ~/.iac-toolbox/credentials>');
-  console.log('│');
-  console.log('│  Suggested dashboards (Grafana → Dashboards → Import):');
-  console.log('│    Node Exporter Full        ID 1860');
-  console.log('│    Docker Container Metrics  ID 193');
-  console.log('└');
-}
-
-/**
- * Run `iac-toolbox apply`.
- *
- * Orchestrates:
- *   1. Pre-flight checks (config, credentials, SSH, Docker)
- *   2. Install sequence: metrics-agent → prometheus → cadvisor → grafana → cloudflare
- *   3. Post-install summary
- */
-export async function runApplyInstall(
-  destination: string,
-  profile: string,
-  filePath: string
-): Promise<void> {
-  // ── Pre-flight ────────────────────────────────────────────
-  console.log('◆  Pre-flight checks');
-
-  // 1. Parse config
-  const config = loadIacToolboxYaml(
-    destination,
-    filePath
-  ) as IacToolboxApplyConfig;
-
+async function runPreflightChecks(
+  config: ApplySummaryConfig,
+  filePath: string,
+  grafanaAdminPassword: string | undefined
+): Promise<{ targetMode: string; targetHost: string }> {
   const configIsEmpty =
     !config || (typeof config === 'object' && Object.keys(config).length === 0);
   if (configIsEmpty) {
@@ -283,9 +60,7 @@ export async function runApplyInstall(
   }
   console.log(`│  ✔ Config loaded: ${filePath}`);
 
-  // 2. Load credentials
-  const creds = loadCredentials(profile);
-  if (!creds.grafana_admin_password) {
+  if (!grafanaAdminPassword) {
     console.error('│  ✗ Credentials missing: grafana_admin_password not found');
     console.error('│');
     console.error(
@@ -296,11 +71,11 @@ export async function runApplyInstall(
   }
   console.log('│  ✔ Credentials loaded from ~/.iac-toolbox/credentials');
 
-  // 3. SSH connectivity (remote targets only)
   const targetMode = config.target?.mode ?? 'local';
-  const targetHost = config.target?.host ?? 'localhost';
+  const targetHost = (config.target?.host as string | undefined) ?? 'localhost';
   const targetUser = config.target?.user ?? 'pi';
-  const targetSshKey = config.target?.ssh_key ?? '~/.ssh/id_ed25519';
+  const targetSshKey =
+    (config.target?.ssh_key as string | undefined) ?? '~/.ssh/id_ed25519';
 
   if (targetMode === 'remote') {
     process.stdout.write(
@@ -322,7 +97,6 @@ export async function runApplyInstall(
     console.log('│  ✔ SSH connection successful');
   }
 
-  // 4. Docker check
   const dockerOk = checkDockerAvailable(
     targetMode,
     targetHost,
@@ -339,9 +113,19 @@ export async function runApplyInstall(
   console.log('│  ✔ Docker available on target');
   console.log('└');
 
-  // ── Install Sequence ──────────────────────────────────────
+  return { targetMode, targetHost };
+}
 
-  // Step 1: metrics-agent (Node Exporter + Grafana Alloy)
+/**
+ * Run the install sequence and return whether Cloudflare was installed.
+ * Calls process.exit(1) with a retry hint on the first failure.
+ */
+async function runInstallSequence(
+  destination: string,
+  profile: string,
+  filePath: string,
+  config: ApplySummaryConfig
+): Promise<boolean> {
   const metricsOk = await runStep(() =>
     runMetricsAgentInstall(destination, filePath)
   );
@@ -353,7 +137,6 @@ export async function runApplyInstall(
     process.exit(1);
   }
 
-  // Step 2: prometheus
   const prometheusOk = await runStep(() =>
     runPrometheusInstall(destination, profile, filePath)
   );
@@ -365,10 +148,7 @@ export async function runApplyInstall(
     process.exit(1);
   }
 
-  // Step 3: cadvisor
-  const cadvisorEnabled = config.cadvisor?.enabled !== false;
-  if (cadvisorEnabled) {
-    // Dynamically import to keep the dependency optional at module load time
+  if (config.cadvisor?.enabled !== false) {
     const { runCAdvisorInstall } = await import('./cadvisorInstall.js');
     const cadvisorOk = await runStep(() =>
       runCAdvisorInstall(destination, profile, filePath)
@@ -382,7 +162,6 @@ export async function runApplyInstall(
     }
   }
 
-  // Step 4: grafana
   const grafanaOk = await runStep(() =>
     runGrafanaInstall(destination, profile, filePath)
   );
@@ -391,10 +170,9 @@ export async function runApplyInstall(
     process.exit(1);
   }
 
-  // Step 5: cloudflare (only if enabled)
   const cloudflareEnabled =
     config.cloudflare &&
-    (config.cloudflare as CloudflareConfig).enabled === true;
+    (config.cloudflare as { enabled?: boolean }).enabled === true;
 
   if (cloudflareEnabled) {
     const cloudflareOk = await runStep(() =>
@@ -409,9 +187,44 @@ export async function runApplyInstall(
     }
   }
 
-  // ── Post-Install Summary ──────────────────────────────────
-  const displayHost = targetMode === 'remote' ? targetHost : 'localhost';
+  return Boolean(cloudflareEnabled);
+}
 
+/**
+ * Run `iac-toolbox apply`.
+ *
+ * Orchestrates:
+ *   1. Pre-flight checks (config, credentials, SSH, Docker)
+ *   2. Install sequence: metrics-agent → prometheus → cadvisor → grafana → cloudflare
+ *   3. Post-install summary
+ */
+export async function runApplyInstall(
+  destination: string,
+  profile: string,
+  filePath: string
+): Promise<void> {
+  console.log('◆  Pre-flight checks');
+
+  const config = loadIacToolboxYaml(
+    destination,
+    filePath
+  ) as ApplySummaryConfig;
+  const creds = loadCredentials(profile);
+
+  const { targetMode, targetHost } = await runPreflightChecks(
+    config,
+    filePath,
+    creds.grafana_admin_password
+  );
+
+  const cloudflareEnabled = await runInstallSequence(
+    destination,
+    profile,
+    filePath,
+    config
+  );
+
+  const displayHost = targetMode === 'remote' ? targetHost : 'localhost';
   if (cloudflareEnabled) {
     printSummaryWithCloudflare(config, displayHost);
   } else {
