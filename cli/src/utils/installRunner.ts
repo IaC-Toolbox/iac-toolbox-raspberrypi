@@ -1,6 +1,5 @@
 import { spawn, ChildProcess } from 'child_process';
 import fs from 'fs';
-import os from 'os';
 import { loadCredentials } from './credentials.js';
 
 export interface InstallResult {
@@ -14,8 +13,6 @@ export interface InstallResult {
  * Required environment variables for install.sh in local mode.
  */
 const REQUIRED_ENV_VARS = [
-  'RPI_HOST',
-  'RPI_USER',
   'DOCKER_HUB_USERNAME',
   'DOCKER_HUB_TOKEN',
   'DOCKER_IMAGE_NAME',
@@ -25,7 +22,7 @@ const REQUIRED_ENV_VARS = [
  * Build the environment object for the install script child process.
  *
  * Reads credentials from ~/.iac-toolbox/credentials and merges with
- * auto-resolved values (RPI_HOST, RPI_USER). No .env file is written.
+ * current process environment. No .env file is written.
  */
 export function buildInstallEnv(
   profile: string = 'default',
@@ -37,8 +34,6 @@ export function buildInstallEnv(
 
   return {
     ...(process.env as Record<string, string>),
-    RPI_HOST: 'localhost',
-    RPI_USER: os.userInfo().username,
     DOCKER_HUB_USERNAME: dockerHubUsername || creds.docker_hub_username || '',
     DOCKER_HUB_TOKEN: creds.docker_hub_token || '',
     DOCKER_IMAGE_NAME: dockerImageName || creds.docker_image_name || '',

@@ -137,28 +137,24 @@ describe('updateTargetConfig', () => {
 // ---------------------------------------------------------------------------
 
 describe('buildTargetEnv', () => {
-  it('returns localhost defaults when no config exists', () => {
+  it('returns ssh key default and local flag when no config exists', () => {
     const env = buildTargetEnv(tmpDir);
     expect(env).toEqual({
-      RPI_HOST: 'localhost',
-      RPI_USER: os.userInfo().username,
       RPI_SSH_KEY: '~/.ssh/id_ed25519',
       RPI_LOCAL: 'true',
     });
   });
 
-  it('returns localhost defaults when config has local mode', () => {
+  it('returns ssh key default and local flag when config has local mode', () => {
     updateTargetConfig(tmpDir, { mode: 'local' });
     const env = buildTargetEnv(tmpDir);
     expect(env).toEqual({
-      RPI_HOST: 'localhost',
-      RPI_USER: os.userInfo().username,
       RPI_SSH_KEY: '~/.ssh/id_ed25519',
       RPI_LOCAL: 'true',
     });
   });
 
-  it('returns remote values when config has remote mode', () => {
+  it('returns ssh key and remote flag when config has remote mode', () => {
     updateTargetConfig(tmpDir, {
       mode: 'remote',
       host: '192.168.1.100',
@@ -167,8 +163,6 @@ describe('buildTargetEnv', () => {
     });
     const env = buildTargetEnv(tmpDir);
     expect(env).toEqual({
-      RPI_HOST: '192.168.1.100',
-      RPI_USER: 'pi',
       RPI_SSH_KEY: '~/.ssh/pi_key',
       RPI_LOCAL: 'false',
     });

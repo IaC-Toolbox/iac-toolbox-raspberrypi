@@ -91,11 +91,9 @@ describe('generateEnvFile', () => {
     githubRunner: { enabled: false },
   };
 
-  it('includes connection details', () => {
+  it('includes ssh key connection detail', () => {
     const env = generateEnvFile(baseConfig);
 
-    expect(env).toContain('RPI_HOST=192.168.1.10');
-    expect(env).toContain('RPI_USER=pi');
     expect(env).toContain('RPI_SSH_KEY=~/.ssh/id_rsa');
   });
 

@@ -188,13 +188,11 @@ function generateConfigYaml(config: WizardConfig): string {
 function generateEnvFile(config: WizardConfig): string {
   const lines: string[] = [];
 
-  lines.push('# Connection');
-  lines.push(`RPI_HOST=${config.connection.host}`);
-  lines.push(`RPI_USER=${config.connection.user}`);
   if (config.connection.sshKey) {
+    lines.push('# Connection');
     lines.push(`RPI_SSH_KEY=${config.connection.sshKey}`);
+    lines.push('');
   }
-  lines.push('');
 
   if (config.githubRunner.enabled && config.githubRunner.repoUrl) {
     lines.push('# GitHub Runner');
@@ -278,8 +276,6 @@ async function generateConfigFiles(
     all: {
       hosts: {
         raspberry_pi: {
-          ansible_host: "{{ lookup('env', 'RPI_HOST') }}",
-          ansible_user: "{{ lookup('env', 'RPI_USER') }}",
           ansible_ssh_private_key_file:
             "{{ lookup('env', 'RPI_SSH_KEY') | default('~/.ssh/id_ed25519') }}",
         },
