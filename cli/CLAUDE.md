@@ -18,6 +18,20 @@ Example: `feat: add ARM64 validation check`
 
 Include `Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>` for AI-assisted commits.
 
+## Imports
+
+Always use static imports at the top of the file. Never use dynamic `await import(...)` inside functions or callbacks.
+
+## File Naming
+
+TypeScript source files use **lowercase-with-hyphens** (kebab-case), not camelCase.
+
+- `grafana-init-wizard.tsx` not `GrafanaInitWizard.tsx`
+- `metrics-agent.ts` not `metricsAgent.ts`
+- `apply-command.ts` not `applyCommand.ts`
+
+This applies to all files under `src/` — components, actions, utils, entry-points, commands, hooks, validators.
+
 # Validation Commands
 
 Run in order. Stop and fix before continuing if any command fails.
