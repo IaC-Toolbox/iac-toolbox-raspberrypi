@@ -1,0 +1,32 @@
+---
+- name: Ensure cadvisor base directory exists
+  file:
+    path: "{{ cadvisor_base_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Deploy docker-compose file
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ cadvisor_base_dir }}/docker-compose.yml"
+    mode: '0644'
+  notify: Restart cadvisor
+
+- name: Start cAdvisor via docker compose
+  shell: docker compose up -d
+  args:
+    chdir: "{{ cadvisor_base_dir }}"
+
+- name: Wait for cadvisor container to be running
+  shell: docker inspect --format="{{ '{{' }}.State.Running{{ '}}' }}" cadvisor
+  register: cadvisor_container_state
+  retries: 15
+  delay: 2
+  until: cadvisor_container_state.stdout == "true"
+  changed_when: false
+
+- name: Display cadvisor status
+  debug:
+    msg:
+      - "cAdvisor {{ cadvisor_version }} is running"
+      - "Metrics available at: http://localhost:{{ cadvisor.port | default(cadvisor_port) }}"

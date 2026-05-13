@@ -1,0 +1,5 @@
+---
+- name: Restart cadvisor
+  shell: docker compose restart cadvisor
+  args:
+    chdir: "{{ cadvisor_base_dir }}"

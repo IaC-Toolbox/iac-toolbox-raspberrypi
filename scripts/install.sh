@@ -184,7 +184,8 @@ if [ "$RUN_ANSIBLE" = true ]; then
   )
   for var_name in "${SECRET_ENV_NAMES[@]}"; do
     if [ -n "${!var_name}" ]; then
-      SECRET_VARS="${SECRET_VARS} ${var_name}=${!var_name}"
+      lower_name=$(echo "$var_name" | tr '[:upper:]' '[:lower:]')
+      SECRET_VARS="${SECRET_VARS} ${lower_name}=${!var_name}"
     fi
   done
 
