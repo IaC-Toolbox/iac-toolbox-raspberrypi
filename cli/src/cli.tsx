@@ -367,6 +367,47 @@ metricsAgent
     process.exit(result.status ?? 1);
   });
 
+const agent = program
+  .command('agent')
+  .description(
+    'Deploy observability agent (Node Exporter + Grafana Alloy + cAdvisor)'
+  );
+
+agent
+  .command('init')
+  .description(
+    'Configure remote Grafana and Prometheus endpoints for the agent'
+  )
+  .option(
+    '--destination <path>',
+    'Path to infrastructure directory',
+    'infrastructure'
+  )
+  .option('--filePath <path>', 'Path to a per-device config file')
+  .action(async (options: { destination: string; filePath?: string }) => {
+    const { default: AgentInitWizard } = await import(
+      './components/agent-init-wizard.js'
+    );
+    render(<AgentInitWizard destination={options.destination} />, {
+      exitOnCtrlC: true,
+      patchConsole: false,
+    });
+  });
+
+agent
+  .command('apply')
+  .description('Install the observability agent stack')
+  .option(
+    '--destination <path>',
+    'Path to infrastructure directory',
+    'infrastructure'
+  )
+  .option('--filePath <path>', 'Path to a per-device config file')
+  .action(async (options: { destination: string; filePath?: string }) => {
+    const { runAgentInstall } = await import('./actions/agent-install.js');
+    await runAgentInstall(options.destination, options.filePath);
+  });
+
 const githubBuildWorkflow = program
   .command('github-build-workflow')
   .description('Manage GitHub Build Workflow templates');
