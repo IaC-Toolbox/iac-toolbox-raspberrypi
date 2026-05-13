@@ -172,22 +172,6 @@ if [ "$RUN_ANSIBLE" = true ]; then
   echo -e "${YELLOW}[4/4] Running Ansible playbook...${NC}"
   echo -e "${YELLOW}Target: defined in config file (target.mode/host/user)${NC}"
 
-  # Build secret variables from environment (injected by CLI from ~/.iac-toolbox/credentials)
-  # Ansible roles validate their required secrets and fail with clear errors if missing.
-  SECRET_VARS=""
-  SECRET_ENV_NAMES=(
-    DOCKER_HUB_TOKEN DOCKER_HUB_USERNAME
-    CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_ZONE_ID
-    GRAFANA_ADMIN_USER GRAFANA_ADMIN_PASSWORD
-    GITHUB_RUNNER_TOKEN GITHUB_REPO_URL
-    ALLOY_REMOTE_WRITE_URL
-  )
-  for var_name in "${SECRET_ENV_NAMES[@]}"; do
-    if [ -n "${!var_name}" ]; then
-      SECRET_VARS="${SECRET_VARS} ${var_name}=${!var_name}"
-    fi
-  done
-
   ANSIBLE_CMD=(ansible-playbook -i inventory/all.yml "playbooks/$ANSIBLE_PLAYBOOK")
 
   # Load iac-toolbox.yml configuration file
@@ -222,9 +206,6 @@ if [ "$RUN_ANSIBLE" = true ]; then
     echo -e "${YELLOW}⚠ No iac-toolbox.yml configuration file found. Use --filePath to specify one, or run init first. Using role defaults.${NC}"
   fi
   ANSIBLE_CMD+=(--extra-vars "project_root=${PROJECT_ROOT}")
-  if [ -n "$SECRET_VARS" ]; then
-    ANSIBLE_CMD+=(--extra-vars "$SECRET_VARS")
-  fi
 
   (
     cd "$ANSIBLE_DIR"

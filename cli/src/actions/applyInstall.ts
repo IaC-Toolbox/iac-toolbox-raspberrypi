@@ -1,4 +1,7 @@
 import { spawnSync } from 'child_process';
+import { readFileSync, writeFileSync, unlinkSync, mkdirSync } from 'fs';
+import { homedir } from 'os';
+import { join } from 'path';
 import { loadIacToolboxYaml } from '../utils/grafanaConfig.js';
 import { loadCredentials } from '../utils/credentials.js';
 import {
@@ -11,16 +14,19 @@ import {
   type ApplySummaryConfig,
 } from '../utils/applySummary.js';
 import { print } from '../utils/print.js';
+import { resolveConfigTemplates } from '../utils/configResolver.js';
 
 /**
  * Validate config, credentials, SSH (remote only), and Docker.
- * Returns target connection info. Calls process.exit(1) on any failure.
+ * Resolves all {{ var }} template references in the YAML config.
+ * Returns target connection info and resolved YAML text.
+ * Calls process.exit(1) on any failure.
  */
 async function runPreflightChecks(
   config: ApplySummaryConfig,
   filePath: string,
-  grafanaAdminPassword: string | undefined
-): Promise<{ targetMode: string; targetHost: string }> {
+  creds: Record<string, string | undefined>
+): Promise<{ targetMode: string; targetHost: string; resolvedYaml: string }> {
   const configIsEmpty =
     !config || (typeof config === 'object' && Object.keys(config).length === 0);
   if (configIsEmpty) {
@@ -32,14 +38,22 @@ async function runPreflightChecks(
   }
   print.success(`Config loaded: ${filePath}`);
 
-  if (!grafanaAdminPassword) {
-    print.error('Credentials missing: grafana_admin_password not found');
+  // Read raw YAML text (not parsed — preserve {{ }} syntax for resolution)
+  const rawYaml = readFileSync(filePath, 'utf-8');
+  const { resolved, missing } = resolveConfigTemplates(rawYaml, creds);
+
+  if (missing.length > 0) {
+    print.error('Missing credentials for template variables in config:');
     print.pipe();
-    print.pipe('Run `iac-toolbox grafana init` first to set up credentials.');
+    for (const varName of missing) {
+      print.pipe(`  ✗ {{ ${varName} }}`);
+      print.pipe(`    → run: iac-toolbox credentials set ${varName}`);
+      print.pipe();
+    }
     print.closeError();
     process.exit(1);
   }
-  print.success('Credentials loaded from ~/.iac-toolbox/credentials');
+  print.success('All template variables resolved from credentials');
 
   const targetMode = config.target?.mode ?? 'local';
   const targetHost = (config.target?.host as string | undefined) ?? 'localhost';
@@ -77,7 +91,7 @@ async function runPreflightChecks(
   print.success('Docker available on target');
   print.close();
 
-  return { targetMode, targetHost };
+  return { targetMode, targetHost, resolvedYaml: resolved };
 }
 
 /**
@@ -86,32 +100,30 @@ async function runPreflightChecks(
  */
 function runInstallSequence(
   destination: string,
-  filePath: string,
   config: ApplySummaryConfig,
-  creds: ReturnType<typeof loadCredentials>
+  resolvedYaml: string
 ): boolean {
   const scriptPath = `${destination}/scripts/install.sh`;
 
+  // Write resolved YAML to ~/.iac-toolbox/ (no {{ }} template refs remaining)
+  const iacDir = join(homedir(), '.iac-toolbox');
+  mkdirSync(iacDir, { recursive: true });
+  const tmpFile = join(iacDir, `resolved-config-${Date.now()}.yml`);
+  writeFileSync(tmpFile, resolvedYaml, { mode: 0o600 });
+
   const env: NodeJS.ProcessEnv = { ...process.env };
-  if (creds.grafana_admin_user)
-    env.GRAFANA_ADMIN_USER = creds.grafana_admin_user;
-  if (creds.grafana_admin_password)
-    env.GRAFANA_ADMIN_PASSWORD = creds.grafana_admin_password;
-  if (creds.cloudflare_api_token)
-    env.CLOUDFLARE_API_TOKEN = creds.cloudflare_api_token;
+  // No credential env vars — they are now embedded in resolvedYaml
 
-  const alloyUrl = (
-    config as Record<string, unknown> & {
-      grafana_alloy?: { alloy_remote_write_url?: string };
-    }
-  ).grafana_alloy?.alloy_remote_write_url;
-  if (alloyUrl) env.ALLOY_REMOTE_WRITE_URL = alloyUrl;
-
-  const result = spawnSync(
-    'bash',
-    [scriptPath, '--observability-platform', '--filePath', filePath],
-    { env, stdio: 'inherit' }
-  );
+  let result;
+  try {
+    result = spawnSync(
+      'bash',
+      [scriptPath, '--observability-platform', '--filePath', tmpFile],
+      { env, stdio: 'inherit' }
+    );
+  } finally {
+    unlinkSync(tmpFile);
+  }
 
   if (result.status !== 0) {
     print.blank();
@@ -150,19 +162,18 @@ export async function runApplyInstall(
     destination,
     filePath
   ) as ApplySummaryConfig;
-  const creds = loadCredentials(profile);
+  const creds = loadCredentials(profile) as Record<string, string | undefined>;
 
-  const { targetMode, targetHost } = await runPreflightChecks(
+  const { targetMode, targetHost, resolvedYaml } = await runPreflightChecks(
     config,
     filePath,
-    creds.grafana_admin_password
+    creds
   );
 
   const cloudflareEnabled = runInstallSequence(
     destination,
-    filePath,
     config,
-    creds
+    resolvedYaml
   );
 
   const displayHost = targetMode === 'remote' ? targetHost : 'localhost';
