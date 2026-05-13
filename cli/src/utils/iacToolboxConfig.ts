@@ -1,9 +1,9 @@
 import fs from 'fs/promises';
 import path from 'path';
-import type { GitHubBuildWorkflowConfig } from '../components/GitHubBuildWorkflowDialog.js';
-import type { CloudflareConfig } from '../components/CloudflareConfigDialog.js';
-import type { VaultConfig } from '../components/VaultConfigDialog.js';
-import type { GrafanaConfig } from '../components/GrafanaConfigDialog.js';
+import type { GitHubBuildWorkflowConfig } from '../clis/github-build-workflow/github-build-workflow-dialog.js';
+import type { CloudflareConfig } from '../clis/cloudflare/cloudflare-config-dialog.js';
+import type { VaultConfig } from '../clis/vault/vault-config-dialog.js';
+import type { GrafanaConfig } from '../clis/grafana/grafana-config-dialog.js';
 import type { DeviceProfile } from '../components/DeviceProfileDialog.js';
 import type { ObservabilityRemoteConfig } from '../components/ObservabilityRemoteDialog.js';
 

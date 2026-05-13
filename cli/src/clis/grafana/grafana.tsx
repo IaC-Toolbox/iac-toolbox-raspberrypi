@@ -1,8 +1,8 @@
 import { spawnSync } from 'child_process';
 import { Command } from 'commander';
 import { render } from 'ink';
-import { runGrafanaInstall } from '../actions/grafanaInstall.js';
-import GrafanaInitWizard from '../components/GrafanaInitWizard.js';
+import { runGrafanaInstall } from './grafana-install.js';
+import GrafanaInitWizard from './grafana-init-wizard.js';
 
 export function registerGrafanaCommand(program: Command): void {
   const grafana = program

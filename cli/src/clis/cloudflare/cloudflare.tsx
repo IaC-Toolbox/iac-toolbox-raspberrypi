@@ -1,17 +1,17 @@
 import { spawnSync } from 'child_process';
 import { Command } from 'commander';
 import { render } from 'ink';
-import { runGrafanaInstall } from '../actions/grafanaInstall.js';
-import GrafanaInitWizard from '../components/GrafanaInitWizard.js';
+import { runCloudflareInstall } from './cloudflare-install.js';
+import CloudflareInitWizard from './cloudflare-init-wizard.js';
 
-export function registerGrafanaCommand(program: Command): void {
-  const grafana = program
-    .command('grafana')
-    .description('Manage Grafana observability stack');
+export function registerCloudflareCommand(program: Command): void {
+  const cloudflare = program
+    .command('cloudflare')
+    .description('Manage Cloudflare Tunnel integration');
 
-  grafana
+  cloudflare
     .command('init')
-    .description('Collect Grafana credentials')
+    .description('Collect Cloudflare API credentials and tunnel config')
     .option('--profile <name>', 'Credential profile to use', 'default')
     .option(
       '--destination <path>',
@@ -19,26 +19,19 @@ export function registerGrafanaCommand(program: Command): void {
       'infrastructure'
     )
     .option('--filePath <path>', 'Path to a per-device config file')
-    .action(
-      (options: {
-        profile: string;
-        destination: string;
-        filePath?: string;
-      }) => {
-        render(
-          <GrafanaInitWizard
-            profile={options.profile}
-            destination={options.destination}
-            filePath={options.filePath}
-          />,
-          { exitOnCtrlC: true, patchConsole: false }
-        );
-      }
-    );
+    .action((options: { profile: string; destination: string }) => {
+      render(
+        <CloudflareInitWizard
+          profile={options.profile}
+          destination={options.destination}
+        />,
+        { exitOnCtrlC: true, patchConsole: false }
+      );
+    });
 
-  grafana
+  cloudflare
     .command('install')
-    .description('Install or reinstall Grafana observability stack')
+    .description('Install or reinstall Cloudflare Tunnel')
     .option('--profile <name>', 'Credential profile to use', 'default')
     .option(
       '--destination <path>',
@@ -52,7 +45,7 @@ export function registerGrafanaCommand(program: Command): void {
         destination: string;
         filePath?: string;
       }) => {
-        await runGrafanaInstall(
+        await runCloudflareInstall(
           options.destination,
           options.profile,
           options.filePath
@@ -60,13 +53,13 @@ export function registerGrafanaCommand(program: Command): void {
       }
     );
 
-  grafana
+  cloudflare
     .command('uninstall')
-    .description('Remove Grafana and all observability data')
+    .description('Remove Cloudflare Tunnel from this device')
     .action(() => {
       const result = spawnSync(
         'bash',
-        ['infrastructure/scripts/uninstall-loki.sh', '--local'],
+        ['infrastructure/scripts/uninstall-cloudflared.sh', '--local'],
         { stdio: 'inherit' }
       );
       process.exit(result.status ?? 1);

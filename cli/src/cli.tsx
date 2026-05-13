@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { buildApplyCommand } from './commands/applyCommand.js';
-import { registerInitCommand } from './entry-points/init.js';
-import { registerCredentialsCommand } from './entry-points/credentials.js';
-import { registerCloudflareCommand } from './entry-points/cloudflare.js';
-import { registerVaultCommand } from './entry-points/vault.js';
-import { registerGrafanaCommand } from './entry-points/grafana.js';
-import { registerLokiCommand } from './entry-points/loki.js';
-import { registerPrometheusCommand } from './entry-points/prometheus.js';
-import { registerMetricsAgentCommand } from './entry-points/metrics-agent.js';
-import { registerGithubBuildWorkflowCommand } from './entry-points/github-build-workflow.js';
-import { registerGithubRunnerCommand } from './entry-points/github-runner.js';
-import { registerTargetCommand } from './entry-points/target.js';
-import { registerInstallCommand } from './entry-points/install.js';
-import { registerUninstallCommand } from './entry-points/uninstall.js';
-
+import { buildApplyCommand } from './clis/apply/apply-command.js';
+import { registerInitCommand } from './clis/init/init.js';
+import { registerCredentialsCommand } from './clis/credentials/credentials.js';
+import { registerCloudflareCommand } from './clis/cloudflare/cloudflare.js';
+import { registerVaultCommand } from './clis/vault/vault.js';
+import { registerGrafanaCommand } from './clis/grafana/grafana.js';
+import { registerLokiCommand } from './clis/loki/loki.js';
+import { registerPrometheusCommand } from './clis/prometheus/prometheus.js';
+import { registerMetricsAgentCommand } from './clis/metrics-agent/metrics-agent.js';
+import { registerGithubBuildWorkflowCommand } from './clis/github-build-workflow/github-build-workflow.js';
+import { registerGithubRunnerCommand } from './clis/github-runner/github-runner.js';
+import { registerTargetCommand } from './clis/target/target.js';
+import { registerInstallCommand } from './clis/install/install.js';
+import { registerUninstallCommand } from './clis/uninstall/uninstall.js';
+import { registerPlatformCommand } from './clis/platform/platform.js';
 
 const program = new Command();
 
@@ -26,24 +26,7 @@ program
   .option('-c <name>=<value>', 'Set config variable')
   .option('--profile <name>', 'Credential profile to use', 'default');
 
-const platform = program
-  .command('platform')
-  .description('Manage the full observability platform');
-
-platform
-  .command('init')
-  .description('Start the observability setup wizard')
-  .option('--profile <name>', 'Credential profile to use', 'default')
-  .option('--output <path>', 'Path to write config file', './iac-toolbox.yml')
-  .action(async (options: { profile: string; output: string }) => {
-    const { default: InitWizard } = await import('./components/InitWizard.js');
-    render(<InitWizard profile={options.profile} output={options.output} />, {
-      exitOnCtrlC: true,
-      patchConsole: false,
-    });
-  });
-
-
+registerPlatformCommand(program);
 registerInitCommand(program);
 registerCredentialsCommand(program);
 registerCloudflareCommand(program);
@@ -58,7 +41,6 @@ registerTargetCommand(program);
 registerInstallCommand(program);
 registerUninstallCommand(program);
 
-const { buildApplyCommand } = await import('./commands/applyCommand.js');
 program.addCommand(buildApplyCommand());
 
 if (process.argv.length === 2) {
