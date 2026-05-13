@@ -367,6 +367,9 @@ metricsAgent
     process.exit(result.status ?? 1);
   });
 
+const { buildAgentCommand } = await import('./commands/agent-command.js');
+program.addCommand(buildAgentCommand());
+
 const githubBuildWorkflow = program
   .command('github-build-workflow')
   .description('Manage GitHub Build Workflow templates');
