@@ -32,7 +32,9 @@ async function runPreflightChecks(
   if (configIsEmpty) {
     print.error(`Config not found: ${filePath}`);
     print.pipe();
-    print.pipe('Run `iac-toolbox init` first to generate iac-toolbox.yml');
+    print.pipe(
+      'Run `iac-toolbox platform init` first to generate iac-toolbox.yml'
+    );
     print.closeError();
     process.exit(1);
   }
@@ -132,7 +134,9 @@ function runInstallSequence(
     print.error('Ansible playbook exited with errors');
     print.pipe('Check output above for details');
     print.pipe();
-    print.pipe('To retry: iac-toolbox apply --filePath=./iac-toolbox.yml');
+    print.pipe(
+      'To retry: iac-toolbox platform apply --filePath=./iac-toolbox.yml'
+    );
     print.closeError();
     process.exit(result.status ?? 1);
   }
@@ -144,7 +148,7 @@ function runInstallSequence(
 }
 
 /**
- * Run `iac-toolbox apply`.
+ * Run `iac-toolbox platform apply`.
  *
  * Orchestrates:
  *   1. Pre-flight checks (config, credentials, SSH, Docker)

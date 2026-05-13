@@ -843,7 +843,7 @@ export default function InitWizard({
       <Text bold>{'│'}</Text>
       <Text dimColor>{'│  ℹ  Run to install:'}</Text>
       <Text>
-        {'│     iac-toolbox apply --filePath='}
+        {'│     iac-toolbox platform apply --filePath='}
         {output}
       </Text>
       <Text bold>{'└'}</Text>
