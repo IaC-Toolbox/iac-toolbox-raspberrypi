@@ -86,7 +86,9 @@ export const print = {
     console.error(muted(sym.pipe));
     console.error(muted(`${sym.pipe}  To retry the full apply:`));
     console.error(
-      muted(`${sym.pipe}     iac-toolbox apply --filePath=./iac-toolbox.yml`)
+      muted(
+        `${sym.pipe}     iac-toolbox platform apply --filePath=./iac-toolbox.yml`
+      )
     );
     console.error(muted(sym.corner));
   },

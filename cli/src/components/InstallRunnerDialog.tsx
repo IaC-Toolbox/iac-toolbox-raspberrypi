@@ -61,7 +61,7 @@ export default function InstallRunnerDialog({
     let cancelled = false;
 
     if (!_installScriptExists(destination)) {
-      const msg = `install.sh not found at ${destination}/scripts/install.sh. Try re-running \`iac-toolbox init\`.`;
+      const msg = `install.sh not found at ${destination}/scripts/install.sh. Try re-running \`iac-toolbox platform init\`.`;
       setRunning(false);
       setInitError(msg);
       onComplete({
