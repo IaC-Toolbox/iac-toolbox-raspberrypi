@@ -1,5 +1,4 @@
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 import yaml from 'js-yaml';
 
@@ -119,8 +118,6 @@ export function updateTargetConfig(
  * Falls back to safe local defaults when no target config exists.
  */
 export function buildTargetEnv(destination: string): {
-  RPI_HOST: string;
-  RPI_USER: string;
   RPI_SSH_KEY: string;
   RPI_LOCAL: string;
 } {
@@ -128,8 +125,6 @@ export function buildTargetEnv(destination: string): {
 
   if (config.mode === 'remote') {
     return {
-      RPI_HOST: config.host ?? 'localhost',
-      RPI_USER: config.user ?? os.userInfo().username,
       RPI_SSH_KEY: config.ssh_key ?? '~/.ssh/id_ed25519',
       RPI_LOCAL: 'false',
     };
@@ -137,8 +132,6 @@ export function buildTargetEnv(destination: string): {
 
   // local mode or no config — return backward-compatible defaults
   return {
-    RPI_HOST: 'localhost',
-    RPI_USER: os.userInfo().username,
     RPI_SSH_KEY: '~/.ssh/id_ed25519',
     RPI_LOCAL: 'true',
   };

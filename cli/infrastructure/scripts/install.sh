@@ -31,6 +31,7 @@ echo $IAC_ROOT
 RUN_ANSIBLE=true
 RUN_TERRAFORM=true
 ANSIBLE_PLAYBOOK="site.yml"
+RPI_LOCAL_MODE="${RPI_LOCAL:-false}"
 FILE_PATH_ARG=""
 
 while [[ $# -gt 0 ]]; do
@@ -56,6 +57,16 @@ while [[ $# -gt 0 ]]; do
       ANSIBLE_PLAYBOOK="vault.yml"
       shift
       ;;
+    --observability-platform)
+      RUN_TERRAFORM=false
+      ANSIBLE_PLAYBOOK="observability_platform.yml"
+      shift
+      ;;
+    --cadvisor)
+      RUN_TERRAFORM=false
+      ANSIBLE_PLAYBOOK="cadvisor.yml"
+      shift
+      ;;
     --cloudflared)
       RUN_TERRAFORM=false
       ANSIBLE_PLAYBOOK="cloudflare.yml"
@@ -76,17 +87,23 @@ while [[ $# -gt 0 ]]; do
       ANSIBLE_PLAYBOOK="metrics-agent.yml"
       shift
       ;;
+    --local)
+      RPI_LOCAL_MODE=true
+      shift
+      ;;
     -h|--help)
       echo "Usage: $0 [OPTIONS]"
       echo ""
       echo "Options:"
       echo "  --ansible-only     Run only Ansible playbook (infrastructure)"
       echo "  --terraform-only   Run only Terraform (Grafana alerts)"
-      echo "  --vault            Deploy only HashiCorp Vault"
-      echo "  --cloudflared      Deploy only Cloudflare tunnel"
-      echo "  --grafana          Deploy only Grafana observability stack"
-      echo "  --prometheus       Deploy only Prometheus metrics collection"
-      echo "  --metrics-agent    Deploy only Node Exporter + Grafana Alloy"
+      echo "  --vault                   Deploy only HashiCorp Vault"
+      echo "  --observability-platform  Deploy full observability stack in one Ansible run"
+      echo "  --cadvisor                Deploy only cAdvisor"
+      echo "  --cloudflared             Deploy only Cloudflare tunnel"
+      echo "  --grafana                 Deploy only Grafana observability stack"
+      echo "  --prometheus              Deploy only Prometheus metrics collection"
+      echo "  --metrics-agent           Deploy only Node Exporter + Grafana Alloy"
       echo "  --local            Run Ansible locally on this machine instead of SSH"
       echo "  --filePath <path>  Path to a per-device config file (overrides iac-toolbox.yml lookup)"
       echo "  -h, --help         Show this help message"
@@ -114,6 +131,9 @@ elif [ "$RUN_TERRAFORM" = false ]; then
 else
   echo -e "${YELLOW}Mode: Full deployment (Ansible + Terraform)${NC}"
 fi
+if [ "$(echo "$RPI_LOCAL_MODE" | tr '[:upper:]' '[:lower:]')" = "true" ] || [ "$RPI_LOCAL_MODE" = "1" ] || [ "$(echo "$RPI_LOCAL_MODE" | tr '[:upper:]' '[:lower:]')" = "yes" ] || [ "$(echo "$RPI_LOCAL_MODE" | tr '[:upper:]' '[:lower:]')" = "on" ]; then
+  echo -e "${YELLOW}Target mode: local (--local)${NC}"
+fi
 echo ""
 
 echo -e "${YELLOW}[1/4] Checking required tools...${NC}"
@@ -135,6 +155,12 @@ fi
 echo ""
 
 echo -e "${YELLOW}[2/4] Checking environment configuration...${NC}"
+if [ "$(echo "$RPI_LOCAL_MODE" | tr '[:upper:]' '[:lower:]')" = "true" ] || [ "$RPI_LOCAL_MODE" = "1" ] || [ "$(echo "$RPI_LOCAL_MODE" | tr '[:upper:]' '[:lower:]')" = "yes" ] || [ "$(echo "$RPI_LOCAL_MODE" | tr '[:upper:]' '[:lower:]')" = "on" ]; then
+  export RPI_LOCAL=true
+else
+  export RPI_LOCAL=false
+fi
+
 echo -e "${GREEN}✓ Environment configured${NC}"
 echo ""
 
@@ -145,23 +171,6 @@ echo ""
 if [ "$RUN_ANSIBLE" = true ]; then
   echo -e "${YELLOW}[4/4] Running Ansible playbook...${NC}"
   echo -e "${YELLOW}Target: defined in config file (target.mode/host/user)${NC}"
-
-  # Build secret variables from environment (injected by CLI from ~/.iac-toolbox/credentials)
-  # Ansible roles validate their required secrets and fail with clear errors if missing.
-  SECRET_VARS=""
-  SECRET_ENV_NAMES=(
-    DOCKER_HUB_TOKEN DOCKER_HUB_USERNAME
-    CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_ZONE_ID
-    GRAFANA_ADMIN_USER GRAFANA_ADMIN_PASSWORD
-    GITHUB_RUNNER_TOKEN GITHUB_REPO_URL
-    ALLOY_REMOTE_WRITE_URL
-  )
-  for var_name in "${SECRET_ENV_NAMES[@]}"; do
-    if [ -n "${!var_name}" ]; then
-      lowercase_name=$(echo "$var_name" | tr '[:upper:]' '[:lower:]')
-      SECRET_VARS="${SECRET_VARS} ${lowercase_name}=${!var_name}"
-    fi
-  done
 
   ANSIBLE_CMD=(ansible-playbook -i inventory/all.yml "playbooks/$ANSIBLE_PLAYBOOK")
 
@@ -197,9 +206,6 @@ if [ "$RUN_ANSIBLE" = true ]; then
     echo -e "${YELLOW}⚠ No iac-toolbox.yml configuration file found. Use --filePath to specify one, or run init first. Using role defaults.${NC}"
   fi
   ANSIBLE_CMD+=(--extra-vars "project_root=${PROJECT_ROOT}")
-  if [ -n "$SECRET_VARS" ]; then
-    ANSIBLE_CMD+=(--extra-vars "$SECRET_VARS")
-  fi
 
   (
     cd "$ANSIBLE_DIR"

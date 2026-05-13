@@ -1,0 +1,11 @@
+---
+# Default variables for cadvisor role
+cadvisor_version: "v0.49.1"
+cadvisor_port: 8080
+cadvisor_base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/cadvisor"
+
+cadvisor_defaults:
+  enabled: true
+  port: 8080
+
+cadvisor: "{{ cadvisor_defaults }}"

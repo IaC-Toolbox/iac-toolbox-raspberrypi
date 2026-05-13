@@ -2,6 +2,7 @@ import { spawnSync } from 'child_process';
 import { loadCredentials } from '../utils/credentials.js';
 import { loadIacToolboxYaml } from '../utils/grafanaConfig.js';
 import { pollHealth } from '../utils/healthCheck.js';
+import { print } from '../utils/print.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;
@@ -28,26 +29,26 @@ export async function runPrometheusInstall(
   filePath?: string
 ): Promise<void> {
   // ── Read Configuration ────────────────────────────────────
-  console.log('◆  Reading Prometheus configuration...');
+  print.step('Reading Prometheus configuration...');
   const creds = loadCredentials(profile);
   const config = loadIacToolboxYaml(destination, filePath) as IacToolboxConfig;
 
   // ── Missing Credentials Guard ─────────────────────────────
   if (!creds.grafana_admin_password) {
-    console.error('│  ✗ Grafana credentials not found');
-    console.error('│');
-    console.error(
-      '│  Prometheus registers itself as a Grafana datasource during install.'
+    print.error('Grafana credentials not found');
+    print.pipe();
+    print.pipe(
+      'Prometheus registers itself as a Grafana datasource during install.'
     );
-    console.error(
-      '│  Run `iac-toolbox grafana init` first to set up Grafana credentials.'
+    print.pipe(
+      'Run `iac-toolbox grafana init` first to set up Grafana credentials.'
     );
-    console.error('└');
+    print.closeError();
     process.exit(1);
   }
 
-  console.log('│  ✔ Configuration loaded');
-  console.log('│');
+  print.success('Configuration loaded');
+  print.pipe();
 
   // ── Parse Grafana URL and Port ────────────────────────────
   const grafanaUrl =
@@ -66,8 +67,8 @@ export async function runPrometheusInstall(
     'admin';
 
   // ── Ansible Invocation ────────────────────────────────────
-  console.log('◆  Installing Prometheus...');
-  console.log('│  ══════════════════════════════════════');
+  print.step('Installing Prometheus...');
+  print.divider();
 
   const env = {
     ...process.env,
@@ -85,19 +86,20 @@ export async function runPrometheusInstall(
   });
 
   if (result.status !== 0) {
-    console.error('');
-    console.error('◆  Prometheus install failed');
-    console.error('│');
-    console.error('│  ✗ Ansible playbook exited with errors');
-    console.error('│  Check output above for details');
-    console.error('│');
-    console.error('│  To retry: iac-toolbox prometheus install');
-    console.error('└');
+    print.blank();
+    print.step('Prometheus install failed');
+    print.pipe();
+    print.error('Ansible playbook exited with errors');
+    print.pipe('Check output above for details');
+    print.pipe();
+    print.pipe('To retry: iac-toolbox prometheus install');
+    print.closeError();
     process.exit(result.status ?? 1);
   }
 
   // ── Post-Install Health Check ─────────────────────────────
-  const prometheusPort = (config.prometheus?.port as number | undefined) ?? 9090;
+  const prometheusPort =
+    (config.prometheus?.port as number | undefined) ?? 9090;
   const prometheusDomain = config.prometheus?.domain as string | undefined;
   const cloudflareEnabled =
     config.cloudflare && (config.cloudflare as Record<string, unknown>).enabled;
@@ -106,7 +108,7 @@ export async function runPrometheusInstall(
       ? `https://${prometheusDomain}/-/healthy`
       : `http://localhost:${prometheusPort}/-/healthy`;
 
-  console.log('│  ◜ Waiting for Prometheus to be healthy...');
+  print.waiting('Waiting for Prometheus to be healthy...');
 
   const healthy = await pollHealth(healthUrl, {
     retries: 30,
@@ -114,33 +116,37 @@ export async function runPrometheusInstall(
   });
 
   if (healthy) {
-    console.log('');
-    console.log('◆  Prometheus installed successfully');
-    console.log('│');
-    console.log('│  ✔ Health check passed');
-    console.log('│');
+    print.blank();
+    print.step('Prometheus installed successfully');
+    print.pipe();
+    print.success('Health check passed');
+    print.pipe();
     if (cloudflareEnabled && prometheusDomain) {
-      console.log(`│  Public URL          https://${prometheusDomain}`);
+      print.pipe(`Public URL          https://${prometheusDomain}`);
     } else {
-      console.log(`│  Prometheus URL      http://localhost:${prometheusPort}`);
+      print.pipe(`Prometheus URL      http://localhost:${prometheusPort}`);
     }
-    console.log('│  Node Exporter URL   http://localhost:9100/metrics');
-    console.log('│  Grafana datasource  auto-configured');
-    console.log('│  Dashboard           Node Exporter Full (auto-imported)');
-    console.log(`│  Retention           ${(config.prometheus?.retention as string | undefined) ?? '15d'}`);
-    console.log(`│  Scrape interval     ${(config.prometheus?.scrape_interval as string | undefined) ?? '15s'}`);
-    console.log('│');
-    console.log('│  Run `iac-toolbox prometheus uninstall` to remove');
-    console.log('└');
+    print.pipe('Node Exporter URL   http://localhost:9100/metrics');
+    print.pipe('Grafana datasource  auto-configured');
+    print.pipe('Dashboard           Node Exporter Full (auto-imported)');
+    print.pipe(
+      `Retention           ${(config.prometheus?.retention as string | undefined) ?? '15d'}`
+    );
+    print.pipe(
+      `Scrape interval     ${(config.prometheus?.scrape_interval as string | undefined) ?? '15s'}`
+    );
+    print.pipe();
+    print.pipe('Run `iac-toolbox prometheus uninstall` to remove');
+    print.close();
   } else {
-    console.error('');
-    console.error('◆  Prometheus install failed');
-    console.error('│');
-    console.error('│  ✗ Health check did not pass after 60 seconds');
-    console.error('│  Check Ansible output above for details');
-    console.error('│');
-    console.error('│  To retry: iac-toolbox prometheus install');
-    console.error('└');
+    print.blank();
+    print.step('Prometheus install failed');
+    print.pipe();
+    print.error('Health check did not pass after 60 seconds');
+    print.pipe('Check Ansible output above for details');
+    print.pipe();
+    print.pipe('To retry: iac-toolbox prometheus install');
+    print.closeError();
     process.exit(1);
   }
 }

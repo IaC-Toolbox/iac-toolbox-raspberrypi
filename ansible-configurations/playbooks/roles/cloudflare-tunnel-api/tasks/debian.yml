@@ -6,12 +6,12 @@
       - cloudflare.account_id | length > 0
       - cloudflare.zone_id is defined
       - cloudflare.zone_id | length > 0
-      - lookup('env', 'CLOUDFLARE_API_TOKEN') | length > 0
-    fail_msg: "Cloudflare API mode requires cloudflare.account_id, cloudflare.zone_id, and CLOUDFLARE_API_TOKEN"
+      - cloudflare.cloudflare_api_token | length > 0
+    fail_msg: "Cloudflare API mode requires cloudflare.account_id, cloudflare.zone_id, and cloudflare.cloudflare_api_token"
 
 - name: Set Cloudflare API token fact
   set_fact:
-    cloudflare_api_token: "{{ lookup('env', 'CLOUDFLARE_API_TOKEN') }}"
+    cloudflare_api_token: "{{ cloudflare.cloudflare_api_token }}"
 
 - name: Set cloudflared architecture
   set_fact:
@@ -21,7 +21,7 @@
   get_url:
     url: "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-{{ cloudflared_arch }}"
     dest: /usr/local/bin/cloudflared
-    mode: '0755'
+    mode: "0755"
   become: true
 
 - name: Verify cloudflared is executable
@@ -40,7 +40,7 @@
     dest: /etc/default/cloudflared
     content: |
       TUNNEL_TOKEN={{ cloudflare_tunnel_token }}
-    mode: '0600'
+    mode: "0600"
     owner: root
     group: root
   become: true
@@ -50,7 +50,7 @@
   template:
     src: cloudflared.service.j2
     dest: /etc/systemd/system/cloudflared.service
-    mode: '0644'
+    mode: "0644"
   become: true
   notify: Restart cloudflared
 

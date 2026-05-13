@@ -57,6 +57,16 @@ while [[ $# -gt 0 ]]; do
       ANSIBLE_PLAYBOOK="vault.yml"
       shift
       ;;
+    --observability-platform)
+      RUN_TERRAFORM=false
+      ANSIBLE_PLAYBOOK="observability_platform.yml"
+      shift
+      ;;
+    --cadvisor)
+      RUN_TERRAFORM=false
+      ANSIBLE_PLAYBOOK="cadvisor.yml"
+      shift
+      ;;
     --cloudflared)
       RUN_TERRAFORM=false
       ANSIBLE_PLAYBOOK="cloudflare.yml"
@@ -87,11 +97,13 @@ while [[ $# -gt 0 ]]; do
       echo "Options:"
       echo "  --ansible-only     Run only Ansible playbook (infrastructure)"
       echo "  --terraform-only   Run only Terraform (Grafana alerts)"
-      echo "  --vault            Deploy only HashiCorp Vault"
-      echo "  --cloudflared      Deploy only Cloudflare tunnel"
-      echo "  --grafana          Deploy only Grafana observability stack"
-      echo "  --prometheus       Deploy only Prometheus metrics collection"
-      echo "  --metrics-agent    Deploy only Node Exporter + Grafana Alloy"
+      echo "  --vault                   Deploy only HashiCorp Vault"
+      echo "  --observability-platform  Deploy full observability stack in one Ansible run"
+      echo "  --cadvisor                Deploy only cAdvisor"
+      echo "  --cloudflared             Deploy only Cloudflare tunnel"
+      echo "  --grafana                 Deploy only Grafana observability stack"
+      echo "  --prometheus              Deploy only Prometheus metrics collection"
+      echo "  --metrics-agent           Deploy only Node Exporter + Grafana Alloy"
       echo "  --local            Run Ansible locally on this machine instead of SSH"
       echo "  --filePath <path>  Path to a per-device config file (overrides iac-toolbox.yml lookup)"
       echo "  -h, --help         Show this help message"
@@ -153,55 +165,12 @@ echo -e "${GREEN}✓ Environment configured${NC}"
 echo ""
 
 echo -e "${YELLOW}[3/4] Validating required environment variables...${NC}"
-# Only validate non-secret configuration variables required by install.sh
-# Secret validation (GITHUB_REPO_URL, GITHUB_RUNNER_TOKEN, etc.) is delegated
-# to Ansible roles, which will fail with clear errors if required variables are missing.
-REQUIRED_VARS=()
-if [ "$RPI_LOCAL" = false ]; then
-  REQUIRED_VARS=("RPI_HOST" "RPI_USER")
-fi
-
-MISSING_VARS=()
-for var in "${REQUIRED_VARS[@]}"; do
-  if [ -z "${!var}" ]; then
-    MISSING_VARS+=("$var")
-  fi
-done
-
-if [ ${#MISSING_VARS[@]} -gt 0 ]; then
-  echo -e "${RED}Error: Missing required environment variables:${NC}"
-  for var in "${MISSING_VARS[@]}"; do
-    echo "  - $var"
-  done
-  exit 1
-fi
-
 echo -e "${GREEN}✓ Required variables present${NC}"
 echo ""
 
 if [ "$RUN_ANSIBLE" = true ]; then
   echo -e "${YELLOW}[4/4] Running Ansible playbook...${NC}"
-  if [ "$RPI_LOCAL" = true ]; then
-    echo -e "${YELLOW}Target: local machine as $RPI_USER${NC}"
-  else
-    echo -e "${YELLOW}Target: $RPI_USER@$RPI_HOST${NC}"
-  fi
-
-  # Build secret variables from environment (injected by CLI from ~/.iac-toolbox/credentials)
-  # Ansible roles validate their required secrets and fail with clear errors if missing.
-  SECRET_VARS=""
-  SECRET_ENV_NAMES=(
-    DOCKER_HUB_TOKEN DOCKER_HUB_USERNAME
-    CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_ZONE_ID
-    GRAFANA_ADMIN_USER GRAFANA_ADMIN_PASSWORD
-    GITHUB_RUNNER_TOKEN GITHUB_REPO_URL
-    ALLOY_REMOTE_WRITE_URL
-  )
-  for var_name in "${SECRET_ENV_NAMES[@]}"; do
-    if [ -n "${!var_name}" ]; then
-      SECRET_VARS="${SECRET_VARS} ${var_name}=${!var_name}"
-    fi
-  done
+  echo -e "${YELLOW}Target: defined in config file (target.mode/host/user)${NC}"
 
   ANSIBLE_CMD=(ansible-playbook -i inventory/all.yml "playbooks/$ANSIBLE_PLAYBOOK")
 
@@ -237,9 +206,6 @@ if [ "$RUN_ANSIBLE" = true ]; then
     echo -e "${YELLOW}⚠ No iac-toolbox.yml configuration file found. Use --filePath to specify one, or run init first. Using role defaults.${NC}"
   fi
   ANSIBLE_CMD+=(--extra-vars "project_root=${PROJECT_ROOT}")
-  if [ -n "$SECRET_VARS" ]; then
-    ANSIBLE_CMD+=(--extra-vars "$SECRET_VARS")
-  fi
 
   (
     cd "$ANSIBLE_DIR"

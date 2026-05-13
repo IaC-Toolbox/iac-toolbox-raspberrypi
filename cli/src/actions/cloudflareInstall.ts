@@ -2,6 +2,7 @@ import { spawnSync } from 'child_process';
 import { loadCredentials } from '../utils/credentials.js';
 import { loadIacToolboxYaml } from '../utils/grafanaConfig.js';
 import { pollHealth } from '../utils/healthCheck.js';
+import { print } from '../utils/print.js';
 
 interface CloudflareConfig {
   enabled?: boolean;
@@ -33,18 +34,16 @@ export async function runCloudflareInstall(
   filePath?: string
 ): Promise<void> {
   // -- Read Configuration ------------------------------------------------
-  console.log('◆  Reading Cloudflare configuration...');
+  print.step('Reading Cloudflare configuration...');
   const creds = loadCredentials(profile);
   const config = loadIacToolboxYaml(destination, filePath) as IacToolboxConfig;
 
   // -- Missing Credentials Guard -----------------------------------------
   if (!creds.cloudflare_api_token) {
-    console.error('│  ✗ No API token found');
-    console.error('│');
-    console.error(
-      '│  Run `iac-toolbox cloudflare init` first to set up credentials'
-    );
-    console.error('└');
+    print.error('No API token found');
+    print.pipe();
+    print.pipe('Run `iac-toolbox cloudflare init` first to set up credentials');
+    print.closeError();
     process.exit(1);
   }
 
@@ -57,20 +56,20 @@ export async function runCloudflareInstall(
   }
 
   if (missing.length > 0) {
-    console.error('│  ✗ Cloudflare configuration incomplete');
-    console.error('│');
-    console.error(`│  Missing: ${missing.join(', ')}`);
-    console.error('│  Run `iac-toolbox cloudflare init` to configure');
-    console.error('└');
+    print.error('Cloudflare configuration incomplete');
+    print.pipe();
+    print.pipe(`Missing: ${missing.join(', ')}`);
+    print.pipe('Run `iac-toolbox cloudflare init` to configure');
+    print.closeError();
     process.exit(1);
   }
 
-  console.log('│  ✔ Credentials loaded');
-  console.log('│');
+  print.success('Credentials loaded');
+  print.pipe();
 
   // -- Ansible Invocation ------------------------------------------------
-  console.log('◆  Installing Cloudflare Tunnel...');
-  console.log('│  ══════════════════════════════════════');
+  print.step('Installing Cloudflare Tunnel...');
+  print.divider();
 
   const env = {
     ...process.env,
@@ -88,19 +87,19 @@ export async function runCloudflareInstall(
   });
 
   if (result.status !== 0) {
-    console.error('');
-    console.error('◆  Cloudflare Tunnel install failed');
-    console.error('│');
-    console.error('│  ✗ Ansible playbook exited with errors');
-    console.error('│  Check output above for details');
-    console.error('│');
-    console.error('│  To retry: iac-toolbox cloudflare install');
-    console.error('└');
+    print.blank();
+    print.step('Cloudflare Tunnel install failed');
+    print.pipe();
+    print.error('Ansible playbook exited with errors');
+    print.pipe('Check output above for details');
+    print.pipe();
+    print.pipe('To retry: iac-toolbox cloudflare install');
+    print.closeError();
     process.exit(result.status ?? 1);
   }
 
   // -- Post-Install Health Check -----------------------------------------
-  console.log('│  ◜ Waiting for tunnel to be healthy...');
+  print.waiting('Waiting for tunnel to be healthy...');
 
   const healthy = await pollHealth('http://localhost:20241/ready', {
     retries: 15,
@@ -111,37 +110,35 @@ export async function runCloudflareInstall(
   const firstDomain = config.cloudflare!.domains![0];
 
   if (healthy) {
-    console.log('');
-    console.log('◆  Cloudflare Tunnel installed successfully');
-    console.log('│');
-    console.log('│  ✔ Tunnel is running');
-    console.log('│');
-    console.log(`│  Tunnel name    ${tunnelName}`);
-    console.log(
-      `│  Domain         ${firstDomain.hostname} → localhost:${firstDomain.service_port}`
+    print.blank();
+    print.step('Cloudflare Tunnel installed successfully');
+    print.pipe();
+    print.success('Tunnel is running');
+    print.pipe();
+    print.pipe(`Tunnel name    ${tunnelName}`);
+    print.pipe(
+      `Domain         ${firstDomain.hostname} → localhost:${firstDomain.service_port}`
     );
-    console.log('│  Dashboard      https://dash.cloudflare.com');
-    console.log('│');
-    console.log('│  Run `iac-toolbox cloudflare uninstall` to remove');
-    console.log('└');
+    print.pipe('Dashboard      https://dash.cloudflare.com');
+    print.pipe();
+    print.pipe('Run `iac-toolbox cloudflare uninstall` to remove');
+    print.close();
   } else {
-    console.error('');
-    console.error('◆  Cloudflare Tunnel install completed');
-    console.error('│');
-    console.error(
-      '│  ⚠ Health check did not pass (cloudflared metrics endpoint not available)'
+    print.blank();
+    print.step('Cloudflare Tunnel install completed');
+    print.pipe();
+    print.warning(
+      'Health check did not pass (cloudflared metrics endpoint not available)'
     );
-    console.error(
-      '│  The tunnel may still be running — check Ansible output above'
+    print.pipe('The tunnel may still be running — check Ansible output above');
+    print.pipe();
+    print.pipe(`Tunnel name    ${tunnelName}`);
+    print.pipe(
+      `Domain         ${firstDomain.hostname} → localhost:${firstDomain.service_port}`
     );
-    console.error('│');
-    console.error(`│  Tunnel name    ${tunnelName}`);
-    console.error(
-      `│  Domain         ${firstDomain.hostname} → localhost:${firstDomain.service_port}`
-    );
-    console.error('│  Dashboard      https://dash.cloudflare.com');
-    console.error('│');
-    console.error('│  Run `iac-toolbox cloudflare uninstall` to remove');
-    console.error('└');
+    print.pipe('Dashboard      https://dash.cloudflare.com');
+    print.pipe();
+    print.pipe('Run `iac-toolbox cloudflare uninstall` to remove');
+    print.closeError();
   }
 }

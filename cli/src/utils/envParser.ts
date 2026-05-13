@@ -1,8 +1,6 @@
 import { readFileSync, existsSync } from 'fs';
 
 export interface EnvConfig {
-  RPI_HOST?: string;
-  RPI_USER?: string;
   RPI_SSH_KEY?: string;
   GITHUB_REPO_URL?: string;
   GITHUB_RUNNER_TOKEN?: string;

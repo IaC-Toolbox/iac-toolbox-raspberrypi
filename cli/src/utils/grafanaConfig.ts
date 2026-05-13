@@ -42,7 +42,10 @@ export function resolveConfigPath(destination: string): string {
  * Load and parse the iac-toolbox.yml file.
  * Returns an empty object if the file does not exist.
  */
-export function loadIacToolboxYaml(destination: string, filePath?: string): IacToolboxYaml {
+export function loadIacToolboxYaml(
+  destination: string,
+  filePath?: string
+): IacToolboxYaml {
   const configPath = filePath ?? resolveConfigPath(destination);
   if (!fs.existsSync(configPath)) {
     return {};

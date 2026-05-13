@@ -6,12 +6,12 @@
       - cloudflare.account_id | length > 0
       - cloudflare.zone_id is defined
       - cloudflare.zone_id | length > 0
-      - lookup('env', 'CLOUDFLARE_API_TOKEN') | length > 0
-    fail_msg: "Cloudflare API mode requires cloudflare.account_id, cloudflare.zone_id, and CLOUDFLARE_API_TOKEN"
+      - cloudflare.cloudflare_api_token | length > 0
+    fail_msg: "Cloudflare API mode requires cloudflare.account_id, cloudflare.zone_id, and cloudflare.cloudflare_api_token"
 
 - name: Set Cloudflare API token fact
   set_fact:
-    cloudflare_api_token: "{{ lookup('env', 'CLOUDFLARE_API_TOKEN') }}"
+    cloudflare_api_token: "{{ cloudflare.cloudflare_api_token }}"
 
 - name: Check if cloudflared is already installed
   command: cloudflared --version
@@ -41,7 +41,7 @@
     dest: "{{ ansible_env.HOME }}/.iac-toolbox/cloudflared/tunnel-token.env"
     content: |
       TUNNEL_TOKEN={{ cloudflare_tunnel_token }}
-    mode: '0600'
+    mode: "0600"
     owner: "{{ ansible_user }}"
   notify: Restart cloudflared
 
@@ -49,7 +49,7 @@
   file:
     path: "{{ ansible_env.HOME }}/Library/LaunchAgents"
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 - name: Create cloudflared launchd plist
   copy:
@@ -80,7 +80,7 @@
           <string>{{ ansible_env.HOME }}/Library/Logs/cloudflared.err.log</string>
       </dict>
       </plist>
-    mode: '0644'
+    mode: "0644"
     owner: "{{ ansible_user }}"
   notify: Restart cloudflared
 

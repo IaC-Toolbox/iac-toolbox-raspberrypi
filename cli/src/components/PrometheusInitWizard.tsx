@@ -20,7 +20,10 @@ interface PrometheusInitWizardProps {
   /** Injectable for testing — defaults to the real TextInput from ink-text-input */
   _TextInput?: (props: TextInputProps) => null;
   /** Injectable for testing — defaults to loadPrometheusGrafanaUrl */
-  _loadGrafanaUrl?: (destination: string, filePath?: string) => string | undefined;
+  _loadGrafanaUrl?: (
+    destination: string,
+    filePath?: string
+  ) => string | undefined;
   /** Injectable for testing — defaults to loadPrometheusDomain */
   _loadDomain?: (destination: string, filePath?: string) => string | undefined;
   /** Injectable for testing — defaults to updatePrometheusConfig */
@@ -64,7 +67,15 @@ export default function PrometheusInitWizard({
       const timer = setTimeout(() => exit(), 100);
       return () => clearTimeout(timer);
     }
-  }, [step, grafanaUrl, domain, destination, filePath, exit, _updatePrometheusConfig]);
+  }, [
+    step,
+    grafanaUrl,
+    domain,
+    destination,
+    filePath,
+    exit,
+    _updatePrometheusConfig,
+  ]);
 
   if (step === 'grafana_url') {
     return (

@@ -60,6 +60,7 @@ describe('PrometheusInitWizard', () => {
         destination="/tmp/dest"
         _TextInput={TextInput}
         _loadGrafanaUrl={() => undefined}
+        _loadDomain={() => undefined}
         _updatePrometheusConfig={() => {}}
       />
     );
@@ -77,6 +78,7 @@ describe('PrometheusInitWizard', () => {
         destination="/tmp/dest"
         _TextInput={helper.TextInput}
         _loadGrafanaUrl={() => undefined}
+        _loadDomain={() => undefined}
         _updatePrometheusConfig={() => {}}
       />
     );
@@ -95,6 +97,7 @@ describe('PrometheusInitWizard', () => {
         destination="/tmp/dest"
         _TextInput={helper.TextInput}
         _loadGrafanaUrl={() => undefined}
+        _loadDomain={() => undefined}
         _updatePrometheusConfig={() => {}}
       />
     );
@@ -106,7 +109,7 @@ describe('PrometheusInitWizard', () => {
     expect(frame).toContain('URL must start with http:// or https://');
   });
 
-  it('shows done screen and calls update config on valid URL', async () => {
+  it('shows done screen and calls update config after URL and domain', async () => {
     const helper = makeTextInputHelper();
     const updateConfig = jest.fn();
     const { lastFrame } = render(
@@ -114,11 +117,17 @@ describe('PrometheusInitWizard', () => {
         destination="/tmp/dest"
         _TextInput={helper.TextInput}
         _loadGrafanaUrl={() => undefined}
+        _loadDomain={() => undefined}
         _updatePrometheusConfig={updateConfig}
       />
     );
 
+    // Submit Grafana URL
     helper.submit('http://localhost:3000');
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Submit domain
+    helper.submit('prometheus.iac-toolbox.com');
     await new Promise((r) => setTimeout(r, 50));
 
     const frame = lastFrame() ?? '';
@@ -128,7 +137,9 @@ describe('PrometheusInitWizard', () => {
 
     expect(updateConfig).toHaveBeenCalledWith(
       '/tmp/dest',
-      'http://localhost:3000'
+      'http://localhost:3000',
+      'prometheus.iac-toolbox.com',
+      undefined
     );
   });
 
@@ -140,18 +151,23 @@ describe('PrometheusInitWizard', () => {
         destination="/tmp/dest"
         _TextInput={helper.TextInput}
         _loadGrafanaUrl={() => undefined}
+        _loadDomain={() => undefined}
         _updatePrometheusConfig={updateConfig}
       />
     );
 
     helper.submit('https://grafana.example.com');
     await new Promise((r) => setTimeout(r, 50));
+    helper.submit('prometheus.example.com');
+    await new Promise((r) => setTimeout(r, 50));
 
     const frame = lastFrame() ?? '';
     expect(frame).toContain('Prometheus configuration saved');
     expect(updateConfig).toHaveBeenCalledWith(
       '/tmp/dest',
-      'https://grafana.example.com'
+      'https://grafana.example.com',
+      'prometheus.example.com',
+      undefined
     );
   });
 
@@ -167,6 +183,7 @@ describe('PrometheusInitWizard', () => {
         destination="/tmp/dest"
         _TextInput={TextInput}
         _loadGrafanaUrl={() => 'http://custom-grafana:4000'}
+        _loadDomain={() => undefined}
         _updatePrometheusConfig={() => {}}
       />
     );
@@ -186,11 +203,13 @@ describe('PrometheusInitWizard', () => {
         destination="/tmp/dest"
         _TextInput={TextInput}
         _loadGrafanaUrl={() => undefined}
+        _loadDomain={() => undefined}
         _updatePrometheusConfig={() => {}}
       />
     );
 
-    expect(capturedValue).toBe('http://localhost:3000');
+    // Default grafana URL when no existing config is 'https://grafana.iac-toolbox.com'
+    expect(capturedValue).toBe('https://grafana.iac-toolbox.com');
   });
 
   it('trims whitespace from submitted URL', async () => {
@@ -201,18 +220,23 @@ describe('PrometheusInitWizard', () => {
         destination="/tmp/dest"
         _TextInput={helper.TextInput}
         _loadGrafanaUrl={() => undefined}
+        _loadDomain={() => undefined}
         _updatePrometheusConfig={updateConfig}
       />
     );
 
     helper.submit('  http://localhost:3000  ');
     await new Promise((r) => setTimeout(r, 50));
+    helper.submit('prometheus.iac-toolbox.com');
+    await new Promise((r) => setTimeout(r, 50));
 
     const frame = lastFrame() ?? '';
     expect(frame).toContain('Prometheus configuration saved');
     expect(updateConfig).toHaveBeenCalledWith(
       '/tmp/dest',
-      'http://localhost:3000'
+      'http://localhost:3000',
+      'prometheus.iac-toolbox.com',
+      undefined
     );
   });
 });

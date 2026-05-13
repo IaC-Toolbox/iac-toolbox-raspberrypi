@@ -54,3 +54,5 @@ target:
   ssh_key: ~/.ssh/raspberrypi-4b
 node_exporter:
   enabled: true
+cadvisor:
+  enabled: true

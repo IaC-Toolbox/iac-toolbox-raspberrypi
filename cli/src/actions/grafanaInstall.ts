@@ -2,6 +2,7 @@ import { spawnSync } from 'child_process';
 import { loadCredentials } from '../utils/credentials.js';
 import { loadIacToolboxYaml } from '../utils/grafanaConfig.js';
 import { pollHealth } from '../utils/healthCheck.js';
+import { print } from '../utils/print.js';
 
 /**
  * Run `iac-toolbox grafana install`.
@@ -15,17 +16,15 @@ export async function runGrafanaInstall(
   filePath?: string
 ): Promise<void> {
   // ── Missing Credentials Guard ─────────────────────────────
-  console.log('◆  Reading Grafana credentials...');
+  print.step('Reading Grafana credentials...');
   const creds = loadCredentials(profile);
   const config = loadIacToolboxYaml(destination, filePath);
 
   if (!creds.grafana_admin_password) {
-    console.error('│  ✗ No credentials found');
-    console.error('│');
-    console.error(
-      '│  Run `iac-toolbox grafana init` first to set up credentials'
-    );
-    console.error('└');
+    print.error('No credentials found');
+    print.pipe();
+    print.pipe('Run `iac-toolbox grafana init` first to set up credentials');
+    print.closeError();
     process.exit(1);
   }
 
@@ -34,12 +33,12 @@ export async function runGrafanaInstall(
     creds.grafana_admin_user ??
     'admin';
 
-  console.log('│  ✔ Credentials loaded');
-  console.log('│');
+  print.success('Credentials loaded');
+  print.pipe();
 
   // ── Ansible Invocation ────────────────────────────────────
-  console.log('◆  Installing Grafana...');
-  console.log('│  ══════════════════════════════════════');
+  print.step('Installing Grafana...');
+  print.divider();
 
   const env = {
     ...process.env,
@@ -56,14 +55,14 @@ export async function runGrafanaInstall(
   });
 
   if (result.status !== 0) {
-    console.error('');
-    console.error('◆  Grafana install failed');
-    console.error('│');
-    console.error('│  ✗ Ansible playbook exited with errors');
-    console.error('│  Check output above for details');
-    console.error('│');
-    console.error('│  To retry: iac-toolbox grafana install');
-    console.error('└');
+    print.blank();
+    print.step('Grafana install failed');
+    print.pipe();
+    print.error('Ansible playbook exited with errors');
+    print.pipe('Check output above for details');
+    print.pipe();
+    print.pipe('To retry: iac-toolbox grafana install');
+    print.closeError();
     process.exit(result.status ?? 1);
   }
 
@@ -77,7 +76,7 @@ export async function runGrafanaInstall(
       ? `https://${grafanaDomain}/api/health`
       : `http://localhost:${grafanaPort}/api/health`;
 
-  console.log('│  ◜ Waiting for Grafana to be healthy...');
+  print.waiting('Waiting for Grafana to be healthy...');
 
   const healthy = await pollHealth(healthUrl, {
     retries: 30,
@@ -85,30 +84,30 @@ export async function runGrafanaInstall(
   });
 
   if (healthy) {
-    console.log('');
-    console.log('◆  Grafana installed successfully');
-    console.log('│');
-    console.log('│  ✔ Health check passed');
-    console.log('│');
+    print.blank();
+    print.step('Grafana installed successfully');
+    print.pipe();
+    print.success('Health check passed');
+    print.pipe();
     if (cloudflareEnabled && grafanaDomain) {
-      console.log(`│  Public URL   https://${grafanaDomain}`);
+      print.pipe(`Public URL   https://${grafanaDomain}`);
     } else {
-      console.log(`│  Local URL    http://localhost:${grafanaPort}`);
+      print.pipe(`Local URL    http://localhost:${grafanaPort}`);
     }
-    console.log(`│  Username     ${adminUser}`);
-    console.log('│  Password     saved to ~/.iac-toolbox/credentials');
-    console.log('│');
-    console.log('│  Run `iac-toolbox grafana uninstall` to remove');
-    console.log('└');
+    print.pipe(`Username     ${adminUser}`);
+    print.pipe('Password     saved to ~/.iac-toolbox/credentials');
+    print.pipe();
+    print.pipe('Run `iac-toolbox grafana uninstall` to remove');
+    print.close();
   } else {
-    console.error('');
-    console.error('◆  Grafana install failed');
-    console.error('│');
-    console.error('│  ✗ Health check did not pass after 60 seconds');
-    console.error('│  Check Ansible output above for details');
-    console.error('│');
-    console.error('│  To retry: iac-toolbox grafana install');
-    console.error('└');
+    print.blank();
+    print.step('Grafana install failed');
+    print.pipe();
+    print.error('Health check did not pass after 60 seconds');
+    print.pipe('Check Ansible output above for details');
+    print.pipe();
+    print.pipe('To retry: iac-toolbox grafana install');
+    print.closeError();
     process.exit(1);
   }
 }

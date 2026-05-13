@@ -1,0 +1,14 @@
+---
+# ============================================
+# IaC Toolbox - cAdvisor Playbook
+# ============================================
+# Deploys cAdvisor for Docker container metrics.
+
+- import_playbook: common.yml
+
+- name: Deploy cAdvisor
+  hosts: all
+  become: false
+  roles:
+    - role: cadvisor
+      when: cadvisor is not defined or cadvisor.enabled | default(true)
