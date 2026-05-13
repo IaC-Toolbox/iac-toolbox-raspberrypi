@@ -165,39 +165,12 @@ echo -e "${GREEN}✓ Environment configured${NC}"
 echo ""
 
 echo -e "${YELLOW}[3/4] Validating required environment variables...${NC}"
-# Only validate non-secret configuration variables required by install.sh
-# Secret validation (GITHUB_REPO_URL, GITHUB_RUNNER_TOKEN, etc.) is delegated
-# to Ansible roles, which will fail with clear errors if required variables are missing.
-REQUIRED_VARS=()
-if [ "$RPI_LOCAL" = false ]; then
-  REQUIRED_VARS=("RPI_HOST" "RPI_USER")
-fi
-
-MISSING_VARS=()
-for var in "${REQUIRED_VARS[@]}"; do
-  if [ -z "${!var}" ]; then
-    MISSING_VARS+=("$var")
-  fi
-done
-
-if [ ${#MISSING_VARS[@]} -gt 0 ]; then
-  echo -e "${RED}Error: Missing required environment variables:${NC}"
-  for var in "${MISSING_VARS[@]}"; do
-    echo "  - $var"
-  done
-  exit 1
-fi
-
 echo -e "${GREEN}✓ Required variables present${NC}"
 echo ""
 
 if [ "$RUN_ANSIBLE" = true ]; then
   echo -e "${YELLOW}[4/4] Running Ansible playbook...${NC}"
-  if [ "$RPI_LOCAL" = true ]; then
-    echo -e "${YELLOW}Target: local machine as $RPI_USER${NC}"
-  else
-    echo -e "${YELLOW}Target: $RPI_USER@$RPI_HOST${NC}"
-  fi
+  echo -e "${YELLOW}Target: defined in config file (target.mode/host/user)${NC}"
 
   # Build secret variables from environment (injected by CLI from ~/.iac-toolbox/credentials)
   # Ansible roles validate their required secrets and fail with clear errors if missing.
