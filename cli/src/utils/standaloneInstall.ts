@@ -31,7 +31,7 @@ export async function runStandaloneInstall(
   const configPath = path.join(destination, 'iac-toolbox.yml');
   if (!configFileExists(destination)) {
     print.error(
-      `Configuration file not found at ${configPath}. Run 'iac-toolbox init' first.`
+      `Configuration file not found at ${configPath}. Run 'iac-toolbox platform init' first.`
     );
     process.exit(1);
   }

@@ -25,8 +25,12 @@ program
   .option('-c <name>=<value>', 'Set config variable')
   .option('--profile <name>', 'Credential profile to use', 'default');
 
-program
-  .command('init', { isDefault: true })
+const platform = program
+  .command('platform')
+  .description('Manage the full observability platform');
+
+platform
+  .command('init')
   .description('Start the observability setup wizard')
   .option('--profile <name>', 'Credential profile to use', 'default')
   .option('--output <path>', 'Path to write config file', './iac-toolbox.yml')
@@ -449,7 +453,7 @@ target
   });
 
 const { buildApplyCommand } = await import('./commands/applyCommand.js');
-program.addCommand(buildApplyCommand());
+platform.addCommand(buildApplyCommand());
 
 program
   .command('install')
