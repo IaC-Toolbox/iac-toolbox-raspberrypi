@@ -3,7 +3,7 @@ import {
   detectAnsible,
   detectTerraform,
   isBrewAvailable,
-} from './prerequisites.js';
+} from './baseline_checks.js';
 
 /**
  * Prerequisites detection tests.

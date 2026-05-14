@@ -1,4 +1,4 @@
-import { detectAnsible, detectTerraform } from '../utils/prerequisites.js';
+import { detectAnsible, detectTerraform } from './baseline_checks.js';
 
 export interface PrerequisiteValidation {
   ansible: {

@@ -1,5 +1,5 @@
 import { loadCredentials } from '../../loaders/credentials-loader.js';
-import { pollHealth } from '../../utils/healthCheck.js';
+import { pollHealth } from '../../validators/health_check.js';
 import { print } from '../../design-system/print.js';
 import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
 import {

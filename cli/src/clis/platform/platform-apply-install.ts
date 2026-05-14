@@ -5,7 +5,7 @@ import { loadCredentials } from '../../loaders/credentials-loader.js';
 import {
   testSshConnection,
   checkDockerAvailable,
-} from '../../utils/preflightChecks.js';
+} from '../../validators/preflight_checks.js';
 import {
   printSummaryNoCloudflare,
   printSummaryWithCloudflare,

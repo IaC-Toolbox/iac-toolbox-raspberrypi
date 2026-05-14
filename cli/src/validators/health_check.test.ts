@@ -1,5 +1,5 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import { pollHealth } from './healthCheck.js';
+import { pollHealth } from './health_check.js';
 
 // ---------------------------------------------------------------------------
 // Mock global fetch

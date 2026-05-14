@@ -1,5 +1,5 @@
 import { loadMetricsAgentConfig } from './metrics-agent-config.js';
-import { pollDockerHealth, pollHealth } from '../../utils/healthCheck.js';
+import { pollDockerHealth, pollHealth } from '../../validators/health_check.js';
 import { print } from '../../design-system/print.js';
 import {
   runAnsiblePlaybook,
