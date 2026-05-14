@@ -62,6 +62,11 @@ while [[ $# -gt 0 ]]; do
       ANSIBLE_PLAYBOOK="observability_platform.yml"
       shift
       ;;
+    --observability-agent)
+      RUN_TERRAFORM=false
+      ANSIBLE_PLAYBOOK="observability_agent.yml"
+      shift
+      ;;
     --cadvisor)
       RUN_TERRAFORM=false
       ANSIBLE_PLAYBOOK="cadvisor.yml"
@@ -99,6 +104,7 @@ while [[ $# -gt 0 ]]; do
       echo "  --terraform-only   Run only Terraform (Grafana alerts)"
       echo "  --vault                   Deploy only HashiCorp Vault"
       echo "  --observability-platform  Deploy full observability stack in one Ansible run"
+      echo "  --observability-agent     Deploy agent stack only (Node Exporter + Grafana Alloy + cAdvisor)"
       echo "  --cadvisor                Deploy only cAdvisor"
       echo "  --cloudflared             Deploy only Cloudflare tunnel"
       echo "  --grafana                 Deploy only Grafana observability stack"
