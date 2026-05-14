@@ -114,7 +114,7 @@ export function updateTargetConfig(
 }
 
 /**
- * Build the RPI_* env vars consumed by install.sh and Ansible inventory.
+ * Build the RPI_* env vars consumed by Ansible inventory.
  * Falls back to safe local defaults when no target config exists.
  */
 export function buildTargetEnv(destination: string): {

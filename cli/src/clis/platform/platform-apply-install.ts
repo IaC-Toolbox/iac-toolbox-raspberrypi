@@ -1,4 +1,3 @@
-import { spawnSync } from 'child_process';
 import { readFileSync, writeFileSync, unlinkSync, mkdirSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
@@ -15,6 +14,11 @@ import {
 import { print } from '../../design-system/print.js';
 import { resolveConfigTemplates } from '../../utils/configResolver.js';
 import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
+import {
+  runAnsiblePlaybook,
+  resolveAnsibleDir,
+  resolveProjectRoot,
+} from '../../utils/ansible.js';
 
 /**
  * Validate config, credentials, SSH (remote only), and Docker.
@@ -105,8 +109,6 @@ function runInstallSequence(
   config: ApplySummaryConfig,
   resolvedYaml: string
 ): boolean {
-  const scriptPath = `${destination}/scripts/install.sh`;
-
   // Write resolved YAML to ~/.iac-toolbox/ (no {{ }} template refs remaining)
   const iacDir = join(homedir(), '.iac-toolbox');
   mkdirSync(iacDir, { recursive: true });
@@ -116,18 +118,19 @@ function runInstallSequence(
   const env: NodeJS.ProcessEnv = { ...process.env };
   // No credential env vars — they are now embedded in resolvedYaml
 
-  let result;
+  let status: number;
   try {
-    result = spawnSync(
-      'bash',
-      [scriptPath, '--observability-platform', '--filePath', tmpFile],
-      { env, stdio: 'inherit' }
-    );
+    status = runAnsiblePlaybook('observability_platform.yml', {
+      ansibleDir: resolveAnsibleDir(destination),
+      filePath: tmpFile,
+      projectRoot: resolveProjectRoot(),
+      env,
+    });
   } finally {
     unlinkSync(tmpFile);
   }
 
-  if (result.status !== 0) {
+  if (status !== 0) {
     print.blank();
     print.step('Observability stack install failed');
     print.pipe();
@@ -138,7 +141,7 @@ function runInstallSequence(
       'To retry: iac-toolbox platform apply --filePath=./iac-toolbox.yml'
     );
     print.closeError();
-    process.exit(result.status ?? 1);
+    process.exit(status ?? 1);
   }
 
   return Boolean(

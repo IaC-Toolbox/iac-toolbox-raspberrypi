@@ -1,13 +1,17 @@
-import { spawnSync } from 'child_process';
 import { loadMetricsAgentConfig } from './metrics-agent-config.js';
 import { pollDockerHealth, pollHealth } from '../../utils/healthCheck.js';
 import { print } from '../../design-system/print.js';
+import {
+  runAnsiblePlaybook,
+  resolveAnsibleDir,
+  resolveProjectRoot,
+} from '../../utils/ansible.js';
 
 /**
  * Run `iac-toolbox metrics-agent install`.
  *
  * Reads grafana_url and prometheus_remote_write_url from iac-toolbox.yml,
- * then invokes install.sh --observability-agent with ALLOY_REMOTE_WRITE_URL
+ * then invokes runAnsiblePlaybook('metrics-agent.yml') with ALLOY_REMOTE_WRITE_URL
  * in the environment.
  * Fails immediately if prometheus_remote_write_url is missing.
  */
@@ -44,15 +48,14 @@ export async function runMetricsAgentInstall(
     ALLOY_REMOTE_WRITE_URL: prometheusRemoteWriteUrl,
   };
 
-  const scriptPath = `${destination}/scripts/install.sh`;
-  const scriptArgs = [scriptPath, '--observability-agent'];
-  if (filePath) scriptArgs.push('--filePath', filePath);
-  const result = spawnSync('bash', scriptArgs, {
+  const status = runAnsiblePlaybook('metrics-agent.yml', {
+    ansibleDir: resolveAnsibleDir(destination),
+    filePath,
+    projectRoot: resolveProjectRoot(),
     env,
-    stdio: 'inherit',
   });
 
-  if (result.status !== 0) {
+  if (status !== 0) {
     print.blank();
     print.step('Observability agent install failed');
     print.pipe();
@@ -61,7 +64,7 @@ export async function runMetricsAgentInstall(
     print.pipe();
     print.pipe('To retry: iac-toolbox metrics-agent install');
     print.closeError();
-    process.exit(result.status ?? 1);
+    process.exit(status ?? 1);
   }
 
   // ── Post-Install Health Checks ────────────────────────────

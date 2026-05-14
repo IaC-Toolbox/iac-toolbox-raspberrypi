@@ -1,6 +1,10 @@
-import { spawnSync } from 'child_process';
 import { print } from '../../design-system/print.js';
 import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
+import {
+  runAnsiblePlaybook,
+  resolveAnsibleDir,
+  resolveProjectRoot,
+} from '../../utils/ansible.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;
@@ -13,7 +17,7 @@ interface IacToolboxConfig {
  * Guards:
  *   1. cadvisor.enabled must be true in iac-toolbox.yml (run `cadvisor init` first)
  *
- * Then invokes install.sh --cadvisor and polls health endpoints post-install.
+ * Then invokes runAnsiblePlaybook('cadvisor.yml') and polls health endpoints post-install.
  */
 export async function runCAdvisorInstall(
   destination: string,
@@ -44,15 +48,14 @@ export async function runCAdvisorInstall(
   print.step('Installing cAdvisor...');
   print.divider();
 
-  const scriptPath = `${destination}/scripts/install.sh`;
-  const scriptArgs = [scriptPath, '--cadvisor'];
-  if (filePath) scriptArgs.push('--filePath', filePath);
-  const result = spawnSync('bash', scriptArgs, {
+  const status = runAnsiblePlaybook('cadvisor.yml', {
+    ansibleDir: resolveAnsibleDir(destination),
+    filePath,
+    projectRoot: resolveProjectRoot(),
     env: { ...process.env },
-    stdio: 'inherit',
   });
 
-  if (result.status !== 0) {
+  if (status !== 0) {
     print.blank();
     print.step('cAdvisor install failed');
     print.pipe();
@@ -61,7 +64,7 @@ export async function runCAdvisorInstall(
     print.pipe();
     print.pipe('To retry: iac-toolbox cadvisor install');
     print.closeError();
-    process.exit(result.status ?? 1);
+    process.exit(status ?? 1);
   }
 
   print.blank();

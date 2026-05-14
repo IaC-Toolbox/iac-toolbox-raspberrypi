@@ -1,8 +1,12 @@
-import { spawnSync } from 'child_process';
 import { loadCredentials } from '../../loaders/credentials-loader.js';
 import { pollHealth } from '../../utils/healthCheck.js';
 import { print } from '../../design-system/print.js';
 import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
+import {
+  runAnsiblePlaybook,
+  resolveAnsibleDir,
+  resolveProjectRoot,
+} from '../../utils/ansible.js';
 
 interface CloudflareConfig {
   enabled?: boolean;
@@ -25,7 +29,7 @@ interface IacToolboxConfig {
 /**
  * Run `iac-toolbox cloudflare install`.
  *
- * Reads credentials from file (no wizard), invokes install.sh --cloudflared --local,
+ * Reads credentials from file (no wizard), invokes runAnsiblePlaybook('cloudflare.yml'),
  * and performs a post-install health check against the cloudflared metrics endpoint.
  */
 export async function runCloudflareInstall(
@@ -78,15 +82,14 @@ export async function runCloudflareInstall(
     CLOUDFLARE_ZONE_ID: config.cloudflare!.zone_id!,
   };
 
-  const scriptPath = `${destination}/scripts/install.sh`;
-  const scriptArgs = [scriptPath, '--cloudflared'];
-  if (filePath) scriptArgs.push('--filePath', filePath);
-  const result = spawnSync('bash', scriptArgs, {
+  const status = runAnsiblePlaybook('cloudflare.yml', {
+    ansibleDir: resolveAnsibleDir(destination),
+    filePath,
+    projectRoot: resolveProjectRoot(),
     env,
-    stdio: 'inherit',
   });
 
-  if (result.status !== 0) {
+  if (status !== 0) {
     print.blank();
     print.step('Cloudflare Tunnel install failed');
     print.pipe();
@@ -95,7 +98,7 @@ export async function runCloudflareInstall(
     print.pipe();
     print.pipe('To retry: iac-toolbox cloudflare install');
     print.closeError();
-    process.exit(result.status ?? 1);
+    process.exit(status ?? 1);
   }
 
   // -- Post-Install Health Check -----------------------------------------
