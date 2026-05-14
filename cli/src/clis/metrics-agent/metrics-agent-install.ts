@@ -11,7 +11,7 @@ import {
  * Run `iac-toolbox metrics-agent install`.
  *
  * Reads grafana_url and prometheus_remote_write_url from iac-toolbox.yml,
- * then invokes install.sh --observability-agent with ALLOY_REMOTE_WRITE_URL
+ * then invokes runAnsiblePlaybook('metrics-agent.yml') with ALLOY_REMOTE_WRITE_URL
  * in the environment.
  * Fails immediately if prometheus_remote_write_url is missing.
  */

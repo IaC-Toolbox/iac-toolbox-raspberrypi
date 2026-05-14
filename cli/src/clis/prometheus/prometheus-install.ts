@@ -24,7 +24,7 @@ interface IacToolboxConfig {
  * Run `iac-toolbox prometheus install`.
  *
  * Reads config from iac-toolbox.yml and Grafana credentials from
- * ~/.iac-toolbox/credentials, then invokes install.sh --prometheus --local.
+ * ~/.iac-toolbox/credentials, then invokes runAnsiblePlaybook('prometheus.yml').
  * Fails immediately if Grafana credentials are missing.
  */
 export async function runPrometheusInstall(

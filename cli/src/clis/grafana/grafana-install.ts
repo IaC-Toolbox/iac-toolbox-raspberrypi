@@ -11,7 +11,7 @@ import {
 /**
  * Run `iac-toolbox grafana install`.
  *
- * Reads credentials from file (no wizard), invokes install.sh --grafana --local,
+ * Reads credentials from file (no wizard), invokes runAnsiblePlaybook('grafana.yml'),
  * and performs a post-install health check.
  */
 export async function runGrafanaInstall(

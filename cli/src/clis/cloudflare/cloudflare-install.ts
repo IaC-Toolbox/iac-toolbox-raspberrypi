@@ -29,7 +29,7 @@ interface IacToolboxConfig {
 /**
  * Run `iac-toolbox cloudflare install`.
  *
- * Reads credentials from file (no wizard), invokes install.sh --cloudflared --local,
+ * Reads credentials from file (no wizard), invokes runAnsiblePlaybook('cloudflare.yml'),
  * and performs a post-install health check against the cloudflared metrics endpoint.
  */
 export async function runCloudflareInstall(

@@ -17,7 +17,7 @@ interface IacToolboxConfig {
  * Guards:
  *   1. cadvisor.enabled must be true in iac-toolbox.yml (run `cadvisor init` first)
  *
- * Then invokes install.sh --cadvisor and polls health endpoints post-install.
+ * Then invokes runAnsiblePlaybook('cadvisor.yml') and polls health endpoints post-install.
  */
 export async function runCAdvisorInstall(
   destination: string,
