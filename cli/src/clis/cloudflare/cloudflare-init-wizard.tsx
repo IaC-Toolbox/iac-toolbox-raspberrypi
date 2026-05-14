@@ -186,10 +186,7 @@ export default function CloudflareInitWizard({
 
     const run = async () => {
       if (step === 'token') {
-        // const result = await _validateToken(pendingValue);
-        // Token validation often fails due to lack of token scope to validate itself
-        // So we assume the token is valid for the purpose of this wizard
-        const result = { valid: true, message: 'Token validation skiped' };
+        const result = await _validateToken(pendingValue);
         if (cancelled) return;
         if (result.valid) {
           setToken(pendingValue);

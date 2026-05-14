@@ -17,6 +17,10 @@ interface MetricsAgentInitWizardProps {
   destination: string;
   /** Injectable for testing — defaults to the real TextInput from ink-text-input */
   _TextInput?: (props: TextInputProps) => null;
+  /** Injectable for testing — defaults to loadMetricsAgentConfig */
+  _loadRemoteWriteUrl?: (destination: string) => string | undefined;
+  /** Injectable for testing — defaults to updateMetricsAgentConfig */
+  _updateMetricsAgentConfig?: (destination: string, url: string) => void;
 }
 
 type Step = 'remote_write_url' | 'done';
@@ -24,10 +28,13 @@ type Step = 'remote_write_url' | 'done';
 export default function MetricsAgentInitWizard({
   destination,
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
+  _loadRemoteWriteUrl = (dest: string) =>
+    loadMetricsAgentConfig(dest).prometheus_remote_write_url,
+  _updateMetricsAgentConfig = updateMetricsAgentConfig,
 }: MetricsAgentInitWizardProps) {
   const { exit } = useApp();
 
-  const existingUrl = loadMetricsAgentConfig(destination).prometheus_remote_write_url;
+  const existingUrl = _loadRemoteWriteUrl(destination);
 
   const [step, setStep] = useState<Step>('remote_write_url');
   const [inputValue, setInputValue] = useState(
@@ -40,12 +47,12 @@ export default function MetricsAgentInitWizard({
 
   useEffect(() => {
     if (step === 'done') {
-      updateMetricsAgentConfig(destination, remoteWriteUrl);
+      _updateMetricsAgentConfig(destination, remoteWriteUrl);
       // Give Ink time to render final screen
       const timer = setTimeout(() => exit(), 100);
       return () => clearTimeout(timer);
     }
-  }, [step, remoteWriteUrl, destination, exit]);
+  }, [step, remoteWriteUrl, destination, exit, _updateMetricsAgentConfig]);
 
   if (step === 'remote_write_url') {
     return (

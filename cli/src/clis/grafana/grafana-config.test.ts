@@ -6,8 +6,8 @@ import yaml from 'js-yaml';
 import {
   resolveConfigPath,
   loadIacToolboxYaml,
-  updateGrafanaConfig,
-} from './grafana-config.js';
+} from 'src/loaders/yaml-loader.js';
+import { updateGrafanaConfig } from './grafana-config.js';
 
 // ---------------------------------------------------------------------------
 // Use real filesystem with temp directories instead of mocking fs,

@@ -1,8 +1,12 @@
-import { spawnSync } from 'child_process';
 import { loadCredentials } from '../../loaders/credentials-loader.js';
 import { pollHealth } from '../../utils/healthCheck.js';
 import { print } from '../../design-system/print.js';
 import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
+import {
+  runAnsiblePlaybook,
+  resolveAnsibleDir,
+  resolveProjectRoot,
+} from '../../utils/ansible.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;
@@ -77,15 +81,14 @@ export async function runPrometheusInstall(
     GRAFANA_PORT: grafanaPort,
   };
 
-  const scriptPath = `${destination}/scripts/install.sh`;
-  const scriptArgs = [scriptPath, '--prometheus'];
-  if (filePath) scriptArgs.push('--filePath', filePath);
-  const result = spawnSync('bash', scriptArgs, {
+  const status = runAnsiblePlaybook('prometheus.yml', {
+    ansibleDir: resolveAnsibleDir(destination),
+    filePath,
+    projectRoot: resolveProjectRoot(),
     env,
-    stdio: 'inherit',
   });
 
-  if (result.status !== 0) {
+  if (status !== 0) {
     print.blank();
     print.step('Prometheus install failed');
     print.pipe();
@@ -94,7 +97,7 @@ export async function runPrometheusInstall(
     print.pipe();
     print.pipe('To retry: iac-toolbox prometheus install');
     print.closeError();
-    process.exit(result.status ?? 1);
+    process.exit(status);
   }
 
   // ── Post-Install Health Check ─────────────────────────────

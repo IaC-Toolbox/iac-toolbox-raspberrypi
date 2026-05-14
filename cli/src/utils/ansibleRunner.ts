@@ -1,7 +1,10 @@
 import { spawnSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
-import { loadCredentials, type CredentialProfile } from './credentials.js';
+import {
+  loadCredentials,
+  type CredentialProfile,
+} from '../loaders/credentials-loader.js';
 
 /**
  * Default path for the non-sensitive configuration file, relative to
