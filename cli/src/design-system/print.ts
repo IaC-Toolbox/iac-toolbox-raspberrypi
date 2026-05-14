@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { Colors, Symbols } from '../design-system/index.js';
+import { Colors, Symbols } from './index.js';
 
 // Map design system color tokens to chalk functions
 const colorFn = (name: string): ((s: string) => string) => {

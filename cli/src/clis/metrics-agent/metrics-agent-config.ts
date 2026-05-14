@@ -8,34 +8,49 @@ import {
 
 interface IacToolboxYaml {
   [key: string]: unknown;
-  grafana_alloy?: { alloy_remote_write_url?: string; [key: string]: unknown };
+  observability_agent?: {
+    prometheus_remote_write_url?: string;
+    [key: string]: unknown;
+  };
+  grafana_alloy?: {
+    alloy_remote_write_url?: string;
+    enabled?: boolean;
+    [key: string]: unknown;
+  };
   node_exporter?: { enabled?: boolean; [key: string]: unknown };
+  cadvisor?: { enabled?: boolean; [key: string]: unknown };
 }
 
 /**
- * Load the grafana_alloy.alloy_remote_write_url from iac-toolbox.yml.
- * Returns undefined if the key is not set.
+ * Load the observability_agent section from iac-toolbox.yml.
+ * Returns an empty object if not set.
  */
-export function loadMetricsAgentRemoteWriteUrl(
-  destination: string
-): string | undefined {
+export function loadMetricsAgentConfig(destination: string): {
+  prometheus_remote_write_url?: string;
+} {
   const config = loadIacToolboxYaml(destination) as IacToolboxYaml;
-  return config.grafana_alloy?.alloy_remote_write_url as string | undefined;
+  return {
+    prometheus_remote_write_url:
+      config.observability_agent?.prometheus_remote_write_url,
+  };
 }
 
 /**
- * Update the node_exporter and grafana_alloy sections of iac-toolbox.yml.
+ * Update the observability_agent, grafana_alloy, node_exporter, and cadvisor
+ * sections of iac-toolbox.yml.
  *
  * Writes:
- *   node_exporter.enabled = true
+ *   observability_agent.prometheus_remote_write_url = <prometheusRemoteWriteUrl>
  *   grafana_alloy.enabled = true
- *   grafana_alloy.alloy_remote_write_url = <remoteWriteUrl>
+ *   grafana_alloy.alloy_remote_write_url = <prometheusRemoteWriteUrl>
+ *   node_exporter.enabled = true
+ *   cadvisor.enabled = true
  *
  * Preserves the rest of the file content.
  */
 export function updateMetricsAgentConfig(
   destination: string,
-  remoteWriteUrl: string
+  prometheusRemoteWriteUrl: string
 ): void {
   const configPath = resolveConfigPath(destination);
   let config: IacToolboxYaml = {};
@@ -50,12 +65,19 @@ export function updateMetricsAgentConfig(
     }
   }
 
-  config.node_exporter = { ...(config.node_exporter || {}), enabled: true };
+  config.observability_agent = {
+    ...(config.observability_agent || {}),
+    prometheus_remote_write_url: prometheusRemoteWriteUrl,
+  };
+
   config.grafana_alloy = {
     ...(config.grafana_alloy || {}),
     enabled: true,
-    alloy_remote_write_url: remoteWriteUrl,
+    alloy_remote_write_url: prometheusRemoteWriteUrl,
   };
+
+  config.node_exporter = { ...(config.node_exporter || {}), enabled: true };
+  config.cadvisor = { ...(config.cadvisor || {}), enabled: true };
 
   const dir = path.dirname(configPath);
   if (!fs.existsSync(dir)) {

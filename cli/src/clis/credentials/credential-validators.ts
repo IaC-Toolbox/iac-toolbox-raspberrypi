@@ -1,4 +1,4 @@
-import type { CredentialKey } from './credentials-store.js';
+import type { CredentialKey } from '../../loaders/credentials-loader.js';
 
 export interface ValidationResult {
   valid: boolean;

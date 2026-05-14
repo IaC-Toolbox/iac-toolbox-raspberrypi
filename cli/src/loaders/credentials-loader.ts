@@ -8,12 +8,8 @@ import os from 'os';
 export const CREDENTIAL_KEYS = {
   docker_hub_token: 'Docker Hub personal access token',
   docker_hub_username: 'Docker Hub username',
-  github_pat: 'GitHub personal access token',
-  github_runner_token: 'GitHub Actions runner registration token',
-  github_runner_repo_url: 'GitHub repository URL for runner registration',
   cloudflare_tunnel_token: 'Cloudflare Tunnel token',
   cloudflare_api_token: 'Cloudflare API token',
-  vault_token: 'HashiCorp Vault token',
   grafana_api_key: 'Grafana API key',
   grafana_admin_password: 'Grafana admin password',
   pagerduty_key: 'PagerDuty integration key',

@@ -1,4 +1,4 @@
-import { print } from '../../utils/print.js';
+import { print } from '../../design-system/print.js';
 
 export interface CloudflareConfig {
   enabled?: boolean;

@@ -2,7 +2,7 @@ import { spawnSync } from 'child_process';
 import { readFileSync, writeFileSync, unlinkSync, mkdirSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
-import { loadCredentials } from '../credentials/credentials-store.js';
+import { loadCredentials } from '../../loaders/credentials-loader.js';
 import {
   testSshConnection,
   checkDockerAvailable,
@@ -12,7 +12,7 @@ import {
   printSummaryWithCloudflare,
   type ApplySummaryConfig,
 } from './platform-apply-summary.js';
-import { print } from '../../utils/print.js';
+import { print } from '../../design-system/print.js';
 import { resolveConfigTemplates } from '../../utils/configResolver.js';
 import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
 

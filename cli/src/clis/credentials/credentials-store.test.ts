@@ -2,7 +2,7 @@ import { describe, it, expect } from '@jest/globals';
 import {
   parseCredentialsFile,
   serializeCredentialsFile,
-} from './credentials-store.js';
+} from '../../loaders/credentials-loader.js';
 
 describe('parseCredentialsFile', () => {
   it('parses empty file', () => {

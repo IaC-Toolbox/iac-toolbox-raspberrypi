@@ -10,7 +10,7 @@ import {
   loadCredentials,
   saveCredentials,
   ensureGitignore,
-} from './credentials-store.js';
+} from '../../loaders/credentials-loader.js';
 import {
   validateCredential,
   type ValidationResult,

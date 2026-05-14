@@ -30,12 +30,16 @@ grafana:
   admin_password: "{{ grafana_admin_password }}"
 prometheus:
   enabled: false
+  grafana_url: https://grafana.iac-toolbox.com
+  domain: prometheus.iac-toolbox.com
 target:
   mode: local
 node_exporter:
   enabled: true
 grafana_alloy:
   enabled: true
-  alloy_remote_write_url: https://prometheus.iac-toolbox.com/api/v1/write
+  alloy_remote_write_url: https://grafana.iac-toolbox.com/prometheus/api/v1/write
 cadvisor:
   enabled: true
+observability_agent:
+  prometheus_remote_write_url: https://grafana.iac-toolbox.com/prometheus/api/v1/write

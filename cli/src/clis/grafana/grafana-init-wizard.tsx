@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import {
   loadCredentials,
   saveCredentials,
-} from '../credentials/credentials-store.js';
+} from '../../loaders/credentials-loader.js';
 import { updateGrafanaConfig } from './grafana-config.js';
 
 interface TextInputProps {

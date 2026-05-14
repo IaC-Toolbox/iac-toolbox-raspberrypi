@@ -1,4 +1,3 @@
-import { spawnSync } from 'child_process';
 import { Command } from 'commander';
 import { render } from 'ink';
 import { runMetricsAgentInstall } from './metrics-agent-install.js';
@@ -7,7 +6,7 @@ import MetricsAgentInitWizard from './metrics-agent-init-wizard.js';
 export function registerMetricsAgentCommand(program: Command): void {
   const metricsAgent = program
     .command('metrics-agent')
-    .description('Manage metrics agent (Node Exporter + Grafana Alloy)');
+    .description('Deploy observability agent (Node Exporter + Grafana Alloy + cAdvisor)');
 
   metricsAgent
     .command('init')
@@ -28,7 +27,7 @@ export function registerMetricsAgentCommand(program: Command): void {
   metricsAgent
     .command('install')
     .description(
-      'Install or reinstall metrics agent (Node Exporter + Grafana Alloy)'
+      'Install or reinstall metrics agent (Node Exporter + Grafana Alloy + cAdvisor)'
     )
     .option(
       '--destination <path>',
@@ -38,17 +37,5 @@ export function registerMetricsAgentCommand(program: Command): void {
     .option('--filePath <path>', 'Path to a per-device config file')
     .action(async (options: { destination: string; filePath?: string }) => {
       await runMetricsAgentInstall(options.destination, options.filePath);
-    });
-
-  metricsAgent
-    .command('uninstall')
-    .description('Remove metrics agent from this device')
-    .action(() => {
-      const result = spawnSync(
-        'bash',
-        ['infrastructure/scripts/uninstall-metrics-agent.sh', '--local'],
-        { stdio: 'inherit' }
-      );
-      process.exit(result.status ?? 1);
     });
 }

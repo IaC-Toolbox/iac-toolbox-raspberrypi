@@ -7,7 +7,7 @@ import {
   type CredentialKey,
   getCredential,
   setCredential,
-} from './credentials-store.js';
+} from '../../loaders/credentials-loader.js';
 import {
   validateCredential,
   hasValidator,

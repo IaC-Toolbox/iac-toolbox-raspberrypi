@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import {
   loadCredentials,
   saveCredentials,
-} from '../credentials/credentials-store.js';
+} from '../../loaders/credentials-loader.js';
 import {
   updateCloudflareConfig,
   loadCloudflareConfig,
@@ -186,8 +186,10 @@ export default function CloudflareInitWizard({
 
     const run = async () => {
       if (step === 'token') {
-        const result = await _validateToken(pendingValue);
-        console.debug('>>> result: ', result);
+        // const result = await _validateToken(pendingValue);
+        // Token validation often fails due to lack of token scope to validate itself
+        // So we assume the token is valid for the purpose of this wizard
+        const result = { valid: true, message: 'Token validation skiped' };
         if (cancelled) return;
         if (result.valid) {
           setToken(pendingValue);

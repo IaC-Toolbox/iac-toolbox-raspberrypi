@@ -3,7 +3,7 @@ import RealSelectInput from 'ink-select-input';
 import RealTextInput from 'ink-text-input';
 import { useState, useEffect } from 'react';
 import fs from 'fs';
-import { saveCredentials } from '../credentials/credentials-store.js';
+import { saveCredentials } from '../../loaders/credentials-loader.js';
 import {
   generateConfig,
   generatePassword,

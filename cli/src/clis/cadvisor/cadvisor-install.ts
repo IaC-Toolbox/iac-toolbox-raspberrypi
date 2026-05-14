@@ -1,6 +1,6 @@
 import { spawnSync } from 'child_process';
-import { loadIacToolboxYaml } from '../grafana/grafana-config.js';
-import { print } from '../../utils/print.js';
+import { print } from '../../design-system/print.js';
+import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;

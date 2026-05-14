@@ -1,7 +1,7 @@
 import { spawnSync } from 'child_process';
-import { loadCredentials } from '../credentials/credentials-store.js';
+import { loadCredentials } from '../../loaders/credentials-loader.js';
 import { pollHealth } from '../../utils/healthCheck.js';
-import { print } from '../../utils/print.js';
+import { print } from '../../design-system/print.js';
 import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
 
 /**

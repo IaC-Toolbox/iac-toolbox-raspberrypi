@@ -61,7 +61,7 @@ describe('applyInstall pre-flight — config loading', () => {
 describe('applyInstall pre-flight — credentials', () => {
   it('loadCredentials returns empty object when credentials file is absent', async () => {
     const { loadCredentials } = await import(
-      '../credentials/credentials-store.js'
+      '../../loaders/credentials-loader.js'
     );
     // Use a non-existent profile name to avoid picking up real credentials
     const creds = loadCredentials('__test_nonexistent_profile__');
@@ -71,7 +71,7 @@ describe('applyInstall pre-flight — credentials', () => {
 
   it('grafana_admin_password is undefined when not set in profile', async () => {
     const { parseCredentialsFile } = await import(
-      '../credentials/credentials-store.js'
+      '../../loaders/credentials-loader.js'
     );
     const content = '[default]\ndocker_hub_token = sometoken\n';
     const parsed = parseCredentialsFile(content);
@@ -80,7 +80,7 @@ describe('applyInstall pre-flight — credentials', () => {
 
   it('grafana_admin_password is defined when set in profile', async () => {
     const { parseCredentialsFile } = await import(
-      '../credentials/credentials-store.js'
+      '../../loaders/credentials-loader.js'
     );
     const content = '[default]\ngrafana_admin_password = supersecret\n';
     const parsed = parseCredentialsFile(content);

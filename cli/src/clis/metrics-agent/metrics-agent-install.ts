@@ -1,39 +1,32 @@
 import { spawnSync } from 'child_process';
+import { loadMetricsAgentConfig } from './metrics-agent-config.js';
 import { pollDockerHealth, pollHealth } from '../../utils/healthCheck.js';
-import { print } from '../../utils/print.js';
-import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
-
-interface IacToolboxConfig {
-  [key: string]: unknown;
-  grafana_alloy?: {
-    alloy_remote_write_url?: string;
-    [key: string]: unknown;
-  };
-}
+import { print } from '../../design-system/print.js';
 
 /**
  * Run `iac-toolbox metrics-agent install`.
  *
- * Reads alloy_remote_write_url from iac-toolbox.yml, then invokes
- * install.sh --metrics-agent --local with ALLOY_REMOTE_WRITE_URL in env.
- * Fails immediately if the remote_write URL is missing.
+ * Reads grafana_url and prometheus_remote_write_url from iac-toolbox.yml,
+ * then invokes install.sh --observability-agent with ALLOY_REMOTE_WRITE_URL
+ * in the environment.
+ * Fails immediately if prometheus_remote_write_url is missing.
  */
 export async function runMetricsAgentInstall(
   destination: string,
   filePath?: string
 ): Promise<void> {
   // ── Read Configuration ────────────────────────────────────
-  print.step('Reading metrics agent configuration...');
-  const config = loadIacToolboxYaml(destination, filePath) as IacToolboxConfig;
+  print.step('Reading agent configuration...');
+  const config = loadMetricsAgentConfig(destination);
 
-  const remoteWriteUrl = config.grafana_alloy?.alloy_remote_write_url;
+  const prometheusRemoteWriteUrl = config.prometheus_remote_write_url;
 
   // ── Missing Config Guard ──────────────────────────────────
-  if (!remoteWriteUrl) {
-    print.error('Metrics agent not configured');
+  if (!prometheusRemoteWriteUrl) {
+    print.error('Agent not configured');
     print.pipe();
     print.pipe(
-      'Run `iac-toolbox metrics-agent init` first to set the remote_write URL.'
+      'Run `iac-toolbox metrics-agent init` first to set the remote endpoints.'
     );
     print.closeError();
     process.exit(1);
@@ -43,16 +36,16 @@ export async function runMetricsAgentInstall(
   print.pipe();
 
   // ── Ansible Invocation ────────────────────────────────────
-  print.step('Installing metrics agent...');
+  print.step('Installing observability agent...');
   print.divider();
 
   const env = {
     ...process.env,
-    ALLOY_REMOTE_WRITE_URL: remoteWriteUrl,
+    ALLOY_REMOTE_WRITE_URL: prometheusRemoteWriteUrl,
   };
 
   const scriptPath = `${destination}/scripts/install.sh`;
-  const scriptArgs = [scriptPath, '--metrics-agent'];
+  const scriptArgs = [scriptPath, '--observability-agent'];
   if (filePath) scriptArgs.push('--filePath', filePath);
   const result = spawnSync('bash', scriptArgs, {
     env,
@@ -61,7 +54,7 @@ export async function runMetricsAgentInstall(
 
   if (result.status !== 0) {
     print.blank();
-    print.step('Metrics agent install failed');
+    print.step('Observability agent install failed');
     print.pipe();
     print.error('Ansible playbook exited with errors');
     print.pipe('Check output above for details');
@@ -94,28 +87,40 @@ export async function runMetricsAgentInstall(
         delayMs: 2000,
       });
 
-  if (nodeExporterHealthy && alloyHealthy) {
+  print.waiting('Waiting for cAdvisor to be healthy...');
+
+  const cadvisorHealthy = await pollHealth('http://localhost:8080/metrics', {
+    retries: 30,
+    delayMs: 2000,
+  });
+
+  if (nodeExporterHealthy && alloyHealthy && cadvisorHealthy) {
     print.blank();
-    print.step('Metrics agent installed successfully');
+    print.step('Observability agent installed successfully');
     print.pipe();
     print.success('Node Exporter healthy');
     print.success('Grafana Alloy ready');
+    print.success('cAdvisor healthy');
     print.pipe();
     print.pipe('Node Exporter     http://localhost:9100/metrics');
     print.pipe('Alloy UI          http://localhost:12345');
-    print.pipe(`Remote write →    ${remoteWriteUrl}`);
+    print.pipe('cAdvisor          http://localhost:8080/metrics');
+    print.pipe(`Remote write →    ${prometheusRemoteWriteUrl}`);
     print.pipe();
-    print.pipe('Run `iac-toolbox metrics-agent uninstall` to remove');
+    print.pipe('To retry: iac-toolbox metrics-agent install');
     print.close();
   } else {
     print.blank();
-    print.step('Metrics agent install failed');
+    print.step('Observability agent install failed');
     print.pipe();
     if (!nodeExporterHealthy) {
       print.error('Node Exporter health check did not pass after 60 seconds');
     }
     if (!alloyHealthy) {
       print.error('Grafana Alloy health check did not pass after 60 seconds');
+    }
+    if (!cadvisorHealthy) {
+      print.error('cAdvisor health check did not pass after 60 seconds');
     }
     print.pipe('Check Ansible output above for details');
     print.pipe();
