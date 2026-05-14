@@ -1,9 +1,9 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { render } from 'ink-testing-library';
-import InitWizard from './init-wizard.js';
+import PlatformWizard from './platform-wizard.js';
 
 /**
- * InitWizard tests.
+ * PlatformWizard tests.
  *
  * Uses injectable _SelectInput, _TextInput, _generateConfig, _generatePassword,
  * _saveCredentials, _testSshConnection, and _writeFile props to avoid
@@ -101,13 +101,13 @@ beforeEach(() => {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('InitWizard', () => {
+describe('PlatformWizard', () => {
   describe('Step 1: target_mode', () => {
     it('renders mode selection on initial render', () => {
       const selectHelper = makeSelectInputHelper();
       const { TextInput } = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -126,7 +126,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const { TextInput } = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -146,7 +146,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const { TextInput } = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -169,7 +169,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -193,7 +193,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -216,7 +216,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -239,7 +239,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -265,7 +265,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -289,7 +289,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -315,7 +315,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -340,7 +340,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -366,7 +366,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -395,7 +395,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const { TextInput } = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -419,7 +419,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const { TextInput } = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -443,7 +443,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -468,7 +468,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -493,7 +493,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -532,7 +532,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -554,7 +554,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -592,7 +592,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -614,7 +614,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -654,7 +654,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -679,7 +679,7 @@ describe('InitWizard', () => {
         jest.fn<(creds: Record<string, string>, profile: string) => void>();
       const writeFileFn = jest.fn<(path: string, content: string) => void>();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -706,7 +706,7 @@ describe('InitWizard', () => {
       const { TextInput } = makeTextInputHelper();
       const writeFileFn = jest.fn<(path: string, content: string) => void>();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           output="./my-config.yml"
           _SelectInput={
@@ -731,7 +731,7 @@ describe('InitWizard', () => {
       const { TextInput } = makeTextInputHelper();
       const writeFileFn = jest.fn<(path: string, content: string) => void>();
       render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           output="./test-output.yml"
           _SelectInput={
@@ -759,7 +759,7 @@ describe('InitWizard', () => {
       const saveCredsFn =
         jest.fn<(creds: Record<string, string>, profile: string) => void>();
       render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -784,7 +784,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -813,7 +813,7 @@ describe('InitWizard', () => {
       const selectHelper = makeSelectInputHelper();
       const textHelper = makeTextInputHelper();
       const { lastFrame } = render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -852,7 +852,7 @@ describe('InitWizard', () => {
       const saveCredsFn =
         jest.fn<(creds: Record<string, string>, profile: string) => void>();
       render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
@@ -891,7 +891,7 @@ describe('InitWizard', () => {
       const saveCredsFn =
         jest.fn<(creds: Record<string, string>, profile: string) => void>();
       render(
-        <InitWizard
+        <PlatformWizard
           {...defaultProps}
           _SelectInput={
             selectHelper.SelectInput as unknown as typeof import('ink-select-input').default

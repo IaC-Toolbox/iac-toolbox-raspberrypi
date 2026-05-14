@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { render } from 'ink';
-import InitWizard from '../init/init-wizard.js';
+import InitWizard from './platform-wizard.js';
+import { runPlatformApplyInstall } from './platform-apply-install.js';
 
 export function registerPlatformCommand(program: Command): void {
   const platform = program
@@ -18,4 +19,28 @@ export function registerPlatformCommand(program: Command): void {
         patchConsole: false,
       });
     });
+
+  platform
+    .command('apply')
+    .description('Install the full observability stack from a config file')
+    .option('--profile <name>', 'Credential profile to use', 'default')
+    .option(
+      '--destination <path>',
+      'Path to infrastructure directory',
+      'infrastructure'
+    )
+    .option('--filePath <path>', 'Path to iac-toolbox.yml', './iac-toolbox.yml')
+    .action(
+      async (options: {
+        profile: string;
+        destination: string;
+        filePath: string;
+      }) => {
+        await runPlatformApplyInstall(
+          options.destination,
+          options.profile,
+          options.filePath
+        );
+      }
+    );
 }

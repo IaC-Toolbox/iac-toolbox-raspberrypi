@@ -2,9 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 import {
-  resolveConfigPath,
   loadIacToolboxYaml,
-} from '../grafana/grafana-config.js';
+  resolveConfigPath,
+} from 'src/loaders/yaml-loader.js';
 
 interface CloudflareDomain {
   hostname: string;

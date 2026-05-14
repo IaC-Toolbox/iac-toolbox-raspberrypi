@@ -2,7 +2,6 @@ import { spawnSync } from 'child_process';
 import { readFileSync, writeFileSync, unlinkSync, mkdirSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
-import { loadIacToolboxYaml } from '../grafana/grafana-config.js';
 import { loadCredentials } from '../credentials/credentials-store.js';
 import {
   testSshConnection,
@@ -12,9 +11,10 @@ import {
   printSummaryNoCloudflare,
   printSummaryWithCloudflare,
   type ApplySummaryConfig,
-} from './apply-summary.js';
+} from './platform-apply-summary.js';
 import { print } from '../../utils/print.js';
 import { resolveConfigTemplates } from '../../utils/configResolver.js';
+import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
 
 /**
  * Validate config, credentials, SSH (remote only), and Docker.
@@ -155,7 +155,7 @@ function runInstallSequence(
  *   2. Single Ansible run via observability_platform.yml
  *   3. Post-install summary
  */
-export async function runApplyInstall(
+export async function runPlatformApplyInstall(
   destination: string,
   profile: string,
   filePath: string

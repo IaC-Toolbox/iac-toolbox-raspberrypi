@@ -1,7 +1,7 @@
 import { spawnSync } from 'child_process';
-import { loadIacToolboxYaml } from '../grafana/grafana-config.js';
 import { pollDockerHealth, pollHealth } from '../../utils/healthCheck.js';
 import { print } from '../../utils/print.js';
+import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;

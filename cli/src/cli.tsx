@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { buildApplyCommand } from './clis/apply/apply-command.js';
-import { registerInitCommand } from './clis/init/init.js';
 import { registerCredentialsCommand } from './clis/credentials/credentials.js';
 import { registerCloudflareCommand } from './clis/cloudflare/cloudflare.js';
 import { registerVaultCommand } from './clis/vault/vault.js';
@@ -27,21 +25,21 @@ program
   .option('--profile <name>', 'Credential profile to use', 'default');
 
 registerPlatformCommand(program);
-registerInitCommand(program);
-registerCredentialsCommand(program);
 registerCloudflareCommand(program);
-registerVaultCommand(program);
 registerGrafanaCommand(program);
-registerLokiCommand(program);
 registerPrometheusCommand(program);
 registerMetricsAgentCommand(program);
+registerLokiCommand(program);
+
+
+
+registerTargetCommand(program);
+registerCredentialsCommand(program);
+registerVaultCommand(program);
 registerGithubBuildWorkflowCommand(program);
 registerGithubRunnerCommand(program);
-registerTargetCommand(program);
 registerInstallCommand(program);
 registerUninstallCommand(program);
-
-program.addCommand(buildApplyCommand());
 
 if (process.argv.length === 2) {
   program.help();

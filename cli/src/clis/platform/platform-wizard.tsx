@@ -32,7 +32,7 @@ interface SelectInputProps {
   onSelect: (item: SelectItem) => void;
 }
 
-export interface InitWizardProps {
+export interface PlatformWizardProps {
   profile: string;
   output: string;
   /** Injectable deps for testing */
@@ -123,7 +123,7 @@ function defaultWriteFile(filePath: string, content: string): void {
 // Component
 // ---------------------------------------------------------------------------
 
-export default function InitWizard({
+export default function PlatformWizard({
   profile,
   output,
   _SelectInput = RealSelectInput,
@@ -133,7 +133,7 @@ export default function InitWizard({
   _saveCredentials = saveCredentials,
   _testSshConnection = defaultTestSshConnection,
   _writeFile = defaultWriteFile,
-}: InitWizardProps) {
+}: PlatformWizardProps) {
   const { exit } = useApp();
 
   // --- state ---

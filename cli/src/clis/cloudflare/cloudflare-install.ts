@@ -1,8 +1,8 @@
 import { spawnSync } from 'child_process';
 import { loadCredentials } from '../credentials/credentials-store.js';
-import { loadIacToolboxYaml } from '../grafana/grafana-config.js';
 import { pollHealth } from '../../utils/healthCheck.js';
 import { print } from '../../utils/print.js';
+import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
 
 interface CloudflareConfig {
   enabled?: boolean;
