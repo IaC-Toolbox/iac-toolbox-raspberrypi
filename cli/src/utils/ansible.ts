@@ -22,8 +22,7 @@ export function assertAnsibleInstalled(): void {
 }
 
 export function resolveAnsibleDir(destination: string): string {
-  // Walk up from compiled JS (dist/) to repo root, then into ansible-configurations/
-  return join(resolveCliRoot(), destination, 'ansible-configurations');
+  return join(process.cwd(), destination, 'ansible-configurations');
 }
 
 export function resolveProjectRoot(): string {
