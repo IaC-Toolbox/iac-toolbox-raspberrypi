@@ -64,7 +64,7 @@ export async function runCAdvisorInstall(
     print.pipe();
     print.pipe('To retry: iac-toolbox cadvisor install');
     print.closeError();
-    process.exit(status);
+    process.exit(status ?? 1);
   }
 
   print.blank();

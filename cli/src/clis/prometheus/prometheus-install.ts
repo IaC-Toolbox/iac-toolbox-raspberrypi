@@ -97,7 +97,7 @@ export async function runPrometheusInstall(
     print.pipe();
     print.pipe('To retry: iac-toolbox prometheus install');
     print.closeError();
-    process.exit(status);
+    process.exit(status ?? 1);
   }
 
   // ── Post-Install Health Check ─────────────────────────────

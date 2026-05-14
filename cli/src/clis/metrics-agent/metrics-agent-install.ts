@@ -64,7 +64,7 @@ export async function runMetricsAgentInstall(
     print.pipe();
     print.pipe('To retry: iac-toolbox metrics-agent install');
     print.closeError();
-    process.exit(status);
+    process.exit(status ?? 1);
   }
 
   // ── Post-Install Health Checks ────────────────────────────

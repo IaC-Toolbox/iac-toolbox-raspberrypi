@@ -118,7 +118,7 @@ function runInstallSequence(
   const env: NodeJS.ProcessEnv = { ...process.env };
   // No credential env vars — they are now embedded in resolvedYaml
 
-  let status = 1;
+  let status: number;
   try {
     status = runAnsiblePlaybook('observability_platform.yml', {
       ansibleDir: resolveAnsibleDir(destination),
@@ -141,7 +141,7 @@ function runInstallSequence(
       'To retry: iac-toolbox platform apply --filePath=./iac-toolbox.yml'
     );
     print.closeError();
-    process.exit(status);
+    process.exit(status ?? 1);
   }
 
   return Boolean(

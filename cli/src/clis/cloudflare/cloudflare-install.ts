@@ -98,7 +98,7 @@ export async function runCloudflareInstall(
     print.pipe();
     print.pipe('To retry: iac-toolbox cloudflare install');
     print.closeError();
-    process.exit(status);
+    process.exit(status ?? 1);
   }
 
   // -- Post-Install Health Check -----------------------------------------

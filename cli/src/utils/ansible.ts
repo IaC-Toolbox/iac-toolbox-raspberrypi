@@ -1,29 +1,33 @@
 import { spawnSync, execSync } from 'child_process';
 import { resolve, join } from 'path';
 import { fileURLToPath } from 'url';
+import { print } from '../design-system/print.js';
+
+function resolveCliRoot(): string {
+  return resolve(fileURLToPath(import.meta.url), '../../../../..');
+}
 
 export function assertAnsibleInstalled(): void {
   try {
     execSync('ansible-playbook --version', { stdio: 'ignore' });
   } catch {
-    console.error(
-      'ansible-playbook not found. Install Ansible before running this command.\n' +
-        '  macOS:  brew install ansible\n' +
-        '  Debian: sudo apt install ansible'
+    print.error(
+      'ansible-playbook not found. Install Ansible before running this command.'
     );
+    print.pipe('  macOS:  brew install ansible');
+    print.pipe('  Debian: sudo apt install ansible');
+    print.closeError();
     process.exit(1);
   }
 }
 
 export function resolveAnsibleDir(destination: string): string {
   // Walk up from compiled JS (dist/) to repo root, then into ansible-configurations/
-  const cliRoot = resolve(fileURLToPath(import.meta.url), '../../../../..');
-  return join(cliRoot, destination, 'ansible-configurations');
+  return join(resolveCliRoot(), destination, 'ansible-configurations');
 }
 
 export function resolveProjectRoot(): string {
-  const cliRoot = resolve(fileURLToPath(import.meta.url), '../../../../..');
-  return cliRoot;
+  return resolveCliRoot();
 }
 
 export interface AnsibleOptions {

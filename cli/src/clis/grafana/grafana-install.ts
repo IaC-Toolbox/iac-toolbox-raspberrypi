@@ -66,7 +66,7 @@ export async function runGrafanaInstall(
     print.pipe();
     print.pipe('To retry: iac-toolbox grafana install');
     print.closeError();
-    process.exit(status);
+    process.exit(status ?? 1);
   }
 
   // ── Post-Install Health Check ─────────────────────────────
