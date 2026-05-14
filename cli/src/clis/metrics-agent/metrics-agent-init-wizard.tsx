@@ -27,7 +27,8 @@ export default function MetricsAgentInitWizard({
 }: MetricsAgentInitWizardProps) {
   const { exit } = useApp();
 
-  const existingUrl = loadMetricsAgentConfig(destination).prometheus_remote_write_url;
+  const existingUrl =
+    loadMetricsAgentConfig(destination).prometheus_remote_write_url;
 
   const [step, setStep] = useState<Step>('remote_write_url');
   const [inputValue, setInputValue] = useState(

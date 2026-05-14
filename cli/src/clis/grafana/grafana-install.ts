@@ -1,13 +1,17 @@
-import { spawnSync } from 'child_process';
 import { loadCredentials } from '../../loaders/credentials-loader.js';
 import { pollHealth } from '../../utils/healthCheck.js';
 import { print } from '../../design-system/print.js';
 import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
+import {
+  runAnsiblePlaybook,
+  resolveAnsibleDir,
+  resolveProjectRoot,
+} from '../../utils/ansible.js';
 
 /**
  * Run `iac-toolbox grafana install`.
  *
- * Reads credentials from file (no wizard), invokes install.sh --grafana --local,
+ * Reads credentials from file (no wizard), invokes runAnsiblePlaybook('grafana.yml'),
  * and performs a post-install health check.
  */
 export async function runGrafanaInstall(
@@ -46,15 +50,14 @@ export async function runGrafanaInstall(
     GRAFANA_ADMIN_PASSWORD: creds.grafana_admin_password,
   };
 
-  const scriptPath = `${destination}/scripts/install.sh`;
-  const scriptArgs = [scriptPath, '--grafana'];
-  if (filePath) scriptArgs.push('--filePath', filePath);
-  const result = spawnSync('bash', scriptArgs, {
+  const status = runAnsiblePlaybook('grafana.yml', {
+    ansibleDir: resolveAnsibleDir(destination),
+    filePath,
+    projectRoot: resolveProjectRoot(),
     env,
-    stdio: 'inherit',
   });
 
-  if (result.status !== 0) {
+  if (status !== 0) {
     print.blank();
     print.step('Grafana install failed');
     print.pipe();
@@ -63,7 +66,7 @@ export async function runGrafanaInstall(
     print.pipe();
     print.pipe('To retry: iac-toolbox grafana install');
     print.closeError();
-    process.exit(result.status ?? 1);
+    process.exit(status ?? 1);
   }
 
   // ── Post-Install Health Check ─────────────────────────────
