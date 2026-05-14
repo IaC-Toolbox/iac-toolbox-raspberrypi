@@ -48,7 +48,7 @@ export async function runMetricsAgentInstall(
     ALLOY_REMOTE_WRITE_URL: prometheusRemoteWriteUrl,
   };
 
-  const status = runAnsiblePlaybook('observability_agent.yml', {
+  const status = runAnsiblePlaybook('metrics-agent.yml', {
     ansibleDir: resolveAnsibleDir(destination),
     filePath,
     projectRoot: resolveProjectRoot(),

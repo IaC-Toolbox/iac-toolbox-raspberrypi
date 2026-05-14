@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import { print } from '../design-system/print.js';
 
 function resolveCliRoot(): string {
-  return resolve(fileURLToPath(import.meta.url), '../../../../..');
+  return resolve(fileURLToPath(import.meta.url), '../../../..');
 }
 
 export function assertAnsibleInstalled(): void {
