@@ -13,10 +13,6 @@ export const CREDENTIAL_KEYS = {
   grafana_api_key: 'Grafana API key',
   grafana_admin_password: 'Grafana admin password',
   pagerduty_key: 'PagerDuty integration key',
-  github_pat: 'GitHub personal access token',
-  github_runner_token: 'GitHub Actions runner registration token',
-  github_runner_repo_url: 'GitHub repository URL for runner',
-  vault_token: 'HashiCorp Vault token',
 } as const;
 
 export type CredentialKey = keyof typeof CREDENTIAL_KEYS;

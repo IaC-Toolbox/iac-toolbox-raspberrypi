@@ -35,13 +35,13 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 describe('applyInstall pre-flight — config loading', () => {
   it('loadIacToolboxYaml returns empty object when file is missing', async () => {
-    const { loadIacToolboxYaml } = await import('src/loaders/yaml-loader.js');
+    const { loadIacToolboxYaml } = await import('../grafana/grafana-config.js');
     const result = loadIacToolboxYaml(path.join(tmpDir, 'nonexistent'));
     expect(result).toEqual({});
   });
 
   it('loadIacToolboxYaml parses target section', async () => {
-    const { loadIacToolboxYaml } = await import('src/loaders/yaml-loader.js');
+    const { loadIacToolboxYaml } = await import('../grafana/grafana-config.js');
     const configData = {
       target: { mode: 'remote', host: 'raspberry-4b.local', user: 'pi' },
       grafana: { port: 3000 },
@@ -183,7 +183,7 @@ describe('applyInstall post-install summary — service ports', () => {
 // ---------------------------------------------------------------------------
 describe('applyInstall — filePath option', () => {
   it('loads config from explicit filePath', async () => {
-    const { loadIacToolboxYaml } = await import('src/loaders/yaml-loader.js');
+    const { loadIacToolboxYaml } = await import('../grafana/grafana-config.js');
     const explicitPath = path.join(tmpDir, 'custom-config.yml');
     const configData = {
       target: { mode: 'local' },

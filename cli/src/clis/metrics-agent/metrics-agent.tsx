@@ -6,9 +6,7 @@ import MetricsAgentInitWizard from './metrics-agent-init-wizard.js';
 export function registerMetricsAgentCommand(program: Command): void {
   const metricsAgent = program
     .command('metrics-agent')
-    .description(
-      'Deploy observability agent (Node Exporter + Grafana Alloy + cAdvisor)'
-    );
+    .description('Deploy observability agent (Node Exporter + Grafana Alloy + cAdvisor)');
 
   metricsAgent
     .command('init')

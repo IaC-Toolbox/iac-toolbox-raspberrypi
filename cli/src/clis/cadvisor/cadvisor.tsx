@@ -8,7 +8,9 @@ export function registerCAdvisorCommand(program: Command): void {
 
   cAdvisor
     .command('install')
-    .description('Install or reinstall cAdvisor for container monitoring')
+    .description(
+      'Install or reinstall cAdvisor for container monitoring'
+    )
     .option(
       '--destination <path>',
       'Path to infrastructure directory',
@@ -16,10 +18,6 @@ export function registerCAdvisorCommand(program: Command): void {
     )
     .option('--filePath <path>', 'Path to a per-device config file')
     .action(async (options: { destination: string; filePath?: string }) => {
-      await runCAdvisorInstall(
-        options.destination,
-        'default',
-        options.filePath
-      );
+      await runCAdvisorInstall(options.destination, 'default', options.filePath);
     });
 }
