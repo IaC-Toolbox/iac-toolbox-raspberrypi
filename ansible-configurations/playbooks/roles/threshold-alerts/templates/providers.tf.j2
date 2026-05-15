@@ -1,0 +1,22 @@
+terraform {
+  required_version = ">= 1.0"
+  required_providers {
+    grafana = {
+      source  = "grafana/grafana"
+      version = "~> 3.0"
+    }
+  }
+}
+
+provider "grafana" {
+  url  = var.grafana_url
+  auth = "${var.grafana_admin_user}:${var.grafana_admin_password}"
+}
+
+data "grafana_data_source" "prometheus" {
+  name = "Prometheus"
+}
+
+resource "grafana_folder" "alerts" {
+  title = "{{ threshold_alerts_instance }}_alerts"
+}

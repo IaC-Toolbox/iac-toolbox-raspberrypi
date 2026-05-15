@@ -29,3 +29,6 @@
 
     - role: cadvisor
       when: cadvisor is not defined or cadvisor.enabled | default(true)
+
+    - role: threshold-alerts
+      when: threshold_alerts is defined and threshold_alerts.enabled | default(false)
