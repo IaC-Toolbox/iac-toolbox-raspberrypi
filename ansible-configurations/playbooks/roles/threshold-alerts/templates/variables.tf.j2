@@ -1,0 +1,29 @@
+variable "grafana_url" {
+  type        = string
+  description = "Grafana URL (e.g., https://grafana.example.com)"
+}
+
+variable "grafana_admin_user" {
+  type    = string
+  default = "admin"
+}
+
+variable "grafana_admin_password" {
+  type      = string
+  sensitive = true
+}
+
+variable "memory_critical_threshold" {
+  type    = number
+  default = {{ threshold_alerts_memory_critical }}
+}
+
+variable "cpu_critical_threshold" {
+  type    = number
+  default = {{ threshold_alerts_cpu_critical }}
+}
+
+variable "disk_critical_threshold" {
+  type    = number
+  default = {{ threshold_alerts_disk_critical }}
+}

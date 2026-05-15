@@ -4,6 +4,7 @@ import { registerCloudflareCommand } from './clis/cloudflare/cloudflare.js';
 import { registerGrafanaCommand } from './clis/grafana/grafana.js';
 import { registerPrometheusCommand } from './clis/prometheus/prometheus.js';
 import { registerMetricsAgentCommand } from './clis/metrics-agent/metrics-agent.js';
+import { registerThresholdAlertsCommand } from './clis/threshold-alerts/threshold-alerts.js';
 import { registerTargetCommand } from './clis/target/target.js';
 import { registerPlatformCommand } from './clis/platform/platform.js';
 import { registerCAdvisorCommand } from './clis/cadvisor/cadvisor.js';
@@ -21,6 +22,7 @@ program
 // main commands - 2 profiles
 registerPlatformCommand(program);
 registerMetricsAgentCommand(program);
+registerThresholdAlertsCommand(program);
 
 // Helpers
 registerCloudflareCommand(program);
