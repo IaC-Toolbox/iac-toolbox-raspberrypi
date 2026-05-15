@@ -18,6 +18,13 @@
     dest: "{{ threshold_alerts_terraform_dest }}/variables.tf"
   delegate_to: localhost
 
+- name: Render terraform.tfvars
+  ansible.builtin.template:
+    src: terraform.tfvars.j2
+    dest: "{{ threshold_alerts_terraform_dest }}/terraform.tfvars"
+    mode: '0600'
+  delegate_to: localhost
+
 - name: Render main.tf (alert rule modules)
   ansible.builtin.template:
     src: main.tf.j2
@@ -28,6 +35,14 @@
   ansible.builtin.template:
     src: modules/threshold_alert/main.tf.j2
     dest: "{{ threshold_alerts_terraform_dest }}/modules/threshold_alert/main.tf"
+  delegate_to: localhost
+
+- name: Ensure terraform.tfvars is in .gitignore
+  ansible.builtin.lineinfile:
+    path: "{{ threshold_alerts_terraform_dest }}/.gitignore"
+    line: "terraform.tfvars"
+    create: true
+    mode: '0644'
   delegate_to: localhost
 
 - name: Print next steps

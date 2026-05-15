@@ -3,8 +3,6 @@
 # IaC Toolbox - Grafana Playbook
 # ============================================
 
-- import_playbook: common.yml
-
 - name: Deploy Grafana
   hosts: all
   become: false

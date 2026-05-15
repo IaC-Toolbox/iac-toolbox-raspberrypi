@@ -4,8 +4,6 @@
 # ============================================
 # Deploys cloudflare-tunnel (oauth mode) and cloudflare-tunnel-api (api mode).
 
-- import_playbook: common.yml
-
 - name: Deploy Cloudflare Tunnel
   hosts: all
   become: false

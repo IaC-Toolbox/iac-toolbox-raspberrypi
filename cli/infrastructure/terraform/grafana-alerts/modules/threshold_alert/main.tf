@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    grafana = {
+      source  = "grafana/grafana"
+      version = "~> 3.0"
+    }
+  }
+}
+
 variable "name"           { type = string }
 variable "folder_uid"     { type = string }
 variable "datasource_uid" { type = string }

@@ -3,8 +3,6 @@
 # IaC Toolbox - Prometheus Playbook
 # ============================================
 
-- import_playbook: common.yml
-
 - name: Deploy Prometheus
   hosts: all
   become: false

@@ -5,7 +5,6 @@
 # Entry point for full deployment.
 # Imports all per-service playbooks in dependency order.
 
-- import_playbook: common.yml
 - import_playbook: vault.yml
 - import_playbook: grafana.yml
 - import_playbook: prometheus.yml

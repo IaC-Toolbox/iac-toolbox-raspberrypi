@@ -37,7 +37,18 @@ export function registerMetricsAgentCommand(program: Command): void {
       'infrastructure'
     )
     .option('--filePath <path>', 'Path to a per-device config file')
-    .action(async (options: { destination: string; filePath?: string }) => {
-      await runMetricsAgentInstall(options.destination, options.filePath);
-    });
+    .option('--profile <name>', 'Credential profile to use', 'default')
+    .action(
+      async (options: {
+        destination: string;
+        filePath?: string;
+        profile: string;
+      }) => {
+        await runMetricsAgentInstall(
+          options.destination,
+          options.profile,
+          options.filePath
+        );
+      }
+    );
 }

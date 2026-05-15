@@ -2,7 +2,7 @@
 # ============================================
 # IaC Toolbox - Metrics Agent Playbook
 # ============================================
-# Deploys Node Exporter + Grafana Alloy.
+# Deploys Node Exporter + cAdvisor + Grafana Alloy + Alerts.
 
 - import_playbook: common.yml
 
@@ -15,3 +15,9 @@
 
     - role: grafana-alloy
       when: grafana_alloy is defined and grafana_alloy.enabled
+
+    - role: cadvisor
+      when: cadvisor is not defined or cadvisor.enabled | default(true)
+
+    - role: threshold-alerts
+      when: threshold_alerts is defined and threshold_alerts.enabled | default(false)

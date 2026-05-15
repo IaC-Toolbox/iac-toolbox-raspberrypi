@@ -1,12 +1,31 @@
 // Scrape Node Exporter and tag metrics with this device's hostname
 prometheus.scrape "node_exporter" {
   targets = [{
-    __address__ = "{{ alloy_node_exporter_host }}:{{ node_exporter_port }}",
+    __address__ = "{{ alloy_docker_host }}:{{ node_exporter_port }}",
     instance    = "{{ grafana_alloy.instance_name | default(ansible_hostname) }}",
     job         = "node_exporter",
   }]
   scrape_interval = "15s"
   forward_to     = [prometheus.relabel.node_exporter_compat.receiver]
+}
+
+// ── Scrape cAdvisor (on the monitoring Docker network) ───────────────────
+prometheus.scrape "cadvisor" {
+  targets = [{
+    __address__ = "{{ alloy_docker_host }}:{{ cadvisor_port }}",   // reachable by container name on the network
+    instance    = "{{ grafana_alloy.instance_name | default(ansible_hostname) }}",
+    job         = "cadvisor",
+  }]
+  scrape_interval = "15s"
+  forward_to      = [prometheus.remote_write.platform.receiver]
+}
+
+
+// Push metrics to the central Prometheus instance on the platform
+prometheus.remote_write "platform" {
+  endpoint {
+    url = "{{ grafana_alloy.alloy_remote_write_url }}"
+  }
 }
 
 // Rename metrics for dashboard compatibility.
@@ -40,11 +59,4 @@ prometheus.relabel "node_exporter_compat" {
     replacement   = "node_memory_SwapTotal_bytes"
   }
 {% endif %}
-}
-
-// Push metrics to the central Prometheus instance on the platform
-prometheus.remote_write "platform" {
-  endpoint {
-    url = "{{ alloy_remote_write_url }}"
-  }
 }

@@ -41,8 +41,6 @@ grafana_alloy:
   alloy_remote_write_url: https://grafana.iac-toolbox.com/prometheus/api/v1/write
 cadvisor:
   enabled: true
-observability_agent:
-  prometheus_remote_write_url: https://grafana.iac-toolbox.com/prometheus/api/v1/write
 threshold_alerts:
   enabled: true
   threshold_alerts_terraform_dest: ./infrastructure

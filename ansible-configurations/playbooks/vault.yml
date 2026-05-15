@@ -3,8 +3,6 @@
 # IaC Toolbox - Vault Playbook
 # ============================================
 
-- import_playbook: common.yml
-
 - name: Deploy HashiCorp Vault
   hosts: all
   become: false

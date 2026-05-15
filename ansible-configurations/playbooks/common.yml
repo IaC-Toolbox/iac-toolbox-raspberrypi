@@ -39,13 +39,15 @@
           OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
           Architecture: {{ ansible_architecture }}
 
+    - name: Set active Docker socket fact
+      set_fact:
+        active_docker_socket: "unix:///var/run/docker.sock"
+        
   roles:
-    - role: common
-
     # - role: setup
     #   when:
     #     - (setup is not defined or setup)
     #     - ansible_os_family != "Darwin"
 
-    - role: docker
-      when: docker is not defined or docker.enabled | default(true)
+    # - role: docker
+    #   when: docker is not defined or docker.enabled | default(true)

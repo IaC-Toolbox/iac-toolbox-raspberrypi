@@ -1,29 +1,34 @@
+import { unlinkSync } from 'fs';
+import yaml from 'js-yaml';
 import { loadCredentials } from '../../loaders/credentials-loader.js';
 import { pollHealth } from '../../validators/health_check.js';
 import { print } from '../../design-system/print.js';
-import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
 import {
   runAnsiblePlaybook,
   resolveAnsibleDir,
   resolveProjectRoot,
 } from '../../utils/ansible.js';
+import { writeResolvedConfig } from '../../loaders/resolved-config.js';
 
-/**
- * Run `iac-toolbox grafana install`.
- *
- * Reads credentials from file (no wizard), invokes runAnsiblePlaybook('grafana.yml'),
- * and performs a post-install health check.
- */
+interface IacToolboxConfig {
+  [key: string]: unknown;
+  grafana?: {
+    admin_user?: string;
+    port?: number;
+    domain?: string;
+    [key: string]: unknown;
+  };
+  cloudflare?: { enabled?: boolean; [key: string]: unknown };
+}
+
 export async function runGrafanaInstall(
   destination: string,
   profile: string,
   filePath?: string
 ): Promise<void> {
-  // ── Missing Credentials Guard ─────────────────────────────
-  print.step('Reading Grafana credentials...');
   const creds = loadCredentials(profile);
-  const config = loadIacToolboxYaml(destination, filePath);
 
+  // ── Missing Credentials Guard ─────────────────────────────
   if (!creds.grafana_admin_password) {
     print.error('No credentials found');
     print.pipe();
@@ -31,6 +36,13 @@ export async function runGrafanaInstall(
     print.closeError();
     process.exit(1);
   }
+
+  const { tmpFile, resolvedYaml } = writeResolvedConfig(
+    destination,
+    profile,
+    filePath
+  );
+  const config = yaml.load(resolvedYaml) as IacToolboxConfig;
 
   const adminUser =
     (config.grafana?.admin_user as string) ??
@@ -44,18 +56,19 @@ export async function runGrafanaInstall(
   print.step('Installing Grafana...');
   print.divider();
 
-  const env = {
-    ...process.env,
-    GRAFANA_ADMIN_USER: adminUser,
-    GRAFANA_ADMIN_PASSWORD: creds.grafana_admin_password,
-  };
+  const env: NodeJS.ProcessEnv = { ...process.env };
 
-  const status = runAnsiblePlaybook('grafana.yml', {
-    ansibleDir: resolveAnsibleDir(destination),
-    filePath,
-    projectRoot: resolveProjectRoot(),
-    env,
-  });
+  let status: number;
+  try {
+    status = runAnsiblePlaybook('grafana.yml', {
+      ansibleDir: resolveAnsibleDir(destination),
+      filePath: tmpFile,
+      projectRoot: resolveProjectRoot(),
+      env,
+    });
+  } finally {
+    unlinkSync(tmpFile);
+  }
 
   if (status !== 0) {
     print.blank();
@@ -81,10 +94,7 @@ export async function runGrafanaInstall(
 
   print.waiting('Waiting for Grafana to be healthy...');
 
-  const healthy = await pollHealth(healthUrl, {
-    retries: 30,
-    delayMs: 2000,
-  });
+  const healthy = await pollHealth(healthUrl, { retries: 30, delayMs: 2000 });
 
   if (healthy) {
     print.blank();

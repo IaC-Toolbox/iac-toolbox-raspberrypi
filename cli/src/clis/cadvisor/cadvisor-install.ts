@@ -1,37 +1,33 @@
+import { unlinkSync } from 'fs';
+import yaml from 'js-yaml';
 import { print } from '../../design-system/print.js';
-import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
 import {
   runAnsiblePlaybook,
   resolveAnsibleDir,
   resolveProjectRoot,
 } from '../../utils/ansible.js';
+import { writeResolvedConfig } from '../../loaders/resolved-config.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;
   cadvisor?: { enabled?: boolean; [key: string]: unknown };
 }
 
-/**
- * Run `iac-toolbox cadvisor install`.
- *
- * Guards:
- *   1. cadvisor.enabled must be true in iac-toolbox.yml (run `cadvisor init` first)
- *
- * Then invokes runAnsiblePlaybook('cadvisor.yml') and polls health endpoints post-install.
- */
 export async function runCAdvisorInstall(
   destination: string,
   profile: string,
   filePath?: string
 ): Promise<void> {
-  void profile; // reserved for future credential profile support
-
-  // ── Read Configuration ────────────────────────────────────
-  print.step('Reading cAdvisor configuration...');
-  const config = loadIacToolboxYaml(destination, filePath) as IacToolboxConfig;
+  const { tmpFile, resolvedYaml } = writeResolvedConfig(
+    destination,
+    profile,
+    filePath
+  );
+  const config = yaml.load(resolvedYaml) as IacToolboxConfig;
 
   // ── Guard: cadvisor.enabled ───────────────────────────────
   if (config.cadvisor?.enabled !== true) {
+    unlinkSync(tmpFile);
     print.error('cAdvisor not enabled');
     print.pipe();
     print.pipe(
@@ -48,12 +44,17 @@ export async function runCAdvisorInstall(
   print.step('Installing cAdvisor...');
   print.divider();
 
-  const status = runAnsiblePlaybook('cadvisor.yml', {
-    ansibleDir: resolveAnsibleDir(destination),
-    filePath,
-    projectRoot: resolveProjectRoot(),
-    env: { ...process.env },
-  });
+  let status: number;
+  try {
+    status = runAnsiblePlaybook('cadvisor.yml', {
+      ansibleDir: resolveAnsibleDir(destination),
+      filePath: tmpFile,
+      projectRoot: resolveProjectRoot(),
+      env: { ...process.env },
+    });
+  } finally {
+    unlinkSync(tmpFile);
+  }
 
   if (status !== 0) {
     print.blank();

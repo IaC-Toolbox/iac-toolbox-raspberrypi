@@ -1,12 +1,14 @@
+import { unlinkSync } from 'fs';
+import yaml from 'js-yaml';
 import { loadCredentials } from '../../loaders/credentials-loader.js';
 import { pollHealth } from '../../validators/health_check.js';
 import { print } from '../../design-system/print.js';
-import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
 import {
   runAnsiblePlaybook,
   resolveAnsibleDir,
   resolveProjectRoot,
 } from '../../utils/ansible.js';
+import { writeResolvedConfig } from '../../loaders/resolved-config.js';
 
 interface CloudflareConfig {
   enabled?: boolean;
@@ -26,23 +28,14 @@ interface IacToolboxConfig {
   cloudflare?: CloudflareConfig;
 }
 
-/**
- * Run `iac-toolbox cloudflare install`.
- *
- * Reads credentials from file (no wizard), invokes runAnsiblePlaybook('cloudflare.yml'),
- * and performs a post-install health check against the cloudflared metrics endpoint.
- */
 export async function runCloudflareInstall(
   destination: string,
   profile: string,
   filePath?: string
 ): Promise<void> {
-  // -- Read Configuration ------------------------------------------------
-  print.step('Reading Cloudflare configuration...');
   const creds = loadCredentials(profile);
-  const config = loadIacToolboxYaml(destination, filePath) as IacToolboxConfig;
 
-  // -- Missing Credentials Guard -----------------------------------------
+  // ── Missing Credentials Guard ─────────────────────────────
   if (!creds.cloudflare_api_token) {
     print.error('No API token found');
     print.pipe();
@@ -51,7 +44,14 @@ export async function runCloudflareInstall(
     process.exit(1);
   }
 
-  // -- Incomplete Config Guard -------------------------------------------
+  const { tmpFile, resolvedYaml } = writeResolvedConfig(
+    destination,
+    profile,
+    filePath
+  );
+  const config = yaml.load(resolvedYaml) as IacToolboxConfig;
+
+  // ── Incomplete Config Guard ───────────────────────────────
   const missing: string[] = [];
   if (!config.cloudflare?.account_id) missing.push('account_id');
   if (!config.cloudflare?.zone_id) missing.push('zone_id');
@@ -60,6 +60,7 @@ export async function runCloudflareInstall(
   }
 
   if (missing.length > 0) {
+    unlinkSync(tmpFile);
     print.error('Cloudflare configuration incomplete');
     print.pipe();
     print.pipe(`Missing: ${missing.join(', ')}`);
@@ -71,23 +72,23 @@ export async function runCloudflareInstall(
   print.success('Credentials loaded');
   print.pipe();
 
-  // -- Ansible Invocation ------------------------------------------------
+  // ── Ansible Invocation ────────────────────────────────────
   print.step('Installing Cloudflare Tunnel...');
   print.divider();
 
-  const env = {
-    ...process.env,
-    CLOUDFLARE_API_TOKEN: creds.cloudflare_api_token,
-    CLOUDFLARE_ACCOUNT_ID: config.cloudflare!.account_id!,
-    CLOUDFLARE_ZONE_ID: config.cloudflare!.zone_id!,
-  };
+  const env: NodeJS.ProcessEnv = { ...process.env };
 
-  const status = runAnsiblePlaybook('cloudflare.yml', {
-    ansibleDir: resolveAnsibleDir(destination),
-    filePath,
-    projectRoot: resolveProjectRoot(),
-    env,
-  });
+  let status: number;
+  try {
+    status = runAnsiblePlaybook('cloudflare.yml', {
+      ansibleDir: resolveAnsibleDir(destination),
+      filePath: tmpFile,
+      projectRoot: resolveProjectRoot(),
+      env,
+    });
+  } finally {
+    unlinkSync(tmpFile);
+  }
 
   if (status !== 0) {
     print.blank();
@@ -101,7 +102,7 @@ export async function runCloudflareInstall(
     process.exit(status ?? 1);
   }
 
-  // -- Post-Install Health Check -----------------------------------------
+  // ── Post-Install Health Check ─────────────────────────────
   print.waiting('Waiting for tunnel to be healthy...');
 
   const healthy = await pollHealth('http://localhost:20241/ready', {
