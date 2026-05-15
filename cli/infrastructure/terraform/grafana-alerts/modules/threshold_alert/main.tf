@@ -1,0 +1,84 @@
+variable "name"           { type = string }
+variable "folder_uid"     { type = string }
+variable "datasource_uid" { type = string }
+variable "expr"           { type = string }
+variable "threshold"      { type = number }
+
+variable "comparator" {
+  type    = string
+  default = "gt"
+}
+
+variable "for" {
+  type    = string
+  default = "5m"
+}
+
+variable "severity" {
+  type    = string
+  default = "critical"
+}
+
+variable "summary"     { type = string }
+
+variable "description" {
+  type    = string
+  default = ""
+}
+
+variable "no_data_state" {
+  type    = string
+  default = "NoData"
+}
+
+resource "grafana_rule_group" "this" {
+  name             = var.name
+  folder_uid       = var.folder_uid
+  interval_seconds = 60
+
+  rule {
+    name      = var.name
+    condition = "C"
+
+    data {
+      ref_id         = "A"
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+      datasource_uid = var.datasource_uid
+      model          = jsonencode({ expr = var.expr, refId = "A" })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({ type = "reduce", refId = "B", expression = "A", reducer = "last" })
+    }
+
+    data {
+      ref_id         = "C"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        type       = "threshold"
+        refId      = "C"
+        expression = "B"
+        conditions = [{ evaluator = { params = [var.threshold], type = var.comparator }, type = "query" }]
+      })
+    }
+
+    no_data_state  = var.no_data_state
+    exec_err_state = "Alerting"
+    for            = var.for
+    labels         = { severity = var.severity }
+    annotations    = { summary = var.summary, description = var.description }
+  }
+}

@@ -22,13 +22,13 @@ program
 // main commands - 2 profiles
 registerPlatformCommand(program);
 registerMetricsAgentCommand(program);
-registerThresholdAlertsCommand(program);
 
 // Helpers
 registerCloudflareCommand(program);
 registerGrafanaCommand(program);
 registerPrometheusCommand(program);
 registerCAdvisorCommand(program);
+registerThresholdAlertsCommand(program);
 
 // SSH Setter
 registerTargetCommand(program);

@@ -1,0 +1,110 @@
+# ── Host alerts (Node Exporter) ─────────────────────────────────────────────
+
+module "alert_node_down" {
+  source         = "./modules/threshold_alert"
+  name           = "NodeDown"
+  folder_uid     = grafana_folder.alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "up{job=\"node_exporter\",instance=\"vvasylkovskyi-F719T9V3V4\"}"
+  threshold      = 1
+  comparator     = "lt"
+  for            = "2m"
+  severity       = "critical"
+  no_data_state  = "Alerting"
+  summary        = "Host vvasylkovskyi-F719T9V3V4 is offline"
+  description    = "No scrape data for more than 2 minutes."
+}
+
+module "alert_low_disk" {
+  source         = "./modules/threshold_alert"
+  name           = "LowDiskSpace"
+  folder_uid     = grafana_folder.alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "(1 - (node_filesystem_avail_bytes{instance=\"vvasylkovskyi-F719T9V3V4\",fstype!~\"tmpfs|overlay\",mountpoint=\"/\"} / node_filesystem_size_bytes{instance=\"vvasylkovskyi-F719T9V3V4\",fstype!~\"tmpfs|overlay\",mountpoint=\"/\"})) * 100"
+  threshold      = var.disk_critical_threshold
+  for            = "5m"
+  severity       = "critical"
+  summary        = "Low disk space on vvasylkovskyi-F719T9V3V4"
+  description    = "Root filesystem above ${var.disk_critical_threshold}%."
+}
+
+module "alert_high_memory" {
+  source         = "./modules/threshold_alert"
+  name           = "HighMemoryUsage"
+  folder_uid     = grafana_folder.alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "(1 - (node_memory_MemAvailable_bytes{instance=\"vvasylkovskyi-F719T9V3V4\"} / node_memory_MemTotal_bytes{instance=\"vvasylkovskyi-F719T9V3V4\"})) * 100"
+  threshold      = var.memory_critical_threshold
+  for            = "5m"
+  severity       = "critical"
+  summary        = "High memory on vvasylkovskyi-F719T9V3V4"
+  description    = "Memory above ${var.memory_critical_threshold}%."
+}
+
+module "alert_swap_in_use" {
+  source         = "./modules/threshold_alert"
+  name           = "SwapInUse"
+  folder_uid     = grafana_folder.alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "node_memory_SwapUsed_bytes{instance=\"vvasylkovskyi-F719T9V3V4\"}"
+  threshold      = 0
+  for            = "5m"
+  severity       = "warning"
+  summary        = "Swap in use on vvasylkovskyi-F719T9V3V4"
+  description    = "Physical memory may be exhausted."
+}
+
+# ── Container alerts (cAdvisor) ──────────────────────────────────────────────
+
+module "alert_container_restarting" {
+  source         = "./modules/threshold_alert"
+  name           = "ContainerRestarting"
+  folder_uid     = grafana_folder.alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "increase(container_start_time_seconds{name!=\"\",instance=\"vvasylkovskyi-F719T9V3V4\"}[5m])"
+  threshold      = 2
+  for            = "1m"
+  severity       = "critical"
+  summary        = "Container {{ $labels.name }} is restarting on vvasylkovskyi-F719T9V3V4"
+  description    = "Container has restarted more than twice in 5 minutes — likely in a crash loop."
+}
+
+module "alert_container_oom" {
+  source         = "./modules/threshold_alert"
+  name           = "ContainerOOMKill"
+  folder_uid     = grafana_folder.alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "increase(container_oom_events_total{name!=\"\",instance=\"vvasylkovskyi-F719T9V3V4\"}[5m])"
+  threshold      = 0
+  for            = "0s"
+  no_data_state  = "NoData"
+  severity       = "critical"
+  summary        = "Container {{ $labels.name }} was OOM killed on vvasylkovskyi-F719T9V3V4"
+  description    = "The kernel OOM killer terminated this container. Memory limit may be too low."
+}
+
+module "alert_container_high_memory" {
+  source         = "./modules/threshold_alert"
+  name           = "ContainerHighMemory"
+  folder_uid     = grafana_folder.alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "(container_memory_usage_bytes{name!=\"\",instance=\"vvasylkovskyi-F719T9V3V4\"} / container_spec_memory_limit_bytes{name!=\"\",instance=\"vvasylkovskyi-F719T9V3V4\"}) * 100 > 0"
+  threshold      = 85
+  for            = "5m"
+  severity       = "warning"
+  summary        = "Container {{ $labels.name }} near memory limit on vvasylkovskyi-F719T9V3V4"
+  description    = "Memory usage above 85% of limit."
+}
+
+module "alert_container_cpu_throttled" {
+  source         = "./modules/threshold_alert"
+  name           = "ContainerCPUThrottled"
+  folder_uid     = grafana_folder.alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "rate(container_cpu_cfs_throttled_seconds_total{name!=\"\",instance=\"vvasylkovskyi-F719T9V3V4\"}[5m]) / rate(container_cpu_usage_seconds_total{name!=\"\",instance=\"vvasylkovskyi-F719T9V3V4\"}[5m]) * 100"
+  threshold      = 25
+  for            = "10m"
+  severity       = "warning"
+  summary        = "Container {{ $labels.name }} CPU-throttled on vvasylkovskyi-F719T9V3V4"
+  description    = "More than 25% of CPU time is being throttled."
+}

@@ -35,7 +35,18 @@ export function registerThresholdAlertsCommand(program: Command): void {
       'infrastructure'
     )
     .option('--filePath <path>', 'Path to a per-device config file')
-    .action(async (options: { destination: string; filePath?: string }) => {
-      await runThresholdAlertsInstall(options.destination, options.filePath);
-    });
+    .option('--profile <name>', 'Credential profile to use', 'default')
+    .action(
+      async (options: {
+        destination: string;
+        filePath?: string;
+        profile: string;
+      }) => {
+        await runThresholdAlertsInstall(
+          options.destination,
+          options.profile,
+          options.filePath
+        );
+      }
+    );
 }

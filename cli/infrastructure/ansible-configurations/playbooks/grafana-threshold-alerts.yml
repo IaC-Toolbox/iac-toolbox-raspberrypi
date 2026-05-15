@@ -1,0 +1,17 @@
+---
+# ============================================
+# IaC Toolbox — Grafana Threshold Alerts Playbook
+# ============================================
+# Renders Terraform alert templates to ./infrastructure/terraform/grafana-alerts/.
+# After this playbook completes, run:
+#   cd ./infrastructure/terraform/grafana-alerts
+#   terraform init && terraform apply
+
+- import_playbook: common.yml
+
+- name: Deploy Grafana Threshold Alert Terraform Templates
+  hosts: all
+  become: false
+  roles:
+    - role: threshold-alerts
+      when: threshold_alerts is defined and threshold_alerts.enabled | default(false)

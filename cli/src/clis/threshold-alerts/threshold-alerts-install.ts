@@ -1,3 +1,4 @@
+import { unlinkSync } from 'fs';
 import { loadThresholdAlertsEnabled } from './threshold-alerts-config.js';
 import { print } from '../../design-system/print.js';
 import {
@@ -5,24 +6,25 @@ import {
   resolveAnsibleDir,
   resolveProjectRoot,
 } from '../../utils/ansible.js';
+import { writeResolvedConfig } from '../../loaders/resolved-config.js';
 
 /**
  * Run `iac-toolbox threshold-alerts install`.
  *
- * Reads threshold_alerts.enabled from iac-toolbox.yml, then invokes
- * runAnsiblePlaybook('grafana-threshold-alerts.yml') to render Terraform
- * alert templates to ./infrastructure/terraform/grafana-alerts/.
+ * Reads threshold_alerts.enabled from iac-toolbox.yml, resolves credential
+ * templates, converts relative paths to absolute, writes a temp config to
+ * ~/.iac-toolbox/, then invokes the grafana-threshold-alerts.yml playbook.
  *
  * Exits 1 if threshold_alerts.enabled is not set — hint to run init first.
  */
 export async function runThresholdAlertsInstall(
   destination: string,
+  profile: string,
   filePath?: string
 ): Promise<void> {
   // ── Read Configuration ────────────────────────────────────
   const enabled = loadThresholdAlertsEnabled(destination, filePath);
 
-  // ── Missing Config Guard ──────────────────────────────────
   if (enabled === undefined || enabled === null) {
     print.error('Threshold alerts not configured');
     print.pipe();
@@ -33,15 +35,22 @@ export async function runThresholdAlertsInstall(
     process.exit(1);
   }
 
+  // ── Resolve templates, absolutify paths, write temp config ──
+  const { tmpFile } = writeResolvedConfig(destination, profile, filePath);
+
   // ── Ansible Invocation ────────────────────────────────────
   print.step('Copying Grafana alert templates...');
   print.divider();
-
-  const status = runAnsiblePlaybook('grafana-threshold-alerts.yml', {
-    ansibleDir: resolveAnsibleDir(destination),
-    filePath,
-    projectRoot: resolveProjectRoot(),
-  });
+  let status: number;
+  try {
+    status = runAnsiblePlaybook('grafana-threshold-alerts.yml', {
+      ansibleDir: resolveAnsibleDir(destination),
+      filePath: tmpFile,
+      projectRoot: resolveProjectRoot(),
+    });
+  } finally {
+    unlinkSync(tmpFile);
+  }
 
   if (status !== 0) {
     print.stepFailure('threshold-alerts install', 'threshold-alerts install');

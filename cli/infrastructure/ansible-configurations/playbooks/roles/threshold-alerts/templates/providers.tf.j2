@@ -5,11 +5,6 @@ terraform {
       source  = "grafana/grafana"
       version = "~> 3.0"
     }
-
-    pagerduty = {
-      source  = "PagerDuty/pagerduty"
-      version = "~> 3.0"
-    }
   }
 }
 
@@ -18,7 +13,10 @@ provider "grafana" {
   auth = "${var.grafana_admin_user}:${var.grafana_admin_password}"
 }
 
-provider "pagerduty" {
-  token          = var.pagerduty_token
-  service_region = var.pagerduty_service_region
+data "grafana_data_source" "prometheus" {
+  name = "Prometheus"
+}
+
+resource "grafana_folder" "alerts" {
+  title = "{{ threshold_alerts_instance }}_alerts"
 }

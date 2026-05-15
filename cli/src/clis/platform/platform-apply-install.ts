@@ -1,8 +1,5 @@
-import { readFileSync, writeFileSync, unlinkSync, mkdirSync } from 'fs';
-import { homedir } from 'os';
-import { join } from 'path';
+import { unlinkSync } from 'fs';
 import yaml from 'js-yaml';
-import { loadCredentials } from '../../loaders/credentials-loader.js';
 import {
   testSshConnection,
   checkDockerAvailable,
@@ -13,8 +10,6 @@ import {
   type ApplySummaryConfig,
 } from './platform-apply-summary.js';
 import { print } from '../../design-system/print.js';
-import { resolveConfigTemplates } from '../../utils/configResolver.js';
-import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
 import {
   runAnsiblePlaybook,
   resolveAnsibleDir,
@@ -25,48 +20,11 @@ import {
   resolveTerraformDir,
   type TerraformVars,
 } from '../../utils/terraform.js';
+import { writeResolvedConfig } from '../../loaders/resolved-config.js';
 
-/**
- * Validate config, credentials, SSH (remote only), and Docker.
- * Resolves all {{ var }} template references in the YAML config.
- * Returns target connection info and resolved YAML text.
- * Calls process.exit(1) on any failure.
- */
 async function runPreflightChecks(
-  config: ApplySummaryConfig,
-  filePath: string,
-  creds: Record<string, string | undefined>
-): Promise<{ targetMode: string; targetHost: string; resolvedYaml: string }> {
-  const configIsEmpty =
-    !config || (typeof config === 'object' && Object.keys(config).length === 0);
-  if (configIsEmpty) {
-    print.error(`Config not found: ${filePath}`);
-    print.pipe();
-    print.pipe(
-      'Run `iac-toolbox platform init` first to generate iac-toolbox.yml'
-    );
-    print.closeError();
-    process.exit(1);
-  }
-  print.success(`Config loaded: ${filePath}`);
-
-  // Read raw YAML text (not parsed — preserve {{ }} syntax for resolution)
-  const rawYaml = readFileSync(filePath, 'utf-8');
-  const { resolved, missing } = resolveConfigTemplates(rawYaml, creds);
-
-  if (missing.length > 0) {
-    print.error('Missing credentials for template variables in config:');
-    print.pipe();
-    for (const varName of missing) {
-      print.pipe(`  ✗ {{ ${varName} }}`);
-      print.pipe(`    → run: iac-toolbox credentials set ${varName}`);
-      print.pipe();
-    }
-    print.closeError();
-    process.exit(1);
-  }
-  print.success('All template variables resolved from credentials');
-
+  config: ApplySummaryConfig
+): Promise<{ targetMode: string; targetHost: string }> {
   const targetMode = config.target?.mode ?? 'local';
   const targetHost = (config.target?.host as string | undefined) ?? 'localhost';
   const targetUser = config.target?.user ?? 'pi';
@@ -103,26 +61,15 @@ async function runPreflightChecks(
   print.success('Docker available on target');
   print.close();
 
-  return { targetMode, targetHost, resolvedYaml: resolved };
+  return { targetMode, targetHost };
 }
 
-/**
- * Run the full observability stack via a single `observability_platform.yml`
- * Ansible run. Returns whether Cloudflare was enabled in the config.
- */
 function runInstallSequence(
   destination: string,
   config: ApplySummaryConfig,
-  resolvedYaml: string
+  tmpFile: string
 ): boolean {
-  // Write resolved YAML to ~/.iac-toolbox/ (no {{ }} template refs remaining)
-  const iacDir = join(homedir(), '.iac-toolbox');
-  mkdirSync(iacDir, { recursive: true });
-  const tmpFile = join(iacDir, `resolved-config-${Date.now()}.yml`);
-  writeFileSync(tmpFile, resolvedYaml, { mode: 0o600 });
-
   const env: NodeJS.ProcessEnv = { ...process.env };
-  // No credential env vars — they are now embedded in resolvedYaml
 
   let status: number;
   try {
@@ -156,10 +103,6 @@ function runInstallSequence(
   );
 }
 
-/**
- * Run Terraform to provision Grafana alert rules and contacts.
- * Only called when metrics_threshold_alerts.enabled is true in config.
- */
 function runTerraformSequence(
   destination: string,
   resolvedConfig: Record<string, unknown>
@@ -238,14 +181,6 @@ function runTerraformSequence(
   print.close();
 }
 
-/**
- * Run `iac-toolbox platform apply`.
- *
- * Orchestrates:
- *   1. Pre-flight checks (config, credentials, SSH, Docker)
- *   2. Single Ansible run via observability_platform.yml
- *   3. Post-install summary
- */
 export async function runPlatformApplyInstall(
   destination: string,
   profile: string,
@@ -253,25 +188,17 @@ export async function runPlatformApplyInstall(
 ): Promise<void> {
   print.step('Pre-flight checks');
 
-  const config = loadIacToolboxYaml(
+  const { tmpFile, resolvedYaml } = writeResolvedConfig(
     destination,
+    profile,
     filePath
-  ) as ApplySummaryConfig;
-  const creds = loadCredentials(profile) as Record<string, string | undefined>;
-
-  const { targetMode, targetHost, resolvedYaml } = await runPreflightChecks(
-    config,
-    filePath,
-    creds
   );
+  const config = yaml.load(resolvedYaml) as ApplySummaryConfig;
 
-  const cloudflareEnabled = runInstallSequence(
-    destination,
-    config,
-    resolvedYaml
-  );
+  const { targetMode, targetHost } = await runPreflightChecks(config);
 
-  // Run Terraform if metrics_threshold_alerts is configured
+  const cloudflareEnabled = runInstallSequence(destination, config, tmpFile);
+
   const resolvedConfig = yaml.load(resolvedYaml) as Record<string, unknown>;
   const alertsConfig = resolvedConfig.metrics_threshold_alerts as
     | { enabled?: boolean }

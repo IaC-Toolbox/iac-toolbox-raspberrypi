@@ -15,15 +15,15 @@ variable "grafana_admin_password" {
 
 variable "memory_critical_threshold" {
   type    = number
-  default = 95
+  default = {{ threshold_alerts_memory_critical }}
 }
 
 variable "cpu_critical_threshold" {
   type    = number
-  default = 90
+  default = {{ threshold_alerts_cpu_critical }}
 }
 
 variable "disk_critical_threshold" {
   type    = number
-  default = 90
+  default = {{ threshold_alerts_disk_critical }}
 }
