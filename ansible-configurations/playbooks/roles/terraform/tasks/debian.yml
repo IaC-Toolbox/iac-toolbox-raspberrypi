@@ -1,0 +1,50 @@
+---
+- name: Install Terraform dependencies
+  include_role:
+    name: package
+  vars:
+    pkg_name: "{{ item }}"
+  loop:
+    - gnupg
+    - software-properties-common
+    - curl
+
+- name: Add HashiCorp GPG key
+  apt_key:
+    url: https://apt.releases.hashicorp.com/gpg
+    state: present
+  become: true
+
+- name: Get Debian release name
+  shell: lsb_release -cs
+  register: debian_release
+  changed_when: false
+
+- name: Map architecture for HashiCorp repo
+  set_fact:
+    terraform_arch: >-
+      {{ 'arm64' if ansible_architecture == 'aarch64'
+         else 'armhf' if ansible_architecture == 'armv7l'
+         else 'amd64' }}
+
+- name: Add HashiCorp apt repository
+  apt_repository:
+    repo: "deb [arch={{ terraform_arch }}] https://apt.releases.hashicorp.com {{ debian_release.stdout }} main"
+    state: present
+    filename: hashicorp
+  become: true
+
+- name: Install Terraform
+  include_role:
+    name: package
+  vars:
+    pkg_name: terraform
+
+- name: Verify Terraform installation
+  command: terraform version
+  register: terraform_version
+  changed_when: false
+
+- name: Display Terraform version
+  debug:
+    msg: "Terraform installed: {{ terraform_version.stdout_lines[0] }}"

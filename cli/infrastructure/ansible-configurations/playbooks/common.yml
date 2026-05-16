@@ -51,3 +51,5 @@
 
     # - role: docker
     #   when: docker is not defined or docker.enabled | default(true)
+
+    - role: terraform

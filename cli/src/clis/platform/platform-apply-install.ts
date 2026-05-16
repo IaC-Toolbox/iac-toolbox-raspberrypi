@@ -15,11 +15,7 @@ import {
   resolveAnsibleDir,
   resolveProjectRoot,
 } from '../../utils/ansible.js';
-import {
-  runTerraform,
-  resolveTerraformDir,
-  type TerraformVars,
-} from '../../utils/terraform.js';
+import { runTerraform, resolveTerraformDir } from '../../utils/terraform.js';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
 
 async function runPreflightChecks(
@@ -103,64 +99,12 @@ function runInstallSequence(
   );
 }
 
-function runTerraformSequence(
-  destination: string,
-  resolvedConfig: Record<string, unknown>
-): void {
-  const alerts = resolvedConfig.metrics_threshold_alerts as
-    | {
-        enabled?: boolean;
-        grafana_url?: string;
-        grafana_admin_user?: string;
-        grafana_admin_password?: string;
-        alert_email?: string;
-        pagerduty_token?: string;
-        pagerduty_service_region?: string;
-        pagerduty_user_email?: string;
-      }
-    | undefined;
-
-  if (!alerts?.grafana_url) {
-    print.error(
-      'metrics_threshold_alerts.grafana_url is required for Terraform'
-    );
-    print.pipe(
-      'Add grafana_url under metrics_threshold_alerts in iac-toolbox.yml'
-    );
-    print.closeError();
-    process.exit(1);
-  }
-  if (!alerts.alert_email) {
-    print.error(
-      'metrics_threshold_alerts.alert_email is required for Terraform'
-    );
-    print.closeError();
-    process.exit(1);
-  }
-
-  const grafana = (resolvedConfig.grafana ?? {}) as {
-    admin_user?: string;
-    admin_password?: string;
-  };
-
+function runTerraformSequence(destination: string): void {
   print.step('Provisioning Grafana alert rules via Terraform...');
   print.divider();
 
-  const vars: TerraformVars = {
-    grafana_url: alerts.grafana_url,
-    grafana_admin_user:
-      alerts.grafana_admin_user ?? grafana.admin_user ?? 'admin',
-    grafana_admin_password:
-      alerts.grafana_admin_password ?? grafana.admin_password ?? '',
-    alert_email: alerts.alert_email,
-    pagerduty_token: alerts.pagerduty_token ?? '',
-    pagerduty_service_region: alerts.pagerduty_service_region ?? 'us',
-    pagerduty_user_email: alerts.pagerduty_user_email ?? '',
-  };
-
   const status = runTerraform({
     terraformDir: resolveTerraformDir(destination),
-    vars,
   });
 
   if (status !== 0) {
@@ -199,13 +143,14 @@ export async function runPlatformApplyInstall(
 
   const cloudflareEnabled = runInstallSequence(destination, config, tmpFile);
 
-  const resolvedConfig = yaml.load(resolvedYaml) as Record<string, unknown>;
-  const alertsConfig = resolvedConfig.metrics_threshold_alerts as
-    | { enabled?: boolean }
-    | undefined;
-  if (alertsConfig?.enabled === true) {
-    runTerraformSequence(destination, resolvedConfig);
-  }
+  // const resolvedConfig = yaml.load(resolvedYaml) as Record<string, unknown>;
+  // const alertsConfig = resolvedConfig.threshold_alerts as
+  //   | { enabled?: boolean }
+  //   | undefined;
+
+  // if (alertsConfig?.enabled === true) {
+  //   runTerraformSequence(destination);
+  // }
 
   const displayHost = targetMode === 'remote' ? targetHost : 'localhost';
   if (cloudflareEnabled) {

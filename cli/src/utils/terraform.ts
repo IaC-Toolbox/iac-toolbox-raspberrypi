@@ -42,7 +42,7 @@ export interface TerraformVars {
 
 export interface TerraformOptions {
   terraformDir: string;
-  vars: TerraformVars;
+  vars?: TerraformVars;
   env?: NodeJS.ProcessEnv;
 }
 
@@ -92,7 +92,6 @@ function writeTerraformVarsFile(vars: TerraformVars): {
  */
 export function runTerraform(options: TerraformOptions): number {
   assertTerraformInstalled();
-  const { tmpFile, cleanup } = writeTerraformVarsFile(options.vars);
   let applyStatus: number;
   try {
     const initResult = spawnSync('terraform', ['init'], {
@@ -102,18 +101,15 @@ export function runTerraform(options: TerraformOptions): number {
     });
     if ((initResult.status ?? 1) !== 0) return initResult.status ?? 1;
 
-    const applyResult = spawnSync(
-      'terraform',
-      ['apply', '-auto-approve', `-var-file=${tmpFile}`],
-      {
-        cwd: options.terraformDir,
-        env: options.env ?? process.env,
-        stdio: 'inherit',
-      }
-    );
+    const applyResult = spawnSync('terraform', ['apply', '-auto-approve'], {
+      cwd: options.terraformDir,
+      env: options.env ?? process.env,
+      stdio: 'inherit',
+    });
     applyStatus = applyResult.status ?? 1;
   } finally {
-    cleanup();
+    // No cleanup needed since we're not using a temp vars file
   }
+
   return applyStatus;
 }

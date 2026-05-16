@@ -18,29 +18,32 @@
   hosts: all
   become: false
   roles:
-    # - role: node_exporter
-    #   when: node_exporter is defined and node_exporter.enabled
+    - role: node_exporter
+      when: node_exporter is defined and node_exporter.enabled
 
     - role: grafana-alloy
       when: grafana_alloy is defined and grafana_alloy.enabled
 
-    # - role: prometheus
-    #   when: prometheus is defined and prometheus.enabled
+    - role: prometheus
+      when: prometheus is defined and prometheus.enabled
 
-    # - role: cadvisor
-    #   when: cadvisor is not defined or cadvisor.enabled | default(true)
+    - role: cadvisor
+      when: cadvisor is not defined or cadvisor.enabled | default(true)
 
-    # - role: cloudflare-tunnel
-    #   when:
-    #     - cloudflare is defined
-    #     - cloudflare.enabled | default(false)
-    #     - (cloudflare.mode | default('oauth')) == 'oauth'
+    - role: cloudflare-tunnel
+      when:
+        - cloudflare is defined
+        - cloudflare.enabled | default(false)
+        - (cloudflare.mode | default('oauth')) == 'oauth'
 
-    # - role: cloudflare-tunnel-api
-    #   when:
-    #     - cloudflare is defined
-    #     - cloudflare.enabled | default(false)
-    #     - (cloudflare.mode | default('oauth')) == 'api'
+    - role: cloudflare-tunnel-api
+      when:
+        - cloudflare is defined
+        - cloudflare.enabled | default(false)
+        - (cloudflare.mode | default('oauth')) == 'api'
 
-    # - role: grafana
-    #   when: grafana is defined and grafana.enabled
+    - role: grafana
+      when: grafana is defined and grafana.enabled
+
+    - role: threshold-alerts
+      when: threshold_alerts is defined and threshold_alerts.enabled | default(false)

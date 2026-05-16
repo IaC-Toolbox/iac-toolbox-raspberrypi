@@ -42,12 +42,14 @@
     - name: Set active Docker socket fact
       set_fact:
         active_docker_socket: "unix:///var/run/docker.sock"
-        
-  roles:
-    # - role: setup
-    #   when:
-    #     - (setup is not defined or setup)
-    #     - ansible_os_family != "Darwin"
 
-    # - role: docker
-    #   when: docker is not defined or docker.enabled | default(true)
+  roles:
+    - role: setup
+      when:
+        - (setup is not defined or setup)
+        - ansible_os_family != "Darwin"
+
+    - role: docker
+      when: docker is not defined or docker.enabled | default(true)
+
+    - role: terraform

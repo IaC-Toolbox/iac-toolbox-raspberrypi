@@ -43,6 +43,9 @@ prometheus:
   scrape_interval: 15s
   retention: 15d
   grafana_url: https://grafana.iac-toolbox.com
+threshold_alerts:
+  enabled: true
+  threshold_alerts_terraform_dest: /home/vvasylkovskyi/.iac-toolbox/infrastructure
 loki:
   enabled: false
 pagerduty:

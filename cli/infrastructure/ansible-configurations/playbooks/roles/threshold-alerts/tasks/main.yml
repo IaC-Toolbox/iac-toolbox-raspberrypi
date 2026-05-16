@@ -4,38 +4,32 @@
     path: "{{ threshold_alerts_terraform_dest }}/modules/threshold_alert"
     state: directory
     mode: '0755'
-  delegate_to: localhost
 
 - name: Render providers.tf
   ansible.builtin.template:
     src: providers.tf.j2
     dest: "{{ threshold_alerts_terraform_dest }}/providers.tf"
-  delegate_to: localhost
 
 - name: Render variables.tf
   ansible.builtin.template:
     src: variables.tf.j2
     dest: "{{ threshold_alerts_terraform_dest }}/variables.tf"
-  delegate_to: localhost
 
 - name: Render terraform.tfvars
   ansible.builtin.template:
     src: terraform.tfvars.j2
     dest: "{{ threshold_alerts_terraform_dest }}/terraform.tfvars"
     mode: '0600'
-  delegate_to: localhost
 
 - name: Render main.tf (alert rule modules)
   ansible.builtin.template:
     src: main.tf.j2
     dest: "{{ threshold_alerts_terraform_dest }}/main.tf"
-  delegate_to: localhost
 
 - name: Render threshold_alert module
   ansible.builtin.template:
     src: modules/threshold_alert/main.tf.j2
     dest: "{{ threshold_alerts_terraform_dest }}/modules/threshold_alert/main.tf"
-  delegate_to: localhost
 
 - name: Ensure terraform.tfvars is in .gitignore
   ansible.builtin.lineinfile:
@@ -43,15 +37,15 @@
     line: "terraform.tfvars"
     create: true
     mode: '0644'
-  delegate_to: localhost
 
-- name: Print next steps
-  ansible.builtin.debug:
-    msg: |
-      Terraform alert files have been rendered to:
-        {{ threshold_alerts_terraform_dest }}
+- name: Terraform init
+  ansible.builtin.command:
+    cmd: terraform init
+    chdir: "{{ threshold_alerts_terraform_dest }}"
+  changed_when: false
 
-      Run the following to provision Grafana alert rules:
-        cd {{ threshold_alerts_terraform_dest }}
-        terraform init
-        terraform apply
+- name: Terraform apply
+  ansible.builtin.command:
+    cmd: terraform apply -auto-approve
+    chdir: "{{ threshold_alerts_terraform_dest }}"
+  changed_when: true

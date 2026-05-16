@@ -21,8 +21,8 @@
     # - role: node_exporter
     #   when: node_exporter is defined and node_exporter.enabled
 
-    - role: grafana-alloy
-      when: grafana_alloy is defined and grafana_alloy.enabled
+    # - role: grafana-alloy
+    #   when: grafana_alloy is defined and grafana_alloy.enabled
 
     # - role: prometheus
     #   when: prometheus is defined and prometheus.enabled
@@ -44,3 +44,6 @@
 
     # - role: grafana
     #   when: grafana is defined and grafana.enabled
+
+    - role: threshold-alerts
+      when: threshold_alerts is defined and threshold_alerts.enabled | default(false)
