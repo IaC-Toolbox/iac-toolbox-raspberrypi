@@ -17,6 +17,10 @@ interface MetricsAgentInitWizardProps {
   destination: string;
   /** Injectable for testing — defaults to the real TextInput from ink-text-input */
   _TextInput?: (props: TextInputProps) => null;
+  /** Injectable for testing — defaults to loadMetricsAgentConfig */
+  _loadRemoteWriteUrl?: () => string | undefined;
+  /** Injectable for testing — defaults to updateMetricsAgentConfig */
+  _updateMetricsAgentConfig?: (destination: string, url: string) => void;
 }
 
 type Step = 'remote_write_url' | 'done';
@@ -24,11 +28,14 @@ type Step = 'remote_write_url' | 'done';
 export default function MetricsAgentInitWizard({
   destination,
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
+  _loadRemoteWriteUrl,
+  _updateMetricsAgentConfig,
 }: MetricsAgentInitWizardProps) {
   const { exit } = useApp();
 
-  const existingUrl =
-    loadMetricsAgentConfig(destination).alloy_remote_write_url;
+  const existingUrl = _loadRemoteWriteUrl
+    ? _loadRemoteWriteUrl()
+    : loadMetricsAgentConfig(destination).alloy_remote_write_url;
 
   const [step, setStep] = useState<Step>('remote_write_url');
   const [inputValue, setInputValue] = useState(
@@ -41,12 +48,16 @@ export default function MetricsAgentInitWizard({
 
   useEffect(() => {
     if (step === 'done') {
-      updateMetricsAgentConfig(destination, remoteWriteUrl);
+      if (_updateMetricsAgentConfig) {
+        _updateMetricsAgentConfig(destination, remoteWriteUrl);
+      } else {
+        updateMetricsAgentConfig(destination, remoteWriteUrl);
+      }
       // Give Ink time to render final screen
       const timer = setTimeout(() => exit(), 100);
       return () => clearTimeout(timer);
     }
-  }, [step, remoteWriteUrl, destination, exit]);
+  }, [step, remoteWriteUrl, destination, exit, _updateMetricsAgentConfig]);
 
   if (step === 'remote_write_url') {
     return (
