@@ -1,7 +1,13 @@
 import path from 'path';
-import { IacToolboxYaml, resolveConfigPath } from 'src/loaders/yaml-loader.js';
+import {
+  IacToolboxYaml,
+  resolveConfigPath,
+  loadIacToolboxYaml,
+} from 'src/loaders/yaml-loader.js';
 import fs from 'fs';
 import yaml from 'js-yaml';
+
+export { resolveConfigPath, loadIacToolboxYaml };
 /**
  * Update the grafana section of iac-toolbox.yml with the admin_user
  * and the Ansible variable reference for admin_password.
