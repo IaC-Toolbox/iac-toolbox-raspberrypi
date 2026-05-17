@@ -25,7 +25,7 @@ data "grafana_data_source" "prometheus" {
 # Falls back to NODE_NAME env var — useful in CI where apply runs on a different
 # machine than the monitored host.
 data "external" "node_name" {
-  program = ["bash", "-c", "echo \"{\\\"name\\\": \\\"${NODE_NAME:-$(hostname)}\\\"}\""]
+  program = ["bash", "-c", "echo \"{\\\"name\\\": \\\"$${NODE_NAME:-$(hostname)}\\\"}\""]
 }
 
 locals {

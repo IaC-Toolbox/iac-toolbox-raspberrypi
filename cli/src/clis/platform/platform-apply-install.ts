@@ -15,6 +15,7 @@ import {
   resolveAnsibleDir,
   resolveProjectRoot,
 } from '../../utils/ansible.js';
+import { runTerraform, resolveTerraformDir } from '../../utils/terraform.js';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
 
 async function runPreflightChecks(
@@ -98,6 +99,32 @@ function runInstallSequence(
   );
 }
 
+function runTerraformSequence(destination: string): void {
+  print.step('Provisioning Grafana alert rules via Terraform...');
+  print.divider();
+
+  const status = runTerraform({
+    terraformDir: resolveTerraformDir(destination),
+  });
+
+  if (status !== 0) {
+    print.blank();
+    print.step('Terraform provisioning failed');
+    print.pipe();
+    print.error('terraform apply exited with errors');
+    print.pipe('Check output above for details');
+    print.pipe();
+    print.pipe(
+      'To retry: iac-toolbox platform apply --filePath=./iac-toolbox.yml'
+    );
+    print.closeError();
+    process.exit(status);
+  }
+
+  print.success('Alert rules provisioned');
+  print.close();
+}
+
 export async function runPlatformApplyInstall(
   destination: string,
   profile: string,
@@ -116,14 +143,14 @@ export async function runPlatformApplyInstall(
 
   const cloudflareEnabled = runInstallSequence(destination, config, tmpFile);
 
-  // const resolvedConfig = yaml.load(resolvedYaml) as Record<string, unknown>;
-  // const alertsConfig = resolvedConfig.threshold_alerts as
-  //   | { enabled?: boolean }
-  //   | undefined;
+  const resolvedConfig = yaml.load(resolvedYaml) as Record<string, unknown>;
+  const alertsConfig = resolvedConfig.threshold_alerts as
+    | { enabled?: boolean }
+    | undefined;
 
-  // if (alertsConfig?.enabled === true) {
-  //   runTerraformSequence(destination);
-  // }
+  if (alertsConfig?.enabled === true) {
+    runTerraformSequence(destination);
+  }
 
   const displayHost = targetMode === 'remote' ? targetHost : 'localhost';
   if (cloudflareEnabled) {

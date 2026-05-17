@@ -3,3 +3,4 @@ iac-toolbox.yml
 .claude/**
 CLAUDE.md.claude/worktrees/
 .claude/worktrees/
+terraform.tfvars
