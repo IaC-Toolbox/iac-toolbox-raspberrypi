@@ -1,10 +1,12 @@
 # Resolved at play time from grafana_alloy.instance_name or ansible_hostname
 threshold_alerts_instance: "{{ grafana_alloy.instance_name | default(ansible_hostname) }}"
 
-# Destination where Terraform files are rendered on the target host
-threshold_alerts_terraform_dest: "{{ ansible_env.HOME }}/.iac-toolbox/terraform-infra"
-
 # Threshold defaults — override per device in iac-toolbox.yml
 threshold_alerts_memory_critical: "{{ threshold_alerts.memory_critical_threshold | default(95) }}"
 threshold_alerts_cpu_critical:    "{{ threshold_alerts.cpu_critical_threshold    | default(90) }}"
 threshold_alerts_disk_critical:   "{{ threshold_alerts.disk_critical_threshold   | default(90) }}"
+
+# Service name used as the `service` label on container-level alert rules.
+# Populated from threshold_alerts.service_name in iac-toolbox.yml.
+# Falls back to ansible_hostname if not set.
+threshold_alerts_service_name: "{{ threshold_alerts.service_name | default(ansible_hostname) }}"

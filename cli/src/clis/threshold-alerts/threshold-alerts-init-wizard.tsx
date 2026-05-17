@@ -6,6 +6,8 @@ import {
   loadThresholdAlertsEnabled,
   loadThresholdAlertsTerraformDest,
   updateThresholdAlertsTerraformDest,
+  loadThresholdAlertsServiceName,
+  updateThresholdAlertsServiceName,
 } from './threshold-alerts-config.js';
 
 interface TextInputProps {
@@ -17,13 +19,17 @@ interface TextInputProps {
 interface ThresholdAlertsInitWizardProps {
   destination: string;
   /** Injectable for testing */
-  _onConfirm?: (enabled: boolean, terraformDest: string) => void;
+  _onConfirm?: (
+    enabled: boolean,
+    terraformDest: string,
+    serviceName: string
+  ) => void;
   /** Injectable for testing */
   _TextInput?: (props: TextInputProps) => null;
 }
 
 type Choice = 'yes' | 'no';
-type Step = 'choose' | 'terraform-dest' | 'done';
+type Step = 'choose' | 'service-name' | 'terraform-dest' | 'done';
 
 export default function ThresholdAlertsInitWizard({
   destination,
@@ -36,12 +42,17 @@ export default function ThresholdAlertsInitWizard({
   const defaultChoice: Choice = existingEnabled === false ? 'no' : 'yes';
   const existingTerraformDest =
     loadThresholdAlertsTerraformDest(destination) ?? './infrastructure';
+  const existingServiceName =
+    loadThresholdAlertsServiceName(destination) ?? 'my-service';
 
   const [step, setStep] = useState<Step>('choose');
   const [selected, setSelected] = useState<Choice>(defaultChoice);
   const [terraformDest, setTerraformDest] = useState(existingTerraformDest);
   const [inputValue, setInputValue] = useState(existingTerraformDest);
   const [inputError, setInputError] = useState<string | null>(null);
+  const [serviceName, setServiceName] = useState(existingServiceName);
+  const [serviceNameInput, setServiceNameInput] = useState(existingServiceName);
+  const [serviceNameError, setServiceNameError] = useState<string | null>(null);
 
   const InputComponent = _TextInput;
 
@@ -54,7 +65,7 @@ export default function ThresholdAlertsInitWizard({
       setSelected('no');
     } else if (key.return) {
       if (selected === 'yes') {
-        setStep('terraform-dest');
+        setStep('service-name');
       } else {
         setStep('done');
       }
@@ -65,17 +76,26 @@ export default function ThresholdAlertsInitWizard({
     if (step === 'done') {
       const enabled = selected === 'yes';
       if (_onConfirm) {
-        _onConfirm(enabled, terraformDest);
+        _onConfirm(enabled, terraformDest, serviceName);
       } else {
         updateThresholdAlertsConfig(destination, enabled);
         if (enabled) {
           updateThresholdAlertsTerraformDest(destination, terraformDest);
+          updateThresholdAlertsServiceName(destination, serviceName);
         }
       }
       const timer = setTimeout(() => exit(), 100);
       return () => clearTimeout(timer);
     }
-  }, [step, selected, terraformDest, destination, exit, _onConfirm]);
+  }, [
+    step,
+    selected,
+    terraformDest,
+    serviceName,
+    destination,
+    exit,
+    _onConfirm,
+  ]);
 
   if (step === 'choose') {
     return (
@@ -104,6 +124,56 @@ export default function ThresholdAlertsInitWizard({
     );
   }
 
+  if (step === 'service-name') {
+    return (
+      <Box flexDirection="column" paddingY={1}>
+        <Text bold color="cyan">
+          {'┌  IaC-Toolbox — Threshold Alerts Setup'}
+        </Text>
+        <Text bold>{'│'}</Text>
+        <Text dimColor>{'◇  Enable threshold alerts: yes'}</Text>
+        <Text bold>{'│'}</Text>
+        <Text bold>{'◆  Service name for alert labels'}</Text>
+        <Text>
+          {'│  Applied as the `service` label on container-level alerts.'}
+        </Text>
+        <Text>
+          {
+            '│  Use the same name as your application (e.g. "payments-api", "my-service").'
+          }
+        </Text>
+        {serviceNameError && (
+          <Box paddingLeft={3}>
+            <Text color="red">
+              {'✗ '}
+              {serviceNameError}
+            </Text>
+          </Box>
+        )}
+        <Box paddingLeft={3} marginTop={1}>
+          <Text>{'› '}</Text>
+          <InputComponent
+            value={serviceNameInput}
+            onChange={(val) => {
+              setServiceNameInput(val);
+              setServiceNameError(null);
+            }}
+            onSubmit={(val) => {
+              const trimmed = val.trim();
+              if (!trimmed) {
+                setServiceNameError('Service name must not be empty');
+                return;
+              }
+              setServiceName(trimmed);
+              setServiceNameError(null);
+              setStep('terraform-dest');
+            }}
+          />
+        </Box>
+      </Box>
+    );
+  }
+
   if (step === 'terraform-dest') {
     return (
       <Box flexDirection="column" paddingY={1}>
@@ -111,13 +181,18 @@ export default function ThresholdAlertsInitWizard({
           {'┌  IaC-Toolbox — Threshold Alerts Setup'}
         </Text>
         <Text bold>{'│'}</Text>
+        <Text dimColor>{'◇  Enable threshold alerts: yes'}</Text>
+        <Text bold>{'│'}</Text>
         <Text dimColor>
-          {'◇  Enable threshold alerts: yes'}
+          {'◇  Service name: '}
+          {serviceName}
         </Text>
         <Text bold>{'│'}</Text>
         <Text bold>{'◆  Where should Terraform alert files be rendered?'}</Text>
         <Text>
-          {'│  Path is used as the base — /terraform/grafana-alerts is appended.'}
+          {
+            '│  Path is used as the base — /terraform/grafana-alerts is appended.'
+          }
         </Text>
         {inputError && (
           <Box paddingLeft={3}>
@@ -164,6 +239,13 @@ export default function ThresholdAlertsInitWizard({
         {String(enabled)}
         {'    → iac-toolbox.yml'}
       </Text>
+      {enabled && (
+        <Text>
+          {'│  service_name          '}
+          {serviceName}
+          {'    → iac-toolbox.yml'}
+        </Text>
+      )}
       {enabled && (
         <Text>
           {'│  terraform destination  '}

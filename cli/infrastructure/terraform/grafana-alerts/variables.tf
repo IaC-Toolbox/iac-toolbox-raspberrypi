@@ -27,3 +27,8 @@ variable "disk_critical_threshold" {
   type    = number
   default = 90
 }
+
+variable "service_name" {
+  type        = string
+  description = "Service name label applied to container-level alerts. Set threshold_alerts.service_name in iac-toolbox.yml."
+}

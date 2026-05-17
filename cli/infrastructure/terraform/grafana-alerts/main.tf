@@ -11,6 +11,7 @@ module "alert_node_down" {
   for            = "2m"
   severity       = "critical"
   no_data_state  = "Alerting"
+  node           = "vvasylkovskyi-F719T9V3V4"
   summary        = "Host vvasylkovskyi-F719T9V3V4 is offline"
   description    = "No scrape data for more than 2 minutes."
 }
@@ -24,6 +25,7 @@ module "alert_low_disk" {
   threshold      = var.disk_critical_threshold
   for            = "5m"
   severity       = "critical"
+  node           = "vvasylkovskyi-F719T9V3V4"
   summary        = "Low disk space on vvasylkovskyi-F719T9V3V4"
   description    = "Root filesystem above ${var.disk_critical_threshold}%."
 }
@@ -37,6 +39,7 @@ module "alert_high_memory" {
   threshold      = var.memory_critical_threshold
   for            = "5m"
   severity       = "critical"
+  node           = "vvasylkovskyi-F719T9V3V4"
   summary        = "High memory on vvasylkovskyi-F719T9V3V4"
   description    = "Memory above ${var.memory_critical_threshold}%."
 }
@@ -50,6 +53,7 @@ module "alert_swap_in_use" {
   threshold      = 0
   for            = "5m"
   severity       = "warning"
+  node           = "vvasylkovskyi-F719T9V3V4"
   summary        = "Swap in use on vvasylkovskyi-F719T9V3V4"
   description    = "Physical memory may be exhausted."
 }
@@ -65,6 +69,8 @@ module "alert_container_restarting" {
   threshold      = 2
   for            = "1m"
   severity       = "critical"
+  node           = local.node_name
+  service        = var.service_name
   summary        = "Container {{ $labels.name }} is restarting on vvasylkovskyi-F719T9V3V4"
   description    = "Container has restarted more than twice in 5 minutes — likely in a crash loop."
 }
@@ -79,6 +85,8 @@ module "alert_container_oom" {
   for            = "0s"
   no_data_state  = "NoData"
   severity       = "critical"
+  node           = local.node_name
+  service        = var.service_name
   summary        = "Container {{ $labels.name }} was OOM killed on vvasylkovskyi-F719T9V3V4"
   description    = "The kernel OOM killer terminated this container. Memory limit may be too low."
 }
@@ -92,6 +100,8 @@ module "alert_container_high_memory" {
   threshold      = 85
   for            = "5m"
   severity       = "warning"
+  node           = local.node_name
+  service        = var.service_name
   summary        = "Container {{ $labels.name }} near memory limit on vvasylkovskyi-F719T9V3V4"
   description    = "Memory usage above 85% of limit."
 }
@@ -105,6 +115,8 @@ module "alert_container_cpu_throttled" {
   threshold      = 25
   for            = "10m"
   severity       = "warning"
+  node           = local.node_name
+  service        = var.service_name
   summary        = "Container {{ $labels.name }} CPU-throttled on vvasylkovskyi-F719T9V3V4"
   description    = "More than 25% of CPU time is being throttled."
 }

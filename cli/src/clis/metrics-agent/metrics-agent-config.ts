@@ -31,6 +31,18 @@ export function loadMetricsAgentConfig(destination: string): {
 }
 
 /**
+ * Load the alloy_remote_write_url value from iac-toolbox.yml.
+ * Returns undefined if not set.
+ */
+export function loadMetricsAgentRemoteWriteUrl(
+  destination: string,
+  filePath?: string
+): string | undefined {
+  const config = loadIacToolboxYaml(destination, filePath) as IacToolboxYaml;
+  return config.grafana_alloy?.alloy_remote_write_url;
+}
+
+/**
  * Update the grafana_alloy, node_exporter, and cadvisor
  * sections of iac-toolbox.yml.
  *

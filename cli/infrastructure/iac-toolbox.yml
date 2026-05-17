@@ -43,4 +43,5 @@ cadvisor:
   enabled: true
 threshold_alerts:
   enabled: true
-  threshold_alerts_terraform_dest: ./infrastructure
+  threshold_alerts_terraform_dest: ./infrastructure/terraform/grafana-alerts
+  service_name: "banana-service"

@@ -5,3 +5,4 @@ grafana_admin_password = "{{ grafana.admin_password | default('') }}"
 memory_critical_threshold = {{ threshold_alerts_memory_critical }}
 cpu_critical_threshold    = {{ threshold_alerts_cpu_critical }}
 disk_critical_threshold   = {{ threshold_alerts_disk_critical }}
+service_name              = "{{ threshold_alerts_service_name }}"

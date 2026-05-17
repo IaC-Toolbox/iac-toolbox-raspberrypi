@@ -143,14 +143,14 @@ export async function runPlatformApplyInstall(
 
   const cloudflareEnabled = runInstallSequence(destination, config, tmpFile);
 
-  // const resolvedConfig = yaml.load(resolvedYaml) as Record<string, unknown>;
-  // const alertsConfig = resolvedConfig.threshold_alerts as
-  //   | { enabled?: boolean }
-  //   | undefined;
+  const resolvedConfig = yaml.load(resolvedYaml) as Record<string, unknown>;
+  const alertsConfig = resolvedConfig.threshold_alerts as
+    | { enabled?: boolean }
+    | undefined;
 
-  // if (alertsConfig?.enabled === true) {
-  //   runTerraformSequence(destination);
-  // }
+  if (alertsConfig?.enabled === true) {
+    runTerraformSequence(destination);
+  }
 
   const displayHost = targetMode === 'remote' ? targetHost : 'localhost';
   if (cloudflareEnabled) {

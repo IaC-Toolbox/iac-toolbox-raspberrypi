@@ -42,7 +42,7 @@
     - name: Set active Docker socket fact
       set_fact:
         active_docker_socket: "unix:///var/run/docker.sock"
-        
+
   roles:
     # - role: setup
     #   when:
@@ -52,4 +52,4 @@
     # - role: docker
     #   when: docker is not defined or docker.enabled | default(true)
 
-    - role: terraform
+    # - role: terraform
