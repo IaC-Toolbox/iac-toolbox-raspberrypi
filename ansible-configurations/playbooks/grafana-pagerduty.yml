@@ -1,0 +1,21 @@
+---
+# ============================================
+# IaC Toolbox — Grafana-PagerDuty Integration Playbook
+# ============================================
+# Renders Terraform templates for the full PagerDuty + Grafana integration
+# into ./infrastructure/terraform/grafana-pagerduty/.
+# Provisions: PagerDuty service, service integration, Grafana contact point,
+# and Grafana notification policy in a single terraform apply.
+#
+# After this playbook completes, run:
+#   cd ./infrastructure/terraform/grafana-pagerduty
+#   terraform init && terraform apply
+
+- import_playbook: common.yml
+
+- name: Deploy Grafana-PagerDuty Integration Terraform Templates
+  hosts: all
+  become: false
+  roles:
+    - role: grafana-pagerduty
+      when: grafana_pagerduty is defined and grafana_pagerduty.enabled | default(false)

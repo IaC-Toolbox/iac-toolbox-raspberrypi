@@ -96,6 +96,37 @@
     msg: "Node Exporter Full dashboard imported at: https://{{ grafana.domain }}{{ node_exporter_dashboard_imported.json.importedUrl }}"
   when: node_exporter_dashboard_imported is changed
 
+- name: Get cAdvisor dashboard JSON from Grafana.com API
+  uri:
+    url: "https://grafana.com/api/dashboards/14282"
+    method: GET
+    return_content: true
+  register: cadvisor_dashboard_json
+
+- name: Import cAdvisor dashboard
+  uri:
+    url: "https://{{ grafana.domain }}/api/dashboards/import"
+    method: POST
+    user: "{{ grafana.admin_user }}"
+    password: "{{ grafana.admin_password }}"
+    body_format: json
+    body:
+      dashboard: "{{ cadvisor_dashboard_json.json.json }}"
+      overwrite: true
+      inputs:
+        - name: "DS_PROMETHEUS"
+          type: "datasource"
+          pluginId: "prometheus"
+          value: "Prometheus"
+    force_basic_auth: true
+    status_code: 200
+  register: cadvisor_dashboard_imported
+
+- name: Display cAdvisor dashboard import message
+  debug:
+    msg: "cAdvisor dashboard imported at: https://{{ grafana.domain }}{{ cadvisor_dashboard_imported.json.importedUrl }}"
+  when: cadvisor_dashboard_imported is changed
+
 - name: Display Grafana access information
   debug:
     msg:
@@ -109,3 +140,4 @@
       - ""
       - "Prometheus datasource provisioned automatically."
       - "Node Exporter Full dashboard imported (ID: 1860)."
+      - "cAdvisor dashboard imported (ID: 14282)."

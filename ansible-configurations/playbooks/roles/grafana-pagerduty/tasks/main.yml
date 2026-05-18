@@ -1,0 +1,56 @@
+---
+- name: Create Grafana-PagerDuty Terraform destination directory
+  ansible.builtin.file:
+    path: "{{ grafana_pagerduty_terraform_dest }}"
+    state: directory
+    mode: '0755'
+
+- name: Create PagerDuty module directory
+  ansible.builtin.file:
+    path: "{{ grafana_pagerduty_terraform_dest }}/modules/pagerduty"
+    state: directory
+    mode: '0755'
+
+- name: Render providers.tf
+  ansible.builtin.template:
+    src: providers.tf.j2
+    dest: "{{ grafana_pagerduty_terraform_dest }}/providers.tf"
+
+- name: Render variables.tf
+  ansible.builtin.template:
+    src: variables.tf.j2
+    dest: "{{ grafana_pagerduty_terraform_dest }}/variables.tf"
+
+- name: Render main.tf
+  ansible.builtin.template:
+    src: main.tf.j2
+    dest: "{{ grafana_pagerduty_terraform_dest }}/main.tf"
+
+- name: Render modules/pagerduty/main.tf (service integration module)
+  ansible.builtin.template:
+    src: modules/pagerduty/main.tf.j2
+    dest: "{{ grafana_pagerduty_terraform_dest }}/modules/pagerduty/main.tf"
+
+- name: Render terraform.tfvars
+  ansible.builtin.template:
+    src: terraform.tfvars.j2
+    dest: "{{ grafana_pagerduty_terraform_dest }}/terraform.tfvars"
+    mode: '0600'
+
+- name: Ensure terraform.tfvars is gitignored
+  ansible.builtin.lineinfile:
+    path: "{{ grafana_pagerduty_terraform_dest }}/.gitignore"
+    line: "terraform.tfvars"
+    create: true
+
+- name: Terraform init
+  ansible.builtin.command:
+    cmd: terraform init
+    chdir: "{{ grafana_pagerduty_terraform_dest }}"
+  changed_when: false
+
+- name: Terraform apply
+  ansible.builtin.command:
+    cmd: terraform apply -auto-approve
+    chdir: "{{ grafana_pagerduty_terraform_dest }}"
+  changed_when: true

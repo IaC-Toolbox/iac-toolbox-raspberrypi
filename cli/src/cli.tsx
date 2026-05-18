@@ -5,6 +5,7 @@ import { registerGrafanaCommand } from './clis/grafana/grafana.js';
 import { registerPrometheusCommand } from './clis/prometheus/prometheus.js';
 import { registerMetricsAgentCommand } from './clis/metrics-agent/metrics-agent.js';
 import { registerThresholdAlertsCommand } from './clis/threshold-alerts/threshold-alerts.js';
+import { registerGrafanaPagerdutyCommand } from './clis/grafana-pagerduty/grafana-pagerduty.js';
 import { registerTargetCommand } from './clis/target/target.js';
 import { registerPlatformCommand } from './clis/platform/platform.js';
 import { registerCAdvisorCommand } from './clis/cadvisor/cadvisor.js';
@@ -29,6 +30,7 @@ registerGrafanaCommand(program);
 registerPrometheusCommand(program);
 registerCAdvisorCommand(program);
 registerThresholdAlertsCommand(program);
+registerGrafanaPagerdutyCommand(program);
 
 // SSH Setter
 registerTargetCommand(program);

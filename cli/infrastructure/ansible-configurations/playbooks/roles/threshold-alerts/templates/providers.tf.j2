@@ -32,6 +32,10 @@ locals {
   node_name = data.external.node_name.result.name
 }
 
-resource "grafana_folder" "alerts" {
-  title = "{{ threshold_alerts_instance }}_alerts"
+resource "grafana_folder" "node_alerts" {
+  title = "${local.node_name}"
+}
+
+resource "grafana_folder" "container_alerts" {
+  title = "${var.service_name}"
 }

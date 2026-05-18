@@ -7,6 +7,8 @@
 #   cd ./infrastructure/terraform/grafana-alerts
 #   terraform init && terraform apply
 
+- import_playbook: common.yml
+
 - name: Deploy Grafana Threshold Alert Terraform Templates
   hosts: all
   become: false
