@@ -1,0 +1,6 @@
+grafana_url              = "{{ grafana.url }}"
+grafana_admin_user       = "{{ grafana.admin_user | default('admin') }}"
+grafana_admin_password   = "{{ grafana_admin_password }}"
+pagerduty_token          = "{{ pagerduty_token }}"
+pagerduty_service_region = "{{ grafana_pagerduty.service_region | default('eu') }}"
+pagerduty_service_name   = "{{ grafana_pagerduty.service_name | default('Infrastructure-Monitoring') }}"

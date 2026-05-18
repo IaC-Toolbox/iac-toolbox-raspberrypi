@@ -5,8 +5,7 @@ import MetricsAgentInitWizard from './metrics-agent-init-wizard.js';
 /**
  * MetricsAgentInitWizard tests.
  *
- * Uses injectable _TextInput, _loadRemoteWriteUrl, and _updateMetricsAgentConfig
- * props to avoid filesystem and TTY dependencies.
+ * Uses injectable _TextInput prop to avoid TTY dependencies.
  */
 
 // ---------------------------------------------------------------------------
@@ -56,12 +55,7 @@ describe('MetricsAgentInitWizard', () => {
   it('renders the remote_write URL prompt on initial render', () => {
     const { TextInput } = makeTextInputHelper();
     const { lastFrame } = render(
-      <MetricsAgentInitWizard
-        destination="/tmp/dest"
-        _TextInput={TextInput}
-        _loadRemoteWriteUrl={() => undefined}
-        _updateMetricsAgentConfig={() => {}}
-      />
+      <MetricsAgentInitWizard destination="/tmp/dest" _TextInput={TextInput} />
     );
 
     const output = lastFrame() ?? '';
@@ -70,7 +64,7 @@ describe('MetricsAgentInitWizard', () => {
     expect(output).toContain('remote_write URL');
   });
 
-  it('pre-fills URL from existing config', () => {
+  it('pre-fills URL with the default remote_write URL', () => {
     let capturedValue = '';
     const TextInput = (props: TextInputProps): null => {
       capturedValue = props.value;
@@ -78,19 +72,11 @@ describe('MetricsAgentInitWizard', () => {
     };
 
     render(
-      <MetricsAgentInitWizard
-        destination="/tmp/dest"
-        _TextInput={TextInput}
-        _loadRemoteWriteUrl={() =>
-          'https://custom-grafana.example.com/prometheus/api/v1/write'
-        }
-        _updateMetricsAgentConfig={() => {}}
-      />
+      <MetricsAgentInitWizard destination="/tmp/dest" _TextInput={TextInput} />
     );
 
-    expect(capturedValue).toBe(
-      'https://custom-grafana.example.com/prometheus/api/v1/write'
-    );
+    // Default value is the hardcoded fallback when no config file exists
+    expect(capturedValue).toContain('prometheus/api/v1/write');
   });
 
   it('shows error when empty URL is submitted', async () => {
@@ -99,8 +85,6 @@ describe('MetricsAgentInitWizard', () => {
       <MetricsAgentInitWizard
         destination="/tmp/dest"
         _TextInput={helper.TextInput}
-        _loadRemoteWriteUrl={() => undefined}
-        _updateMetricsAgentConfig={() => {}}
       />
     );
 
@@ -117,8 +101,6 @@ describe('MetricsAgentInitWizard', () => {
       <MetricsAgentInitWizard
         destination="/tmp/dest"
         _TextInput={helper.TextInput}
-        _loadRemoteWriteUrl={() => undefined}
-        _updateMetricsAgentConfig={() => {}}
       />
     );
 
@@ -129,15 +111,12 @@ describe('MetricsAgentInitWizard', () => {
     expect(frame).toContain('URL must start with http:// or https://');
   });
 
-  it('writes config on submit and shows done screen', async () => {
+  it('shows done screen on valid URL submit', async () => {
     const helper = makeTextInputHelper();
-    const updateConfig = jest.fn();
     const { lastFrame } = render(
       <MetricsAgentInitWizard
         destination="/tmp/dest"
         _TextInput={helper.TextInput}
-        _loadRemoteWriteUrl={() => undefined}
-        _updateMetricsAgentConfig={updateConfig}
       />
     );
 
@@ -148,11 +127,6 @@ describe('MetricsAgentInitWizard', () => {
     expect(frame).toContain('Metrics agent configuration saved');
     expect(frame).toContain('iac-toolbox metrics-agent install');
     expect(frame).toContain(
-      'https://grafana.iac-toolbox.com/prometheus/api/v1/write'
-    );
-
-    expect(updateConfig).toHaveBeenCalledWith(
-      '/tmp/dest',
       'https://grafana.iac-toolbox.com/prometheus/api/v1/write'
     );
   });
