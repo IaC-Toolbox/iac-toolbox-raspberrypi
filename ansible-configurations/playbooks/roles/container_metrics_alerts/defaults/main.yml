@@ -1,0 +1,7 @@
+# Resolved at play time from grafana_alloy.instance_name or ansible_hostname
+container_metrics_alerts_instance: "{{ grafana_alloy.instance_name | default(ansible_hostname) }}"
+
+# Service name used to scope cAdvisor alert expressions to a specific container.
+# Populated from container_metrics_alerts.service_name in iac-toolbox.yml.
+# Falls back to ansible_hostname if not set.
+container_metrics_alerts_service_name: "{{ container_metrics_alerts.service_name | default(ansible_hostname) }}"

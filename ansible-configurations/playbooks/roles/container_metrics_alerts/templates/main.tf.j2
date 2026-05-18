@@ -1,0 +1,62 @@
+# ── Container alerts (cAdvisor) ──────────────────────────────────────────────
+
+module "alert_container_restarting" {
+  source         = "./modules/threshold_alert"
+  name           = "ContainerRestarting"
+  folder_uid     = grafana_folder.container_alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "increase(container_start_time_seconds{name=\"${var.service_name}\",instance=\"${local.node_name}\"}[5m])"
+  threshold      = 2
+  for            = "1m"
+  severity       = "critical"
+  node           = local.node_name
+  service        = var.service_name
+  summary        = "Container ${var.service_name} is restarting on ${local.node_name}"
+  description    = "Container has restarted more than twice in 5 minutes — likely in a crash loop."
+}
+
+module "alert_container_oom" {
+  source         = "./modules/threshold_alert"
+  name           = "ContainerOOMKill"
+  folder_uid     = grafana_folder.container_alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "increase(container_oom_events_total{name=\"${var.service_name}\",instance=\"${local.node_name}\"}[5m])"
+  threshold      = 0
+  for            = "0s"
+  no_data_state  = "NoData"
+  severity       = "critical"
+  node           = local.node_name
+  service        = var.service_name
+  summary        = "Container ${var.service_name} was OOM killed on ${local.node_name}"
+  description    = "The kernel OOM killer terminated this container. Memory limit may be too low."
+}
+
+module "alert_container_high_memory" {
+  source         = "./modules/threshold_alert"
+  name           = "ContainerHighMemory"
+  folder_uid     = grafana_folder.container_alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "(container_memory_usage_bytes{name=\"${var.service_name}\",instance=\"${local.node_name}\"} / container_spec_memory_limit_bytes{name=\"${var.service_name}\",instance=\"${local.node_name}\"}) * 100 and container_spec_memory_limit_bytes{name=\"${var.service_name}\",instance=\"${local.node_name}\"} > 0"
+  threshold      = 85
+  for            = "5m"
+  severity       = "warning"
+  node           = local.node_name
+  service        = var.service_name
+  summary        = "Container ${var.service_name} near memory limit on ${local.node_name}"
+  description    = "Memory usage above 85% of limit."
+}
+
+module "alert_container_cpu_throttled" {
+  source         = "./modules/threshold_alert"
+  name           = "ContainerCPUThrottled"
+  folder_uid     = grafana_folder.container_alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "rate(container_cpu_cfs_throttled_seconds_total{name=\"${var.service_name}\",instance=\"${local.node_name}\"}[5m]) / rate(container_cpu_usage_seconds_total{name=\"${var.service_name}\",instance=\"${local.node_name}\"}[5m]) * 100 and rate(container_cpu_usage_seconds_total{name=\"${var.service_name}\",instance=\"${local.node_name}\"} [5m]) > 0"
+  threshold      = 25
+  for            = "10m"
+  severity       = "warning"
+  node           = local.node_name
+  service        = var.service_name
+  summary        = "Container ${var.service_name} CPU-throttled on ${local.node_name}"
+  description    = "More than 25% of CPU time is being throttled."
+}
