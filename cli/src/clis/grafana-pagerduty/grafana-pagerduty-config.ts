@@ -14,6 +14,7 @@ interface IacToolboxYaml {
     service_region?: string;
     service_name?: string;
     terraform_dest?: string;
+    pagerduty_token?: string;
     [key: string]: unknown;
   };
 }
@@ -62,6 +63,7 @@ export function updateGrafanaPagerdutyConfig(
     service_region: serviceRegion,
     service_name: serviceName,
     terraform_dest: terraformDest,
+    ...(enabled ? { pagerduty_token: '{{ pagerduty_token }}' } : {}),
   };
 
   const dir = path.dirname(configPath);

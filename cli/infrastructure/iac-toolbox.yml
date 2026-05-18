@@ -28,6 +28,7 @@ grafana:
   enabled: true
   admin_user: admin
   admin_password: "{{ grafana_admin_password }}"
+  url: https://grafana.iac-toolbox.com
 prometheus:
   enabled: false
   grafana_url: https://grafana.iac-toolbox.com
@@ -44,4 +45,10 @@ cadvisor:
 threshold_alerts:
   enabled: true
   threshold_alerts_terraform_dest: ./infrastructure/terraform/grafana-alerts
-  service_name: "banana-service"
+  service_name: iac-toolbox
+grafana_pagerduty:
+  enabled: true
+  service_region: eu
+  service_name: iac-toolbox
+  terraform_dest: ./infrastructure
+  pagerduty_token: "{{ pagerduty_token }}"
