@@ -9,6 +9,16 @@
 
 - import_playbook: common.yml
 
+- name: Render shared threshold_alert Terraform module
+  hosts: all
+  become: false
+  roles:
+    - role: threshold_alert_module
+      vars:
+        threshold_alert_module:
+          base: "{{ threshold_alerts.threshold_alerts_terraform_dest | dirname }}"
+      when: threshold_alerts is defined and threshold_alerts.enabled | default(false)
+
 - name: Deploy Grafana Threshold Alert Terraform Templates
   hosts: all
   become: false

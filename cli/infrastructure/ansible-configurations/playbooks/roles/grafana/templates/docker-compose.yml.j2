@@ -13,6 +13,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD={{ grafana.admin_password }}
       - GF_SERVER_ROOT_URL=https://{{ grafana.domain }}
       - GF_SERVER_DOMAIN={{ grafana.domain }}
+    mem_limit: {{ grafana.memory_limit | default('512m') }}
     networks:
       - monitoring
 

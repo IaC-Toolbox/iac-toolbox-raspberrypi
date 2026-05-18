@@ -127,6 +127,95 @@
     msg: "cAdvisor dashboard imported at: https://{{ grafana.domain }}{{ cadvisor_dashboard_imported.json.importedUrl }}"
   when: cadvisor_dashboard_imported is changed
 
+- name: Get Docker and system monitoring dashboard JSON from Grafana.com API
+  uri:
+    url: "https://grafana.com/api/dashboards/16310"
+    method: GET
+    return_content: true
+  register: docker_system_dashboard_json
+
+- name: Import Docker and system monitoring dashboard
+  uri:
+    url: "https://{{ grafana.domain }}/api/dashboards/import"
+    method: POST
+    user: "{{ grafana.admin_user }}"
+    password: "{{ grafana.admin_password }}"
+    body_format: json
+    body:
+      dashboard: "{{ docker_system_dashboard_json.json.json }}"
+      overwrite: true
+      inputs:
+        - name: "DS_PROMETHEUS"
+          type: "datasource"
+          pluginId: "prometheus"
+          value: "Prometheus"
+    force_basic_auth: true
+    status_code: 200
+  register: docker_system_dashboard_imported
+
+- name: Display Docker and system monitoring dashboard import message
+  debug:
+    msg: "Docker and system monitoring dashboard imported at: https://{{ grafana.domain }}{{ docker_system_dashboard_imported.json.importedUrl }}"
+  when: docker_system_dashboard_imported is changed
+
+# ── Add container memory gauge panel to cAdvisor dashboard ──────────────────
+
+- name: Get current cAdvisor dashboard from Grafana
+  uri:
+    url: "https://{{ grafana.domain }}/api/dashboards/uid/{{ cadvisor_dashboard_imported.json.uid }}"
+    method: GET
+    user: "{{ grafana.admin_user }}"
+    password: "{{ grafana.admin_password }}"
+    force_basic_auth: true
+    status_code: 200
+  register: cadvisor_dashboard_current
+
+- name: Append container memory timeseries panel to cAdvisor dashboard
+  uri:
+    url: "https://{{ grafana.domain }}/api/dashboards/db"
+    method: POST
+    user: "{{ grafana.admin_user }}"
+    password: "{{ grafana.admin_password }}"
+    body_format: json
+    body:
+      dashboard: "{{ cadvisor_dashboard_current.json.dashboard | combine({
+        'panels': cadvisor_dashboard_current.json.dashboard.panels + [container_memory_timeseries_panel]
+      }) }}"
+      folderId: "{{ cadvisor_dashboard_current.json.meta.folderId }}"
+      overwrite: true
+    force_basic_auth: true
+    status_code: 200
+  vars:
+    container_memory_timeseries_panel:
+      title: "Container Memory Remaining (bytes)"
+      type: "timeseries"
+      datasource: "Prometheus"
+      fieldConfig:
+        defaults:
+          unit: "bytes"
+          color:
+            mode: "palette-classic"
+          custom:
+            lineWidth: 2
+            fillOpacity: 10
+          thresholds:
+            mode: "absolute"
+            steps:
+              - { color: "red",    value: 0        }
+              - { color: "yellow", value: 52428800  }
+              - { color: "green",  value: 104857600 }
+      targets:
+        - expr: "container_spec_memory_limit_bytes{name!=\"\"} - container_memory_usage_bytes{name!=\"\"} and container_spec_memory_limit_bytes{name!=\"\"} > 0"
+          legendFormat: "{{ '{{' }} name {{ '}}' }}"
+          refId: "A"
+      options:
+        tooltip:
+          mode: "multi"
+        legend:
+          displayMode: "table"
+          placement: "bottom"
+      gridPos: { h: 8, w: 24, x: 0, y: 0 }
+        
 - name: Display Grafana access information
   debug:
     msg:
@@ -141,3 +230,4 @@
       - "Prometheus datasource provisioned automatically."
       - "Node Exporter Full dashboard imported (ID: 1860)."
       - "cAdvisor dashboard imported (ID: 14282)."
+      - "Docker and system monitoring dashboard imported (ID: 16310)."

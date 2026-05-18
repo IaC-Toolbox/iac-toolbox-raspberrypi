@@ -20,6 +20,11 @@ cloudflare:
       service: http://localhost:9090
 vault:
   enabled: false
+target:
+  mode: remote
+  host: raspberry-4b.local
+  user: vvasylkovskyi
+  ssh_key: ~/.ssh/raspberrypi-4b
 grafana:
   enabled: true
   version: latest
@@ -32,6 +37,7 @@ grafana:
   prometheus_domain: prometheus.iac-toolbox.com
   admin_user: admin
   admin_password: "{{ grafana_admin_password }}"
+  memory_limit: 512m
 prometheus:
   enabled: true
   version: latest
@@ -41,24 +47,25 @@ prometheus:
   scrape_interval: 15s
   retention: 15d
   grafana_url: https://grafana.iac-toolbox.com
+  memory_limit: 256m
 loki:
   enabled: false
-target:
-  mode: remote
-  host: raspberry-4b.local
-  user: vvasylkovskyi
-  ssh_key: ~/.ssh/raspberrypi-4b
 node_exporter:
   enabled: true
 cadvisor:
   enabled: true
+  memory_limit: 128m
 grafana_alloy:
   enabled: true
   alloy_remote_write_url: https://prometheus.iac-toolbox.com/api/v1/write
-threshold_alerts:
+  memory_limit: 256m
+node_metrics_alerts:
   enabled: true
-  threshold_alerts_terraform_dest: /home/vvasylkovskyi/.iac-toolbox/infrastructure
+  terraform_dest: /home/vvasylkovskyi/.iac-toolbox/infrastructure/terraform/node-alerts
+container_metrics_alerts:
+  enabled: true
   service_name: grafana
+  terraform_dest: /home/vvasylkovskyi/.iac-toolbox/infrastructure/terraform/container-alerts
 grafana_pagerduty:
   enabled: true
   service_region: eu
