@@ -1,0 +1,4 @@
+# Destination where Terraform files are rendered on the control machine.
+# Base path comes from iac-toolbox.yml grafana_pagerduty.terraform_dest;
+# the role appends /terraform/grafana-pagerduty — matching the threshold-alerts pattern.
+grafana_pagerduty_terraform_dest: "{{ grafana_pagerduty.terraform_dest }}/terraform/grafana-pagerduty"

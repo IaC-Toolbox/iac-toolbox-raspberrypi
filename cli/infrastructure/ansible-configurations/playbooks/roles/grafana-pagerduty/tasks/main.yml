@@ -1,0 +1,63 @@
+---
+- name: Create Grafana-PagerDuty Terraform destination directory
+  ansible.builtin.file:
+    path: "{{ grafana_pagerduty_terraform_dest }}"
+    state: directory
+    mode: '0755'
+  delegate_to: localhost
+
+- name: Create PagerDuty module directory
+  ansible.builtin.file:
+    path: "{{ grafana_pagerduty_terraform_dest }}/modules/pagerduty"
+    state: directory
+    mode: '0755'
+  delegate_to: localhost
+
+- name: Render providers.tf
+  ansible.builtin.template:
+    src: providers.tf.j2
+    dest: "{{ grafana_pagerduty_terraform_dest }}/providers.tf"
+  delegate_to: localhost
+
+- name: Render variables.tf
+  ansible.builtin.template:
+    src: variables.tf.j2
+    dest: "{{ grafana_pagerduty_terraform_dest }}/variables.tf"
+  delegate_to: localhost
+
+- name: Render main.tf
+  ansible.builtin.template:
+    src: main.tf.j2
+    dest: "{{ grafana_pagerduty_terraform_dest }}/main.tf"
+  delegate_to: localhost
+
+- name: Render modules/pagerduty/main.tf (service integration module)
+  ansible.builtin.template:
+    src: modules/pagerduty/main.tf.j2
+    dest: "{{ grafana_pagerduty_terraform_dest }}/modules/pagerduty/main.tf"
+  delegate_to: localhost
+
+- name: Render terraform.tfvars
+  ansible.builtin.template:
+    src: terraform.tfvars.j2
+    dest: "{{ grafana_pagerduty_terraform_dest }}/terraform.tfvars"
+    mode: '0600'
+  delegate_to: localhost
+
+- name: Ensure terraform.tfvars is gitignored
+  ansible.builtin.lineinfile:
+    path: "{{ grafana_pagerduty_terraform_dest }}/.gitignore"
+    line: "terraform.tfvars"
+    create: true
+  delegate_to: localhost
+
+- name: Print next steps
+  ansible.builtin.debug:
+    msg: |
+      Grafana-PagerDuty Terraform files rendered to:
+        {{ grafana_pagerduty_terraform_dest }}
+
+      Run the following to provision the full PagerDuty + Grafana integration:
+        cd {{ grafana_pagerduty_terraform_dest }}
+        terraform init
+        terraform apply
