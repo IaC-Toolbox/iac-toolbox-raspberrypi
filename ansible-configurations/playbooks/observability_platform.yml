@@ -45,6 +45,15 @@
     - role: grafana
       when: grafana is defined and grafana.enabled
 
+    - role: threshold_alert_module
+      vars:
+        threshold_alert_module:
+          base: "{{ terraform_base | default('./infrastructure/terraform') }}"
+      when: >
+        (threshold_alerts is defined and threshold_alerts.enabled | default(false)) or
+        (node_metrics_alerts is defined and node_metrics_alerts.enabled | default(false)) or
+        (container_metrics_alerts is defined and container_metrics_alerts.enabled | default(false))
+
     - role: threshold-alerts
       when: threshold_alerts is defined and threshold_alerts.enabled | default(false)
 

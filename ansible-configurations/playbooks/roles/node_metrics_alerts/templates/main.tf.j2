@@ -1,7 +1,7 @@
 # ── Host alerts (Node Exporter) ─────────────────────────────────────────────
 
 module "alert_node_down" {
-  source         = "./modules/threshold_alert"
+  source         = "../modules/threshold_alert"
   name           = "NodeDown"
   folder_uid     = grafana_folder.node_alerts.uid
   datasource_uid = data.grafana_data_source.prometheus.uid
@@ -17,7 +17,7 @@ module "alert_node_down" {
 }
 
 module "alert_low_disk" {
-  source         = "./modules/threshold_alert"
+  source         = "../modules/threshold_alert"
   name           = "LowDiskSpace"
   folder_uid     = grafana_folder.node_alerts.uid
   datasource_uid = data.grafana_data_source.prometheus.uid
@@ -31,7 +31,7 @@ module "alert_low_disk" {
 }
 
 module "alert_high_memory" {
-  source         = "./modules/threshold_alert"
+  source         = "../modules/threshold_alert"
   name           = "HighMemoryUsage"
   folder_uid     = grafana_folder.node_alerts.uid
   datasource_uid = data.grafana_data_source.prometheus.uid
@@ -45,7 +45,7 @@ module "alert_high_memory" {
 }
 
 module "alert_swap_in_use" {
-  source         = "./modules/threshold_alert"
+  source         = "../modules/threshold_alert"
   name           = "SwapInUse"
   folder_uid     = grafana_folder.node_alerts.uid
   datasource_uid = data.grafana_data_source.prometheus.uid

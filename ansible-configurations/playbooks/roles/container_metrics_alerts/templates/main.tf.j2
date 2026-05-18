@@ -1,7 +1,7 @@
 # ── Container alerts (cAdvisor) ──────────────────────────────────────────────
 
 module "alert_container_restarting" {
-  source         = "./modules/threshold_alert"
+  source         = "../modules/threshold_alert"
   name           = "ContainerRestarting"
   folder_uid     = grafana_folder.container_alerts.uid
   datasource_uid = data.grafana_data_source.prometheus.uid
@@ -16,7 +16,7 @@ module "alert_container_restarting" {
 }
 
 module "alert_container_oom" {
-  source         = "./modules/threshold_alert"
+  source         = "../modules/threshold_alert"
   name           = "ContainerOOMKill"
   folder_uid     = grafana_folder.container_alerts.uid
   datasource_uid = data.grafana_data_source.prometheus.uid
@@ -32,7 +32,7 @@ module "alert_container_oom" {
 }
 
 module "alert_container_high_memory" {
-  source         = "./modules/threshold_alert"
+  source         = "../modules/threshold_alert"
   name           = "ContainerHighMemory"
   folder_uid     = grafana_folder.container_alerts.uid
   datasource_uid = data.grafana_data_source.prometheus.uid
@@ -47,7 +47,7 @@ module "alert_container_high_memory" {
 }
 
 module "alert_container_cpu_throttled" {
-  source         = "./modules/threshold_alert"
+  source         = "../modules/threshold_alert"
   name           = "ContainerCPUThrottled"
   folder_uid     = grafana_folder.container_alerts.uid
   datasource_uid = data.grafana_data_source.prometheus.uid
