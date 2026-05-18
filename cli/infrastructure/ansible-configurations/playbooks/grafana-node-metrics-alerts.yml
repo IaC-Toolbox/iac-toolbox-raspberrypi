@@ -1,0 +1,18 @@
+---
+# ============================================
+# IaC Toolbox — Grafana Node Metrics Alerts Playbook
+# ============================================
+# Renders Terraform node-level alert templates (NodeDown, LowDiskSpace,
+# HighMemoryUsage, SwapInUse). Provisioned once per device.
+# After this playbook completes, run:
+#   cd <node_metrics_alerts.terraform_dest>
+#   terraform init && terraform apply
+
+- import_playbook: common.yml
+
+- name: Deploy Node Metrics Alert Terraform Templates
+  hosts: all
+  become: false
+  roles:
+    - role: node_metrics_alerts
+      when: node_metrics_alerts is defined and node_metrics_alerts.enabled | default(false)

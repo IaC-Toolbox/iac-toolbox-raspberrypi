@@ -85,14 +85,7 @@ export async function runContainerMetricsAlertsInstall(
   print.step('Container metrics alert templates installed');
   print.pipe();
   print.success('Terraform files rendered to the configured terraform_dest');
-  print.pipe();
-  print.pipe('Next steps:');
-  print.pipe();
-  print.pipe('   cd <container_metrics_alerts.terraform_dest>');
-  print.pipe('   terraform init');
-  print.pipe('   terraform apply');
-  print.pipe();
-  print.pipe('After apply, visit Grafana → Alerting → Alert rules');
+  print.pipe('Visit Grafana → Alerting → Alert rules');
   print.pipe(`to confirm rules are visible under the "${serviceName}" folder.`);
   print.pipe();
   print.close();

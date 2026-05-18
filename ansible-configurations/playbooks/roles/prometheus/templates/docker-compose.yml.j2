@@ -21,6 +21,7 @@ services:
 {% endif %}
     networks:
       - monitoring
+    mem_limit: {{ prometheus.memory_limit | default('512m') }}
 
 volumes:
   prometheus_data:

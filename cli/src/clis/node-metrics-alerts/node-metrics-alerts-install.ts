@@ -66,13 +66,7 @@ export async function runNodeMetricsAlertsInstall(
   print.pipe();
   print.success('Terraform files rendered to the configured terraform_dest');
   print.pipe();
-  print.pipe('Next steps:');
-  print.pipe();
-  print.pipe('   cd <node_metrics_alerts.terraform_dest>');
-  print.pipe('   terraform init');
-  print.pipe('   terraform apply');
-  print.pipe();
-  print.pipe('After apply, visit Grafana → Alerting → Alert rules');
+  print.pipe('Visit Grafana → Alerting → Alert rules');
   print.pipe('to confirm rules are visible under the node alerts folder.');
   print.pipe();
   print.close();

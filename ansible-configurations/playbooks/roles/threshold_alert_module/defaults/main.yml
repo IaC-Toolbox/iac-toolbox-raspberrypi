@@ -1,0 +1,6 @@
+---
+# Base Terraform directory where the shared module will be rendered.
+# The module lands at: <threshold_alert_module_base>/modules/threshold_alert/
+# Consumer roles (node_metrics_alerts, container_metrics_alerts, threshold-alerts) derive this
+# automatically from their own terraform_dest.
+threshold_alert_module_base: "{{ threshold_alert_module.base }}"

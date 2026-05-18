@@ -15,3 +15,4 @@ services:
       - /var/lib/docker:/var/lib/docker:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    mem_limit: {{ cadvisor.memory_limit | default('512m') }}

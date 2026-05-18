@@ -42,13 +42,17 @@ grafana_alloy:
   alloy_remote_write_url: https://grafana.iac-toolbox.com/prometheus/api/v1/write
 cadvisor:
   enabled: true
-threshold_alerts:
+node_metrics_alerts:
   enabled: true
-  threshold_alerts_terraform_dest: ./infrastructure/terraform/grafana-alerts
-  service_name: iac-toolbox
+  terraform_dest: ./infrastructure/terraform/node-alerts
+container_metrics_alerts:
+  enabled: true
+  service_name: my-service
+  terraform_dest: ./infrastructure/terraform/container-alerts
 grafana_pagerduty:
   enabled: true
   service_region: eu
   service_name: iac-toolbox
   terraform_dest: ./infrastructure
   pagerduty_token: "{{ pagerduty_token }}"
+
