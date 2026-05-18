@@ -1,7 +1,7 @@
 ---
 - name: Create Terraform destination directory
   ansible.builtin.file:
-    path: "{{ node_metrics_alerts.terraform_dest }}/modules/threshold_alert"
+    path: "{{ node_metrics_alerts.terraform_dest }}"
     state: directory
     mode: '0755'
 
@@ -25,16 +25,6 @@
   ansible.builtin.template:
     src: main.tf.j2
     dest: "{{ node_metrics_alerts.terraform_dest }}/main.tf"
-
-- name: Render threshold_alert module
-  ansible.builtin.template:
-    src: modules/threshold_alert/main.tf.j2
-    dest: "{{ node_metrics_alerts.terraform_dest }}/modules/threshold_alert/main.tf"
-
-- name: Render threshold_alert module variables
-  ansible.builtin.template:
-    src: modules/threshold_alert/variables.tf.j2
-    dest: "{{ node_metrics_alerts.terraform_dest }}/modules/threshold_alert/variables.tf"
 
 - name: Ensure terraform.tfvars is in .gitignore
   ansible.builtin.lineinfile:

@@ -11,6 +11,16 @@
 
 - import_playbook: common.yml
 
+- name: Render shared threshold_alert Terraform module
+  hosts: all
+  become: false
+  roles:
+    - role: threshold_alert_module
+      vars:
+        threshold_alert_module:
+          base: "{{ container_metrics_alerts.terraform_dest | dirname }}"
+      when: container_metrics_alerts is defined and container_metrics_alerts.enabled | default(false)
+
 - name: Deploy Container Metrics Alert Terraform Templates
   hosts: all
   become: false
