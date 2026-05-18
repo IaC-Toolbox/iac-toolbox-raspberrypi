@@ -1,0 +1,7 @@
+# Resolved at play time from grafana_alloy.instance_name or ansible_hostname
+node_metrics_alerts_instance: "{{ grafana_alloy.instance_name | default(ansible_hostname) }}"
+
+# Threshold defaults — override per device in iac-toolbox.yml
+node_metrics_alerts_memory_critical: "{{ node_metrics_alerts.memory_critical_threshold | default(95) }}"
+node_metrics_alerts_cpu_critical:    "{{ node_metrics_alerts.cpu_critical_threshold    | default(90) }}"
+node_metrics_alerts_disk_critical:   "{{ node_metrics_alerts.disk_critical_threshold   | default(90) }}"

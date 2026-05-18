@@ -1,0 +1,19 @@
+---
+# ============================================
+# IaC Toolbox — Grafana Container Metrics Alerts Playbook
+# ============================================
+# Renders Terraform container-level alert templates for a specific service
+# (ContainerRestarting, ContainerOOMKill, ContainerHighMemory, ContainerCPUThrottled).
+# Invoke once per service. Requires container_metrics_alerts.service_name to be set.
+# After this playbook completes, run:
+#   cd <container_metrics_alerts.terraform_dest>
+#   terraform init && terraform apply
+
+- import_playbook: common.yml
+
+- name: Deploy Container Metrics Alert Terraform Templates
+  hosts: all
+  become: false
+  roles:
+    - role: container_metrics_alerts
+      when: container_metrics_alerts is defined and container_metrics_alerts.enabled | default(false)
