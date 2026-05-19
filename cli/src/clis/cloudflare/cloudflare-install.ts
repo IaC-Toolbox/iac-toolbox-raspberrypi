@@ -8,7 +8,7 @@ import {
   resolveProjectRoot,
 } from '../../utils/ansible.js';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
-import { validateCloudflare } from './cloudflare.validation.js';
+import { validateClis, CliName } from '../validate-clis.js';
 
 interface CloudflareConfig {
   enabled?: boolean;
@@ -43,7 +43,12 @@ export async function runCloudflareInstall(
   let status: number;
   try {
     // ── Credentials + Config Guard ────────────────────────────
-    validateCloudflare(destination, tmpFile, profile, config);
+    validateClis(CliName.Cloudflare, {
+      destination,
+      filePath: tmpFile,
+      profile,
+      config,
+    });
 
     print.success('Credentials loaded');
     print.pipe();

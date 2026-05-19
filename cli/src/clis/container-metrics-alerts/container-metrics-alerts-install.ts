@@ -6,8 +6,9 @@ import {
   resolveAnsibleDir,
   resolveProjectRoot,
 } from '../../utils/ansible.js';
+import yaml from 'js-yaml';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
-import { validateContainerMetricsAlerts } from './container-metrics-alerts.validation.js';
+import { validateClis, CliName } from '../validate-clis.js';
 
 /**
  * Run `iac-toolbox container-metrics-alerts install`.
@@ -24,16 +25,26 @@ export async function runContainerMetricsAlertsInstall(
   profile: string,
   filePath?: string
 ): Promise<void> {
+  // ── Resolve templates, absolutify paths, write temp config ──
+  const { tmpFile, resolvedYaml } = writeResolvedConfig(
+    destination,
+    profile,
+    filePath
+  );
+  const config = yaml.load(resolvedYaml) as Record<string, unknown>;
+
   // ── Read Configuration ────────────────────────────────────
-  validateContainerMetricsAlerts(destination, filePath);
+  validateClis(CliName.ContainerMetricsAlerts, {
+    destination,
+    filePath: tmpFile,
+    profile,
+    config,
+  });
 
   const serviceName = loadContainerMetricsAlertsServiceName(
     destination,
     filePath
   );
-
-  // ── Resolve templates, absolutify paths, write temp config ──
-  const { tmpFile } = writeResolvedConfig(destination, profile, filePath);
 
   // ── Ansible Invocation ────────────────────────────────────
   print.step('Copying Grafana container metrics alert templates...');
