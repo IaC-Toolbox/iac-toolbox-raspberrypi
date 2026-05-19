@@ -7,6 +7,7 @@ import {
   resolveProjectRoot,
 } from '../../utils/ansible.js';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
+import { validateCadvisor } from './cadvisor.validation.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;
@@ -25,27 +26,18 @@ export async function runCAdvisorInstall(
   );
   const config = yaml.load(resolvedYaml) as IacToolboxConfig;
 
-  // ── Guard: cadvisor.enabled ───────────────────────────────
-  if (config.cadvisor?.enabled !== true) {
-    unlinkSync(tmpFile);
-    print.error('cAdvisor not enabled');
-    print.pipe();
-    print.pipe(
-      'Set cadvisor.enabled: true in iac-toolbox.yml to install cAdvisor.'
-    );
-    print.closeError();
-    process.exit(1);
-  }
-
-  print.success('Configuration loaded');
-  print.pipe();
-
-  // ── Ansible Invocation ────────────────────────────────────
-  print.step('Installing cAdvisor...');
-  print.divider();
-
   let status: number;
   try {
+    // ── Guard: cadvisor.enabled ───────────────────────────────
+    validateCadvisor(destination, tmpFile, config);
+
+    print.success('Configuration loaded');
+    print.pipe();
+
+    // ── Ansible Invocation ────────────────────────────────────
+    print.step('Installing cAdvisor...');
+    print.divider();
+
     status = runAnsiblePlaybook('cadvisor.yml', {
       ansibleDir: resolveAnsibleDir(destination),
       filePath: tmpFile,

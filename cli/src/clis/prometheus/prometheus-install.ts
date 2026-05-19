@@ -1,6 +1,5 @@
 import { unlinkSync } from 'fs';
 import yaml from 'js-yaml';
-import { loadCredentials } from '../../loaders/credentials-loader.js';
 import { pollHealth } from '../../validators/health_check.js';
 import { print } from '../../design-system/print.js';
 import {
@@ -9,6 +8,7 @@ import {
   resolveProjectRoot,
 } from '../../utils/ansible.js';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
+import { validatePrometheus } from './prometheus.validation.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;
@@ -32,21 +32,8 @@ export async function runPrometheusInstall(
   profile: string,
   filePath?: string
 ): Promise<void> {
-  const creds = loadCredentials(profile);
-
   // ── Missing Credentials Guard ─────────────────────────────
-  if (!creds.grafana_admin_password) {
-    print.error('Grafana credentials not found');
-    print.pipe();
-    print.pipe(
-      'Prometheus registers itself as a Grafana datasource during install.'
-    );
-    print.pipe(
-      'Run `iac-toolbox grafana init` first to set up Grafana credentials.'
-    );
-    print.closeError();
-    process.exit(1);
-  }
+  validatePrometheus(destination, filePath ?? '', profile);
 
   const { tmpFile, resolvedYaml } = writeResolvedConfig(
     destination,

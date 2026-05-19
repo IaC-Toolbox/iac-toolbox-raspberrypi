@@ -1,5 +1,4 @@
 import { unlinkSync } from 'fs';
-import { loadGrafanaPagerdutyConfig } from './grafana-pagerduty-config.js';
 import { print } from '../../design-system/print.js';
 import {
   runAnsiblePlaybook,
@@ -7,6 +6,7 @@ import {
   resolveProjectRoot,
 } from '../../utils/ansible.js';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
+import { validateGrafanaPagerduty } from './grafana-pagerduty.validation.js';
 
 /**
  * Run `iac-toolbox grafana-pagerduty install`.
@@ -23,15 +23,7 @@ export async function runGrafanaPagerdutyInstall(
   filePath?: string
 ): Promise<void> {
   // ── Read Configuration ────────────────────────────────────
-  const config = loadGrafanaPagerdutyConfig(destination, filePath);
-
-  if (!config?.enabled) {
-    print.error('Grafana-PagerDuty integration not configured');
-    print.pipe();
-    print.pipe('Run `iac-toolbox grafana-pagerduty init` first.');
-    print.closeError();
-    process.exit(1);
-  }
+  validateGrafanaPagerduty(destination, filePath);
 
   // ── Resolve templates, absolutify paths, write temp config ──
   const { tmpFile } = writeResolvedConfig(destination, profile, filePath);
