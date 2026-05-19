@@ -5,8 +5,9 @@ import {
   resolveAnsibleDir,
   resolveProjectRoot,
 } from '../../utils/ansible.js';
+import yaml from 'js-yaml';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
-import { validateGrafanaPagerduty } from './grafana-pagerduty.validation.js';
+import { validateClis } from '../validate-clis.js';
 
 /**
  * Run `iac-toolbox grafana-pagerduty install`.
@@ -22,11 +23,21 @@ export async function runGrafanaPagerdutyInstall(
   profile: string,
   filePath?: string
 ): Promise<void> {
-  // ── Read Configuration ────────────────────────────────────
-  validateGrafanaPagerduty(destination, filePath);
-
   // ── Resolve templates, absolutify paths, write temp config ──
-  const { tmpFile } = writeResolvedConfig(destination, profile, filePath);
+  const { tmpFile, resolvedYaml } = writeResolvedConfig(
+    destination,
+    profile,
+    filePath
+  );
+  const config = yaml.load(resolvedYaml) as Record<string, unknown>;
+
+  // ── Read Configuration ────────────────────────────────────
+  validateClis('grafana-pagerduty', {
+    destination,
+    filePath: tmpFile,
+    profile,
+    config,
+  });
 
   // ── Ansible Invocation ────────────────────────────────────
   print.step('Rendering Grafana-PagerDuty Terraform templates...');

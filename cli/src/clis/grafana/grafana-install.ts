@@ -9,7 +9,7 @@ import {
   resolveProjectRoot,
 } from '../../utils/ansible.js';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
-import { validateGrafana } from './grafana.validation.js';
+import { validateClis } from '../validate-clis.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;
@@ -27,9 +27,6 @@ export async function runGrafanaInstall(
   profile: string,
   filePath?: string
 ): Promise<void> {
-  // ── Missing Credentials Guard ─────────────────────────────
-  validateGrafana(destination, filePath ?? '', profile);
-
   const creds = loadCredentials(profile);
 
   const { tmpFile, resolvedYaml } = writeResolvedConfig(
@@ -38,6 +35,9 @@ export async function runGrafanaInstall(
     filePath
   );
   const config = yaml.load(resolvedYaml) as IacToolboxConfig;
+
+  // ── Missing Credentials Guard ─────────────────────────────
+  validateClis('grafana', { destination, filePath: tmpFile, profile, config });
 
   const adminUser =
     (config.grafana?.admin_user as string) ??

@@ -5,8 +5,9 @@ import {
   resolveAnsibleDir,
   resolveProjectRoot,
 } from '../../utils/ansible.js';
+import yaml from 'js-yaml';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
-import { validateThresholdAlerts } from './threshold-alerts.validation.js';
+import { validateClis } from '../validate-clis.js';
 
 /**
  * Run `iac-toolbox threshold-alerts install`.
@@ -22,11 +23,21 @@ export async function runThresholdAlertsInstall(
   profile: string,
   filePath?: string
 ): Promise<void> {
-  // ── Read Configuration ────────────────────────────────────
-  validateThresholdAlerts(destination, filePath);
-
   // ── Resolve templates, absolutify paths, write temp config ──
-  const { tmpFile } = writeResolvedConfig(destination, profile, filePath);
+  const { tmpFile, resolvedYaml } = writeResolvedConfig(
+    destination,
+    profile,
+    filePath
+  );
+  const config = yaml.load(resolvedYaml) as Record<string, unknown>;
+
+  // ── Read Configuration ────────────────────────────────────
+  validateClis('threshold-alerts', {
+    destination,
+    filePath: tmpFile,
+    profile,
+    config,
+  });
 
   // ── Ansible Invocation ────────────────────────────────────
   print.step('Copying Grafana alert templates...');

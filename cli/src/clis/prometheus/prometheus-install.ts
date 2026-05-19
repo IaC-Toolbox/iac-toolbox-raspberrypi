@@ -8,7 +8,7 @@ import {
   resolveProjectRoot,
 } from '../../utils/ansible.js';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
-import { validatePrometheus } from './prometheus.validation.js';
+import { validateClis } from '../validate-clis.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;
@@ -32,15 +32,20 @@ export async function runPrometheusInstall(
   profile: string,
   filePath?: string
 ): Promise<void> {
-  // ── Missing Credentials Guard ─────────────────────────────
-  validatePrometheus(destination, filePath ?? '', profile);
-
   const { tmpFile, resolvedYaml } = writeResolvedConfig(
     destination,
     profile,
     filePath
   );
   const config = yaml.load(resolvedYaml) as IacToolboxConfig;
+
+  // ── Missing Credentials Guard ─────────────────────────────
+  validateClis('prometheus', {
+    destination,
+    filePath: tmpFile,
+    profile,
+    config,
+  });
 
   print.success('Configuration loaded');
   print.pipe();
