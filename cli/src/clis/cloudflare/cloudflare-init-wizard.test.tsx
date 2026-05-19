@@ -423,13 +423,17 @@ describe('CloudflareInitWizard', () => {
       { cloudflare_api_token: 'my-api-token' },
       'default'
     );
-    expect(updateConfig).toHaveBeenCalledWith('/tmp/dest', {
-      accountId: VALID_HEX_32,
-      zoneId: VALID_ZONE_ID,
-      tunnelName: 'example.com-tunnel',
-      hostname: 'grafana.example.com',
-      servicePort: 3000,
-    }, undefined);
+    expect(updateConfig).toHaveBeenCalledWith(
+      '/tmp/dest',
+      {
+        accountId: VALID_HEX_32,
+        zoneId: VALID_ZONE_ID,
+        tunnelName: 'example.com-tunnel',
+        hostname: 'grafana.example.com',
+        servicePort: 3000,
+      },
+      undefined
+    );
   });
 
   it('pre-fills values from existing credentials and config', async () => {
