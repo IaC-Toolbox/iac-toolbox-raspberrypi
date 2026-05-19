@@ -21,7 +21,7 @@ import {
   ConditionKey,
   type ValidatorDescriptor,
   type ValidationContext,
-} from './validate-clis.js';
+} from './validate-clis-types.js';
 
 export const CLI_VALIDATION_MAP: Record<CliName, ValidatorDescriptor[]> = {
   // ── Leaf CLIs ─────────────────────────────────────────────────────────────

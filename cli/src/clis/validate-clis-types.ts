@@ -1,0 +1,32 @@
+export enum CliName {
+  Grafana = 'grafana',
+  Prometheus = 'prometheus',
+  Cadvisor = 'cadvisor',
+  Cloudflare = 'cloudflare',
+  GrafanaPagerduty = 'grafana-pagerduty',
+  NodeMetricsAlerts = 'node-metrics-alerts',
+  ContainerMetricsAlerts = 'container-metrics-alerts',
+  ThresholdAlerts = 'threshold-alerts',
+  MetricsAgent = 'metrics-agent',
+  Platform = 'platform',
+}
+
+export enum ConditionKey {
+  Cloudflare = 'cloudflare',
+  GrafanaPagerduty = 'grafana_pagerduty',
+  NodeMetricsAlerts = 'node_metrics_alerts',
+  ContainerMetricsAlerts = 'container_metrics_alerts',
+  ThresholdAlerts = 'threshold_alerts',
+}
+
+export interface ValidationContext {
+  destination: string;
+  filePath: string;
+  profile: string;
+  config: Record<string, unknown>;
+}
+
+export interface ValidatorDescriptor {
+  fn: (ctx: ValidationContext) => void;
+  condition?: ConditionKey;
+}

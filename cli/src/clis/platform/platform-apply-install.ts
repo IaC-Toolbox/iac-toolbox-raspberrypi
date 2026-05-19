@@ -145,7 +145,12 @@ export async function runPlatformApplyInstall(
   // ── Sub-CLI Validations ───────────────────────────────────
   // Run all sub-system validations before touching Ansible.
   // Each validator exits immediately with a clear message on failure.
-  validateClis(CliName.Platform, { destination, filePath: tmpFile, profile, config });
+  validateClis(CliName.Platform, {
+    destination,
+    filePath: tmpFile,
+    profile,
+    config,
+  });
 
   const cloudflareEnabled = runInstallSequence(destination, config, tmpFile);
 
