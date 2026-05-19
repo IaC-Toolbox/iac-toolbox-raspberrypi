@@ -115,7 +115,7 @@ describe('CloudflareInitWizard', () => {
     expect(frame).toContain('API token must not be empty');
   });
 
-  it('shows error when token validation fails', async () => {
+  it('skips token validation and transitions to account ID step', async () => {
     const helper = makeTextInputHelper();
     const { lastFrame } = render(
       <CloudflareInitWizard
@@ -128,11 +128,13 @@ describe('CloudflareInitWizard', () => {
     helper.submit('bad-token');
     await new Promise((r) => setTimeout(r, 100));
 
+    // Token validation is skipped regardless of _validateToken — always transitions
     const frame = lastFrame() ?? '';
-    expect(frame).toContain('Invalid token');
+    expect(frame).toContain('Cloudflare Account ID');
+    expect(frame).toContain('Token validation skiped');
   });
 
-  it('transitions to account ID step after valid token', async () => {
+  it('transitions to account ID step after token submission', async () => {
     const helper = makeTextInputHelper();
     const { lastFrame } = render(
       <CloudflareInitWizard {...defaultProps} _TextInput={helper.TextInput} />
@@ -143,7 +145,7 @@ describe('CloudflareInitWizard', () => {
 
     const frame = lastFrame() ?? '';
     expect(frame).toContain('Cloudflare Account ID');
-    expect(frame).toContain('Token verified');
+    expect(frame).toContain('Token validation skiped');
   });
 
   it('shows error when account ID is not 32 hex chars', async () => {
@@ -421,13 +423,17 @@ describe('CloudflareInitWizard', () => {
       { cloudflare_api_token: 'my-api-token' },
       'default'
     );
-    expect(updateConfig).toHaveBeenCalledWith('/tmp/dest', {
-      accountId: VALID_HEX_32,
-      zoneId: VALID_ZONE_ID,
-      tunnelName: 'example.com-tunnel',
-      hostname: 'grafana.example.com',
-      servicePort: 3000,
-    });
+    expect(updateConfig).toHaveBeenCalledWith(
+      '/tmp/dest',
+      {
+        accountId: VALID_HEX_32,
+        zoneId: VALID_ZONE_ID,
+        tunnelName: 'example.com-tunnel',
+        hostname: 'grafana.example.com',
+        servicePort: 3000,
+      },
+      undefined
+    );
   });
 
   it('pre-fills values from existing credentials and config', async () => {

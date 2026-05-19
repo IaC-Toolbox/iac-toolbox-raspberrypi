@@ -19,15 +19,22 @@ export function registerCloudflareCommand(program: Command): void {
       'infrastructure'
     )
     .option('--filePath <path>', 'Path to a per-device config file')
-    .action((options: { profile: string; destination: string }) => {
-      render(
-        <CloudflareInitWizard
-          profile={options.profile}
-          destination={options.destination}
-        />,
-        { exitOnCtrlC: true, patchConsole: false }
-      );
-    });
+    .action(
+      (options: {
+        profile: string;
+        destination: string;
+        filePath?: string;
+      }) => {
+        render(
+          <CloudflareInitWizard
+            profile={options.profile}
+            destination={options.destination}
+            filePath={options.filePath}
+          />,
+          { exitOnCtrlC: true, patchConsole: false }
+        );
+      }
+    );
 
   cloudflare
     .command('install')

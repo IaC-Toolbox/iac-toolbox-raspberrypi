@@ -18,6 +18,7 @@ interface TextInputProps {
 
 interface ThresholdAlertsInitWizardProps {
   destination: string;
+  filePath?: string;
   /** Injectable for testing */
   _onConfirm?: (
     enabled: boolean,
@@ -33,6 +34,7 @@ type Step = 'choose' | 'service-name' | 'terraform-dest' | 'done';
 
 export default function ThresholdAlertsInitWizard({
   destination,
+  filePath,
   _onConfirm,
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
 }: ThresholdAlertsInitWizardProps) {
@@ -78,10 +80,14 @@ export default function ThresholdAlertsInitWizard({
       if (_onConfirm) {
         _onConfirm(enabled, terraformDest, serviceName);
       } else {
-        updateThresholdAlertsConfig(destination, enabled);
+        updateThresholdAlertsConfig(destination, enabled, filePath);
         if (enabled) {
-          updateThresholdAlertsTerraformDest(destination, terraformDest);
-          updateThresholdAlertsServiceName(destination, serviceName);
+          updateThresholdAlertsTerraformDest(
+            destination,
+            terraformDest,
+            filePath
+          );
+          updateThresholdAlertsServiceName(destination, serviceName, filePath);
         }
       }
       const timer = setTimeout(() => exit(), 100);
@@ -93,6 +99,7 @@ export default function ThresholdAlertsInitWizard({
     terraformDest,
     serviceName,
     destination,
+    filePath,
     exit,
     _onConfirm,
   ]);
@@ -237,20 +244,23 @@ export default function ThresholdAlertsInitWizard({
       <Text>
         {'│  enabled               '}
         {String(enabled)}
-        {'    → iac-toolbox.yml'}
+        {'    → '}
+        {filePath ?? 'iac-toolbox.yml'}
       </Text>
       {enabled && (
         <Text>
           {'│  service_name          '}
           {serviceName}
-          {'    → iac-toolbox.yml'}
+          {'    → '}
+          {filePath ?? 'iac-toolbox.yml'}
         </Text>
       )}
       {enabled && (
         <Text>
           {'│  terraform destination  '}
           {terraformDest}
-          {'    → iac-toolbox.yml'}
+          {'    → '}
+          {filePath ?? 'iac-toolbox.yml'}
         </Text>
       )}
       <Text bold>{'│'}</Text>
