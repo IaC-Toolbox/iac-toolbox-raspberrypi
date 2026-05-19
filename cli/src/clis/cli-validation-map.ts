@@ -16,30 +16,32 @@ import { validateGrafanaPagerduty } from './grafana-pagerduty/grafana-pagerduty.
 import { validateNodeMetricsAlerts } from './node-metrics-alerts/node-metrics-alerts.validation.js';
 import { validateContainerMetricsAlerts } from './container-metrics-alerts/container-metrics-alerts.validation.js';
 import { validateThresholdAlerts } from './threshold-alerts/threshold-alerts.validation.js';
-import type {
-  ValidatorDescriptor,
-  ValidationContext,
+import {
+  CliName,
+  ConditionKey,
+  type ValidatorDescriptor,
+  type ValidationContext,
 } from './validate-clis.js';
 
-export const CLI_VALIDATION_MAP: Record<string, ValidatorDescriptor[]> = {
+export const CLI_VALIDATION_MAP: Record<CliName, ValidatorDescriptor[]> = {
   // ── Leaf CLIs ─────────────────────────────────────────────────────────────
   // Each has exactly one validator: its own.
 
-  grafana: [
+  [CliName.Grafana]: [
     {
       fn: (ctx: ValidationContext) =>
         validateGrafana(ctx.destination, ctx.filePath, ctx.profile),
     },
   ],
 
-  prometheus: [
+  [CliName.Prometheus]: [
     {
       fn: (ctx: ValidationContext) =>
         validatePrometheus(ctx.destination, ctx.filePath, ctx.profile),
     },
   ],
 
-  cadvisor: [
+  [CliName.Cadvisor]: [
     {
       fn: (ctx: ValidationContext) =>
         validateCadvisor(
@@ -50,7 +52,7 @@ export const CLI_VALIDATION_MAP: Record<string, ValidatorDescriptor[]> = {
     },
   ],
 
-  cloudflare: [
+  [CliName.Cloudflare]: [
     {
       fn: (ctx: ValidationContext) =>
         validateCloudflare(
@@ -62,28 +64,28 @@ export const CLI_VALIDATION_MAP: Record<string, ValidatorDescriptor[]> = {
     },
   ],
 
-  'grafana-pagerduty': [
+  [CliName.GrafanaPagerduty]: [
     {
       fn: (ctx: ValidationContext) =>
         validateGrafanaPagerduty(ctx.destination, ctx.filePath),
     },
   ],
 
-  'node-metrics-alerts': [
+  [CliName.NodeMetricsAlerts]: [
     {
       fn: (ctx: ValidationContext) =>
         validateNodeMetricsAlerts(ctx.destination, ctx.filePath),
     },
   ],
 
-  'container-metrics-alerts': [
+  [CliName.ContainerMetricsAlerts]: [
     {
       fn: (ctx: ValidationContext) =>
         validateContainerMetricsAlerts(ctx.destination, ctx.filePath),
     },
   ],
 
-  'threshold-alerts': [
+  [CliName.ThresholdAlerts]: [
     {
       fn: (ctx: ValidationContext) =>
         validateThresholdAlerts(ctx.destination, ctx.filePath),
@@ -94,7 +96,7 @@ export const CLI_VALIDATION_MAP: Record<string, ValidatorDescriptor[]> = {
   // Each validates its own config AND every sub-system it orchestrates.
 
   // metrics-agent deploys: Grafana Alloy + Node Exporter + cAdvisor
-  'metrics-agent': [
+  [CliName.MetricsAgent]: [
     {
       fn: (ctx: ValidationContext) =>
         validateMetricsAgent(
@@ -115,7 +117,7 @@ export const CLI_VALIDATION_MAP: Record<string, ValidatorDescriptor[]> = {
   ],
 
   // platform deploys: all sub-systems in observability_platform.yml
-  platform: [
+  [CliName.Platform]: [
     {
       fn: (ctx: ValidationContext) =>
         validateGrafana(ctx.destination, ctx.filePath, ctx.profile),
@@ -148,27 +150,27 @@ export const CLI_VALIDATION_MAP: Record<string, ValidatorDescriptor[]> = {
           ctx.profile,
           ctx.config as CloudflareValidationConfig
         ),
-      condition: 'cloudflare',
+      condition: ConditionKey.Cloudflare,
     },
     {
       fn: (ctx: ValidationContext) =>
         validateGrafanaPagerduty(ctx.destination, ctx.filePath),
-      condition: 'grafana_pagerduty',
+      condition: ConditionKey.GrafanaPagerduty,
     },
     {
       fn: (ctx: ValidationContext) =>
         validateNodeMetricsAlerts(ctx.destination, ctx.filePath),
-      condition: 'node_metrics_alerts',
+      condition: ConditionKey.NodeMetricsAlerts,
     },
     {
       fn: (ctx: ValidationContext) =>
         validateContainerMetricsAlerts(ctx.destination, ctx.filePath),
-      condition: 'container_metrics_alerts',
+      condition: ConditionKey.ContainerMetricsAlerts,
     },
     {
       fn: (ctx: ValidationContext) =>
         validateThresholdAlerts(ctx.destination, ctx.filePath),
-      condition: 'threshold_alerts',
+      condition: ConditionKey.ThresholdAlerts,
     },
   ],
 };

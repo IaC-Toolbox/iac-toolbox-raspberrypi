@@ -8,7 +8,7 @@ import {
 } from '../../utils/ansible.js';
 import yaml from 'js-yaml';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
-import { validateClis } from '../validate-clis.js';
+import { validateClis, CliName } from '../validate-clis.js';
 
 /**
  * Run `iac-toolbox container-metrics-alerts install`.
@@ -34,7 +34,7 @@ export async function runContainerMetricsAlertsInstall(
   const config = yaml.load(resolvedYaml) as Record<string, unknown>;
 
   // ── Read Configuration ────────────────────────────────────
-  validateClis('container-metrics-alerts', {
+  validateClis(CliName.ContainerMetricsAlerts, {
     destination,
     filePath: tmpFile,
     profile,

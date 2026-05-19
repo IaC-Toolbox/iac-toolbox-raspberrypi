@@ -7,7 +7,7 @@ import {
 } from '../../utils/ansible.js';
 import yaml from 'js-yaml';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
-import { validateClis } from '../validate-clis.js';
+import { validateClis, CliName } from '../validate-clis.js';
 
 /**
  * Run `iac-toolbox node-metrics-alerts install`.
@@ -32,7 +32,7 @@ export async function runNodeMetricsAlertsInstall(
   const config = yaml.load(resolvedYaml) as Record<string, unknown>;
 
   // ── Read Configuration ────────────────────────────────────
-  validateClis('node-metrics-alerts', {
+  validateClis(CliName.NodeMetricsAlerts, {
     destination,
     filePath: tmpFile,
     profile,

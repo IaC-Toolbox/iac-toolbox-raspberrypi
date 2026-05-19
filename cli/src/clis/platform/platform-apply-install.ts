@@ -17,7 +17,7 @@ import {
 } from '../../utils/ansible.js';
 import { runTerraform, resolveTerraformDir } from '../../utils/terraform.js';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
-import { validateClis } from '../validate-clis.js';
+import { validateClis, CliName } from '../validate-clis.js';
 
 async function runPreflightChecks(
   config: ApplySummaryConfig
@@ -145,7 +145,7 @@ export async function runPlatformApplyInstall(
   // ── Sub-CLI Validations ───────────────────────────────────
   // Run all sub-system validations before touching Ansible.
   // Each validator exits immediately with a clear message on failure.
-  validateClis('platform', { destination, filePath: tmpFile, profile, config });
+  validateClis(CliName.Platform, { destination, filePath: tmpFile, profile, config });
 
   const cloudflareEnabled = runInstallSequence(destination, config, tmpFile);
 

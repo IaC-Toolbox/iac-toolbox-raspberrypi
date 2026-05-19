@@ -7,7 +7,7 @@ import {
 } from '../../utils/ansible.js';
 import yaml from 'js-yaml';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
-import { validateClis } from '../validate-clis.js';
+import { validateClis, CliName } from '../validate-clis.js';
 
 /**
  * Run `iac-toolbox grafana-pagerduty install`.
@@ -32,7 +32,7 @@ export async function runGrafanaPagerdutyInstall(
   const config = yaml.load(resolvedYaml) as Record<string, unknown>;
 
   // ── Read Configuration ────────────────────────────────────
-  validateClis('grafana-pagerduty', {
+  validateClis(CliName.GrafanaPagerduty, {
     destination,
     filePath: tmpFile,
     profile,

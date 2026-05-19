@@ -1,5 +1,26 @@
 import { CLI_VALIDATION_MAP } from './cli-validation-map.js';
 
+export enum CliName {
+  Grafana = 'grafana',
+  Prometheus = 'prometheus',
+  Cadvisor = 'cadvisor',
+  Cloudflare = 'cloudflare',
+  GrafanaPagerduty = 'grafana-pagerduty',
+  NodeMetricsAlerts = 'node-metrics-alerts',
+  ContainerMetricsAlerts = 'container-metrics-alerts',
+  ThresholdAlerts = 'threshold-alerts',
+  MetricsAgent = 'metrics-agent',
+  Platform = 'platform',
+}
+
+export enum ConditionKey {
+  Cloudflare = 'cloudflare',
+  GrafanaPagerduty = 'grafana_pagerduty',
+  NodeMetricsAlerts = 'node_metrics_alerts',
+  ContainerMetricsAlerts = 'container_metrics_alerts',
+  ThresholdAlerts = 'threshold_alerts',
+}
+
 export interface ValidationContext {
   destination: string;
   filePath: string;
@@ -9,7 +30,7 @@ export interface ValidationContext {
 
 export interface ValidatorDescriptor {
   fn: (ctx: ValidationContext) => void;
-  condition?: string;
+  condition?: ConditionKey;
 }
 
 /**
@@ -21,7 +42,7 @@ export interface ValidatorDescriptor {
  * If `cliName` is not in the map this function is a no-op — callers
  * that want a hard failure on unknown CLIs should check the map directly.
  */
-export function validateClis(cliName: string, ctx: ValidationContext): void {
+export function validateClis(cliName: CliName, ctx: ValidationContext): void {
   const descriptors = CLI_VALIDATION_MAP[cliName];
   if (!descriptors) return;
 

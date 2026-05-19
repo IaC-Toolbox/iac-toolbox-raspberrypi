@@ -7,7 +7,7 @@ import {
   resolveProjectRoot,
 } from '../../utils/ansible.js';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
-import { validateClis } from '../validate-clis.js';
+import { validateClis, CliName } from '../validate-clis.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;
@@ -34,7 +34,7 @@ export async function runMetricsAgentInstall(
   let status: number;
   try {
     // ── Missing Config Guard ──────────────────────────────────
-    validateClis('metrics-agent', {
+    validateClis(CliName.MetricsAgent, {
       destination,
       filePath: tmpFile,
       profile,
