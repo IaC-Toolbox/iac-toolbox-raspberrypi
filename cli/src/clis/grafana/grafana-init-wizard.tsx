@@ -18,6 +18,7 @@ interface GrafanaInitWizardProps {
   profile: string;
   destination: string;
   filePath?: string;
+  onComplete?: () => void;
   /** Injectable for testing — defaults to the real TextInput from ink-text-input */
   _TextInput?: (props: TextInputProps) => null;
   /** Injectable for testing — defaults to loadCredentials */
@@ -41,6 +42,7 @@ export default function GrafanaInitWizard({
   profile,
   destination,
   filePath,
+  onComplete,
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
   _loadCredentials = loadCredentials,
   _saveCredentials = saveCredentials,
@@ -73,7 +75,13 @@ export default function GrafanaInitWizard({
       );
       _updateGrafanaConfig(destination, username, filePath);
       // Give Ink time to render final screen
-      const timer = setTimeout(() => exit(), 100);
+      const timer = setTimeout(() => {
+        if (onComplete) {
+          onComplete();
+        } else {
+          exit();
+        }
+      }, 100);
       return () => clearTimeout(timer);
     }
   }, [
@@ -84,6 +92,7 @@ export default function GrafanaInitWizard({
     destination,
     filePath,
     exit,
+    onComplete,
     _saveCredentials,
     _updateGrafanaConfig,
   ]);

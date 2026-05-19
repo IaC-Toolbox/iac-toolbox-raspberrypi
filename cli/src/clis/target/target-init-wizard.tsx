@@ -24,6 +24,7 @@ interface SelectItem {
 interface TargetInitWizardProps {
   destination: string;
   filePath?: string;
+  onComplete?: () => void;
   /** Injectable deps for testing */
   _SelectInput?: typeof RealSelectInput;
   _TextInput?: (props: TextInputProps) => null;
@@ -83,6 +84,7 @@ const MODE_OPTIONS: SelectItem[] = [
 export default function TargetInitWizard({
   destination,
   filePath,
+  onComplete,
   _SelectInput = RealSelectInput,
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
   _loadTargetConfig = loadTargetConfig,
@@ -159,7 +161,13 @@ export default function TargetInitWizard({
           filePath
         );
       }
-      const timer = setTimeout(() => exit(), 100);
+      const timer = setTimeout(() => {
+        if (onComplete) {
+          onComplete();
+        } else {
+          exit();
+        }
+      }, 100);
       return () => clearTimeout(timer);
     }
   }, [
@@ -171,6 +179,7 @@ export default function TargetInitWizard({
     destination,
     filePath,
     exit,
+    onComplete,
     _updateTargetConfig,
   ]);
 

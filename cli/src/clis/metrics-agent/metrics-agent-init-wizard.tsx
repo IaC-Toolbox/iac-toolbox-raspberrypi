@@ -16,6 +16,7 @@ interface TextInputProps {
 interface MetricsAgentInitWizardProps {
   destination: string;
   filePath?: string;
+  onComplete?: () => void;
   /** Injectable for testing — defaults to the real TextInput from ink-text-input */
   _TextInput?: (props: TextInputProps) => null;
 }
@@ -25,6 +26,7 @@ type Step = 'remote_write_url' | 'done';
 export default function MetricsAgentInitWizard({
   destination,
   filePath,
+  onComplete,
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
 }: MetricsAgentInitWizardProps) {
   const { exit } = useApp();
@@ -45,10 +47,16 @@ export default function MetricsAgentInitWizard({
     if (step === 'done') {
       updateMetricsAgentConfig(destination, remoteWriteUrl, filePath);
       // Give Ink time to render final screen
-      const timer = setTimeout(() => exit(), 100);
+      const timer = setTimeout(() => {
+        if (onComplete) {
+          onComplete();
+        } else {
+          exit();
+        }
+      }, 100);
       return () => clearTimeout(timer);
     }
-  }, [step, remoteWriteUrl, destination, filePath, exit]);
+  }, [step, remoteWriteUrl, destination, filePath, exit, onComplete]);
 
   if (step === 'remote_write_url') {
     return (
