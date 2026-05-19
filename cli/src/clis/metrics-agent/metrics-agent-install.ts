@@ -7,6 +7,7 @@ import {
   resolveProjectRoot,
 } from '../../utils/ansible.js';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
+import { validateMetricsAgent } from './metrics-agent.validation.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;
@@ -30,29 +31,20 @@ export async function runMetricsAgentInstall(
 
   const prometheusRemoteWriteUrl = config.grafana_alloy?.alloy_remote_write_url;
 
-  // ── Missing Config Guard ──────────────────────────────────
-  if (!prometheusRemoteWriteUrl) {
-    unlinkSync(tmpFile);
-    print.error('Agent not configured');
-    print.pipe();
-    print.pipe(
-      'Run `iac-toolbox metrics-agent init` first to set the remote endpoints.'
-    );
-    print.closeError();
-    process.exit(1);
-  }
-
-  print.success('Configuration loaded');
-  print.pipe();
-
-  // ── Ansible Invocation ────────────────────────────────────
-  print.step('Installing observability agent...');
-  print.divider();
-
-  const env: NodeJS.ProcessEnv = { ...process.env };
-
   let status: number;
   try {
+    // ── Missing Config Guard ──────────────────────────────────
+    validateMetricsAgent(destination, tmpFile, config);
+
+    print.success('Configuration loaded');
+    print.pipe();
+
+    // ── Ansible Invocation ────────────────────────────────────
+    print.step('Installing observability agent...');
+    print.divider();
+
+    const env: NodeJS.ProcessEnv = { ...process.env };
+
     status = runAnsiblePlaybook('metrics-agent.yml', {
       ansibleDir: resolveAnsibleDir(destination),
       filePath: tmpFile,

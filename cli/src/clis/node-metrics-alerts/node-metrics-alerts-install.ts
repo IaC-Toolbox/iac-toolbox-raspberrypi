@@ -1,5 +1,4 @@
 import { unlinkSync } from 'fs';
-import { loadNodeMetricsAlertsEnabled } from './node-metrics-alerts-config.js';
 import { print } from '../../design-system/print.js';
 import {
   runAnsiblePlaybook,
@@ -7,6 +6,7 @@ import {
   resolveProjectRoot,
 } from '../../utils/ansible.js';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
+import { validateNodeMetricsAlerts } from './node-metrics-alerts.validation.js';
 
 /**
  * Run `iac-toolbox node-metrics-alerts install`.
@@ -23,17 +23,7 @@ export async function runNodeMetricsAlertsInstall(
   filePath?: string
 ): Promise<void> {
   // ── Read Configuration ────────────────────────────────────
-  const enabled = loadNodeMetricsAlertsEnabled(destination, filePath);
-
-  if (enabled === undefined || enabled === null) {
-    print.error('Node metrics alerts not configured');
-    print.pipe();
-    print.pipe(
-      'Run `iac-toolbox node-metrics-alerts init` first to enable or disable node metrics alerts.'
-    );
-    print.closeError();
-    process.exit(1);
-  }
+  validateNodeMetricsAlerts(destination, filePath);
 
   // ── Resolve templates, absolutify paths, write temp config ──
   const { tmpFile } = writeResolvedConfig(destination, profile, filePath);
