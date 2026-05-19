@@ -137,7 +137,11 @@ describe('TargetInitWizard', () => {
     const frame = lastFrame() ?? '';
     expect(frame).toContain('Target configuration saved');
     expect(frame).toContain('localhost');
-    expect(updateConfig).toHaveBeenCalledWith('/tmp/dest', { mode: 'local' });
+    expect(updateConfig).toHaveBeenCalledWith(
+      '/tmp/dest',
+      { mode: 'local' },
+      undefined
+    );
   });
 
   it('selecting remote transitions to connection string step', async () => {
@@ -369,12 +373,16 @@ describe('TargetInitWizard', () => {
     expect(frame).toContain('remote');
     expect(frame).toContain('192.168.1.50');
     expect(frame).toContain('pi');
-    expect(updateConfig).toHaveBeenCalledWith('/tmp/dest', {
-      mode: 'remote',
-      host: '192.168.1.50',
-      user: 'pi',
-      ssh_key: '~/.ssh/id_ed25519',
-    });
+    expect(updateConfig).toHaveBeenCalledWith(
+      '/tmp/dest',
+      {
+        mode: 'remote',
+        host: '192.168.1.50',
+        user: 'pi',
+        ssh_key: '~/.ssh/id_ed25519',
+      },
+      undefined
+    );
   });
 
   it('shows error screen on failed ssh connection', async () => {

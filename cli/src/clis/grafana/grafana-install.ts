@@ -37,7 +37,12 @@ export async function runGrafanaInstall(
   const config = yaml.load(resolvedYaml) as IacToolboxConfig;
 
   // ── Missing Credentials Guard ─────────────────────────────
-  validateClis(CliName.Grafana, { destination, filePath: tmpFile, profile, config });
+  validateClis(CliName.Grafana, {
+    destination,
+    filePath: tmpFile,
+    profile,
+    config,
+  });
 
   const adminUser =
     (config.grafana?.admin_user as string) ??

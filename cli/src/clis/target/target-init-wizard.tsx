@@ -23,11 +23,16 @@ interface SelectItem {
 
 interface TargetInitWizardProps {
   destination: string;
+  filePath?: string;
   /** Injectable deps for testing */
   _SelectInput?: typeof RealSelectInput;
   _TextInput?: (props: TextInputProps) => null;
   _loadTargetConfig?: (destination: string) => TargetConfig;
-  _updateTargetConfig?: (destination: string, config: TargetConfig) => void;
+  _updateTargetConfig?: (
+    destination: string,
+    config: TargetConfig,
+    filePath?: string
+  ) => void;
   _testSshConnection?: (
     host: string,
     user: string,
@@ -77,6 +82,7 @@ const MODE_OPTIONS: SelectItem[] = [
 
 export default function TargetInitWizard({
   destination,
+  filePath,
   _SelectInput = RealSelectInput,
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
   _loadTargetConfig = loadTargetConfig,
@@ -140,19 +146,33 @@ export default function TargetInitWizard({
   useEffect(() => {
     if (step === 'done') {
       if (mode === 'local') {
-        _updateTargetConfig(destination, { mode: 'local' });
+        _updateTargetConfig(destination, { mode: 'local' }, filePath);
       } else {
-        _updateTargetConfig(destination, {
-          mode: 'remote',
-          host,
-          user,
-          ssh_key: sshKey,
-        });
+        _updateTargetConfig(
+          destination,
+          {
+            mode: 'remote',
+            host,
+            user,
+            ssh_key: sshKey,
+          },
+          filePath
+        );
       }
       const timer = setTimeout(() => exit(), 100);
       return () => clearTimeout(timer);
     }
-  }, [step, mode, host, user, sshKey, destination, exit, _updateTargetConfig]);
+  }, [
+    step,
+    mode,
+    host,
+    user,
+    sshKey,
+    destination,
+    filePath,
+    exit,
+    _updateTargetConfig,
+  ]);
 
   const header = (
     <>
@@ -396,17 +416,20 @@ export default function TargetInitWizard({
       <Text>
         {'│  Host    '}
         {host}
-        {'    → iac-toolbox.yml'}
+        {'    → '}
+        {filePath ?? 'iac-toolbox.yml'}
       </Text>
       <Text>
         {'│  User    '}
         {user}
-        {'              → iac-toolbox.yml'}
+        {'              → '}
+        {filePath ?? 'iac-toolbox.yml'}
       </Text>
       <Text>
         {'│  Key     '}
         {sshKey}
-        {'  → iac-toolbox.yml'}
+        {'  → '}
+        {filePath ?? 'iac-toolbox.yml'}
       </Text>
       <Text bold>{'│'}</Text>
       <Text>

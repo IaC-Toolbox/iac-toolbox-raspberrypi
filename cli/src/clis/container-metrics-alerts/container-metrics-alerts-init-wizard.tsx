@@ -18,6 +18,7 @@ interface TextInputProps {
 
 interface ContainerMetricsAlertsInitWizardProps {
   destination: string;
+  filePath?: string;
   /** Injectable for testing */
   _onConfirm?: (
     enabled: boolean,
@@ -33,6 +34,7 @@ type Step = 'choose' | 'service-name' | 'terraform-dest' | 'done';
 
 export default function ContainerMetricsAlertsInitWizard({
   destination,
+  filePath,
   _onConfirm,
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
 }: ContainerMetricsAlertsInitWizardProps) {
@@ -79,10 +81,18 @@ export default function ContainerMetricsAlertsInitWizard({
       if (_onConfirm) {
         _onConfirm(enabled, serviceName, terraformDest);
       } else {
-        updateContainerMetricsAlertsConfig(destination, enabled);
+        updateContainerMetricsAlertsConfig(destination, enabled, filePath);
         if (enabled) {
-          updateContainerMetricsAlertsServiceName(destination, serviceName);
-          updateContainerMetricsAlertsTerraformDest(destination, terraformDest);
+          updateContainerMetricsAlertsServiceName(
+            destination,
+            serviceName,
+            filePath
+          );
+          updateContainerMetricsAlertsTerraformDest(
+            destination,
+            terraformDest,
+            filePath
+          );
         }
       }
       const timer = setTimeout(() => exit(), 100);
@@ -94,6 +104,7 @@ export default function ContainerMetricsAlertsInitWizard({
     serviceName,
     terraformDest,
     destination,
+    filePath,
     exit,
     _onConfirm,
   ]);
@@ -233,20 +244,23 @@ export default function ContainerMetricsAlertsInitWizard({
       <Text>
         {'│  enabled               '}
         {String(enabled)}
-        {'    → iac-toolbox.yml'}
+        {'    → '}
+        {filePath ?? 'iac-toolbox.yml'}
       </Text>
       {enabled && (
         <Text>
           {'│  service_name          '}
           {serviceName}
-          {'    → iac-toolbox.yml'}
+          {'    → '}
+          {filePath ?? 'iac-toolbox.yml'}
         </Text>
       )}
       {enabled && (
         <Text>
           {'│  terraform destination  '}
           {terraformDest}
-          {'    → iac-toolbox.yml'}
+          {'    → '}
+          {filePath ?? 'iac-toolbox.yml'}
         </Text>
       )}
       <Text bold>{'│'}</Text>

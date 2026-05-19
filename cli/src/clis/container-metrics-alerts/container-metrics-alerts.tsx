@@ -21,9 +21,12 @@ export function registerContainerMetricsAlertsCommand(program: Command): void {
       'infrastructure'
     )
     .option('--filePath <path>', 'Path to a per-device config file')
-    .action((options: { destination: string }) => {
+    .action((options: { destination: string; filePath?: string }) => {
       render(
-        <ContainerMetricsAlertsInitWizard destination={options.destination} />,
+        <ContainerMetricsAlertsInitWizard
+          destination={options.destination}
+          filePath={options.filePath}
+        />,
         {
           exitOnCtrlC: true,
           patchConsole: false,
