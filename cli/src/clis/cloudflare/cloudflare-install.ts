@@ -1,6 +1,5 @@
 import { unlinkSync } from 'fs';
 import yaml from 'js-yaml';
-import { loadCredentials } from '../../loaders/credentials-loader.js';
 import { pollHealth } from '../../validators/health_check.js';
 import { print } from '../../design-system/print.js';
 import {
@@ -9,6 +8,7 @@ import {
   resolveProjectRoot,
 } from '../../utils/ansible.js';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
+import { validateCloudflare } from './cloudflare.validation.js';
 
 interface CloudflareConfig {
   enabled?: boolean;
@@ -33,17 +33,6 @@ export async function runCloudflareInstall(
   profile: string,
   filePath?: string
 ): Promise<void> {
-  const creds = loadCredentials(profile);
-
-  // ── Missing Credentials Guard ─────────────────────────────
-  if (!creds.cloudflare_api_token) {
-    print.error('No API token found');
-    print.pipe();
-    print.pipe('Run `iac-toolbox cloudflare init` first to set up credentials');
-    print.closeError();
-    process.exit(1);
-  }
-
   const { tmpFile, resolvedYaml } = writeResolvedConfig(
     destination,
     profile,
@@ -51,35 +40,20 @@ export async function runCloudflareInstall(
   );
   const config = yaml.load(resolvedYaml) as IacToolboxConfig;
 
-  // ── Incomplete Config Guard ───────────────────────────────
-  const missing: string[] = [];
-  if (!config.cloudflare?.account_id) missing.push('account_id');
-  if (!config.cloudflare?.zone_id) missing.push('zone_id');
-  if (!config.cloudflare?.domains || config.cloudflare.domains.length === 0) {
-    missing.push('domains');
-  }
-
-  if (missing.length > 0) {
-    unlinkSync(tmpFile);
-    print.error('Cloudflare configuration incomplete');
-    print.pipe();
-    print.pipe(`Missing: ${missing.join(', ')}`);
-    print.pipe('Run `iac-toolbox cloudflare init` to configure');
-    print.closeError();
-    process.exit(1);
-  }
-
-  print.success('Credentials loaded');
-  print.pipe();
-
-  // ── Ansible Invocation ────────────────────────────────────
-  print.step('Installing Cloudflare Tunnel...');
-  print.divider();
-
-  const env: NodeJS.ProcessEnv = { ...process.env };
-
   let status: number;
   try {
+    // ── Credentials + Config Guard ────────────────────────────
+    validateCloudflare(destination, tmpFile, profile, config);
+
+    print.success('Credentials loaded');
+    print.pipe();
+
+    // ── Ansible Invocation ────────────────────────────────────
+    print.step('Installing Cloudflare Tunnel...');
+    print.divider();
+
+    const env: NodeJS.ProcessEnv = { ...process.env };
+
     status = runAnsiblePlaybook('cloudflare.yml', {
       ansibleDir: resolveAnsibleDir(destination),
       filePath: tmpFile,
