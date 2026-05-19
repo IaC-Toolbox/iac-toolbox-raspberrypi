@@ -17,38 +17,7 @@ import {
 } from '../../utils/ansible.js';
 import { runTerraform, resolveTerraformDir } from '../../utils/terraform.js';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
-import { validateGrafana } from '../grafana/grafana.validation.js';
-import { validatePrometheus } from '../prometheus/prometheus.validation.js';
-import { validateMetricsAgent } from '../metrics-agent/metrics-agent.validation.js';
-import { validateCadvisor } from '../cadvisor/cadvisor.validation.js';
-import { validateCloudflare } from '../cloudflare/cloudflare.validation.js';
-import { validateGrafanaPagerduty } from '../grafana-pagerduty/grafana-pagerduty.validation.js';
-import { validateNodeMetricsAlerts } from '../node-metrics-alerts/node-metrics-alerts.validation.js';
-import { validateContainerMetricsAlerts } from '../container-metrics-alerts/container-metrics-alerts.validation.js';
-import { validateThresholdAlerts } from '../threshold-alerts/threshold-alerts.validation.js';
-
-interface PlatformConfig extends ApplySummaryConfig {
-  grafana_alloy?: {
-    alloy_remote_write_url?: string;
-    [key: string]: unknown;
-  };
-  grafana_pagerduty?: {
-    enabled?: boolean;
-    [key: string]: unknown;
-  };
-  node_metrics_alerts?: {
-    enabled?: boolean;
-    [key: string]: unknown;
-  };
-  container_metrics_alerts?: {
-    enabled?: boolean;
-    [key: string]: unknown;
-  };
-  threshold_alerts?: {
-    enabled?: boolean;
-    [key: string]: unknown;
-  };
-}
+import { validateClis, CliName } from '../validate-clis.js';
 
 async function runPreflightChecks(
   config: ApplySummaryConfig
@@ -169,33 +138,14 @@ export async function runPlatformApplyInstall(
     profile,
     filePath
   );
-  const config = yaml.load(resolvedYaml) as PlatformConfig;
+  const config = yaml.load(resolvedYaml) as ApplySummaryConfig;
 
   const { targetMode, targetHost } = await runPreflightChecks(config);
 
   // ── Sub-CLI Validations ───────────────────────────────────
   // Run all sub-system validations before touching Ansible.
   // Each validator exits immediately with a clear message on failure.
-  validateGrafana(destination, tmpFile, profile);
-  validatePrometheus(destination, tmpFile, profile);
-  validateMetricsAgent(destination, tmpFile, config);
-  validateCadvisor(destination, tmpFile, config);
-
-  if (config.cloudflare?.enabled) {
-    validateCloudflare(destination, tmpFile, profile, config);
-  }
-  if (config.grafana_pagerduty?.enabled) {
-    validateGrafanaPagerduty(destination, tmpFile);
-  }
-  if (config.node_metrics_alerts?.enabled) {
-    validateNodeMetricsAlerts(destination, tmpFile);
-  }
-  if (config.container_metrics_alerts?.enabled) {
-    validateContainerMetricsAlerts(destination, tmpFile);
-  }
-  if (config.threshold_alerts?.enabled) {
-    validateThresholdAlerts(destination, tmpFile);
-  }
+  validateClis(CliName.Platform, { destination, filePath: tmpFile, profile, config });
 
   const cloudflareEnabled = runInstallSequence(destination, config, tmpFile);
 

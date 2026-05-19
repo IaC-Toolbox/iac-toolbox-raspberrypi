@@ -7,7 +7,7 @@ import {
   resolveProjectRoot,
 } from '../../utils/ansible.js';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
-import { validateCadvisor } from './cadvisor.validation.js';
+import { validateClis, CliName } from '../validate-clis.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;
@@ -29,7 +29,12 @@ export async function runCAdvisorInstall(
   let status: number;
   try {
     // ── Guard: cadvisor.enabled ───────────────────────────────
-    validateCadvisor(destination, tmpFile, config);
+    validateClis(CliName.Cadvisor, {
+      destination,
+      filePath: tmpFile,
+      profile,
+      config,
+    });
 
     print.success('Configuration loaded');
     print.pipe();
