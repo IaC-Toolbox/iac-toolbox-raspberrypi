@@ -31,6 +31,7 @@ interface ValidateZoneFn {
 interface CloudflareInitWizardProps {
   profile: string;
   destination: string;
+  filePath?: string;
   /** Injectable for testing */
   _TextInput?: (props: TextInputProps) => null;
   /** Injectable for testing */
@@ -49,7 +50,8 @@ interface CloudflareInitWizardProps {
       tunnelName: string;
       hostname: string;
       servicePort: number;
-    }
+    },
+    filePath?: string
   ) => void;
   /** Injectable for testing */
   _loadCloudflareConfig?: (destination: string) =>
@@ -144,6 +146,7 @@ async function defaultValidateZone(
 export default function CloudflareInitWizard({
   profile,
   destination,
+  filePath,
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
   _loadCredentials = loadCredentials,
   _saveCredentials = saveCredentials,
@@ -246,13 +249,17 @@ export default function CloudflareInitWizard({
         },
         profile
       );
-      _updateCloudflareConfig(destination, {
-        accountId,
-        zoneId,
-        tunnelName,
-        hostname,
-        servicePort,
-      });
+      _updateCloudflareConfig(
+        destination,
+        {
+          accountId,
+          zoneId,
+          tunnelName,
+          hostname,
+          servicePort,
+        },
+        filePath
+      );
       const timer = setTimeout(() => exit(), 100);
       return () => clearTimeout(timer);
     }
@@ -266,6 +273,7 @@ export default function CloudflareInitWizard({
     servicePort,
     profile,
     destination,
+    filePath,
     exit,
     _saveCredentials,
     _updateCloudflareConfig,
@@ -615,26 +623,30 @@ export default function CloudflareInitWizard({
         {'│  Account ID      '}
         {accountId.substring(0, 10)}
         {'...'}
-        {'               → iac-toolbox.yml'}
+        {'               → '}
+        {filePath ?? 'iac-toolbox.yml'}
       </Text>
       <Text>
         {'│  Zone ID         '}
         {zoneId.substring(0, 10)}
         {'...'}
         {zoneName ? `  (${zoneName})` : ''}
-        {'  → iac-toolbox.yml'}
+        {'  → '}
+        {filePath ?? 'iac-toolbox.yml'}
       </Text>
       <Text>
         {'│  Tunnel          '}
         {tunnelName}
-        {'               → iac-toolbox.yml'}
+        {'               → '}
+        {filePath ?? 'iac-toolbox.yml'}
       </Text>
       <Text>
         {'│  Domain          '}
         {hostname}
         {':'}
         {servicePort}
-        {'  → iac-toolbox.yml'}
+        {'  → '}
+        {filePath ?? 'iac-toolbox.yml'}
       </Text>
       <Text bold>{'│'}</Text>
       <Text>{'│  ℹ  To install Cloudflare Tunnel, run:'}</Text>

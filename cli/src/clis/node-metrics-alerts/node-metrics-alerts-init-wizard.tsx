@@ -16,6 +16,7 @@ interface TextInputProps {
 
 interface NodeMetricsAlertsInitWizardProps {
   destination: string;
+  filePath?: string;
   /** Injectable for testing */
   _onConfirm?: (enabled: boolean, terraformDest: string) => void;
   /** Injectable for testing */
@@ -27,6 +28,7 @@ type Step = 'choose' | 'terraform-dest' | 'done';
 
 export default function NodeMetricsAlertsInitWizard({
   destination,
+  filePath,
   _onConfirm,
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
 }: NodeMetricsAlertsInitWizardProps) {
@@ -68,15 +70,19 @@ export default function NodeMetricsAlertsInitWizard({
       if (_onConfirm) {
         _onConfirm(enabled, terraformDest);
       } else {
-        updateNodeMetricsAlertsConfig(destination, enabled);
+        updateNodeMetricsAlertsConfig(destination, enabled, filePath);
         if (enabled) {
-          updateNodeMetricsAlertsTerraformDest(destination, terraformDest);
+          updateNodeMetricsAlertsTerraformDest(
+            destination,
+            terraformDest,
+            filePath
+          );
         }
       }
       const timer = setTimeout(() => exit(), 100);
       return () => clearTimeout(timer);
     }
-  }, [step, selected, terraformDest, destination, exit, _onConfirm]);
+  }, [step, selected, terraformDest, destination, filePath, exit, _onConfirm]);
 
   if (step === 'choose') {
     return (
@@ -161,13 +167,15 @@ export default function NodeMetricsAlertsInitWizard({
       <Text>
         {'│  enabled               '}
         {String(enabled)}
-        {'    → iac-toolbox.yml'}
+        {'    → '}
+        {filePath ?? 'iac-toolbox.yml'}
       </Text>
       {enabled && (
         <Text>
           {'│  terraform destination  '}
           {terraformDest}
-          {'    → iac-toolbox.yml'}
+          {'    → '}
+          {filePath ?? 'iac-toolbox.yml'}
         </Text>
       )}
       <Text bold>{'│'}</Text>

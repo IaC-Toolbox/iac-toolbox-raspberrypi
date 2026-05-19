@@ -137,9 +137,10 @@ export function updateThresholdAlertsServiceName(
  */
 export function updateThresholdAlertsConfig(
   destination: string,
-  enabled: boolean
+  enabled: boolean,
+  filePath?: string
 ): void {
-  const configPath = resolveConfigPath(destination);
+  const configPath = filePath ?? resolveConfigPath(destination);
   let config: IacToolboxYaml = {};
 
   if (fs.existsSync(configPath)) {

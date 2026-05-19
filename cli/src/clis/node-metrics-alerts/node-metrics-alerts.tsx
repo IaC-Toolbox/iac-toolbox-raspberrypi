@@ -21,9 +21,12 @@ export function registerNodeMetricsAlertsCommand(program: Command): void {
       'infrastructure'
     )
     .option('--filePath <path>', 'Path to a per-device config file')
-    .action((options: { destination: string }) => {
+    .action((options: { destination: string; filePath?: string }) => {
       render(
-        <NodeMetricsAlertsInitWizard destination={options.destination} />,
+        <NodeMetricsAlertsInitWizard
+          destination={options.destination}
+          filePath={options.filePath}
+        />,
         {
           exitOnCtrlC: true,
           patchConsole: false,

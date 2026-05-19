@@ -19,11 +19,17 @@ export function registerThresholdAlertsCommand(program: Command): void {
       'infrastructure'
     )
     .option('--filePath <path>', 'Path to a per-device config file')
-    .action((options: { destination: string }) => {
-      render(<ThresholdAlertsInitWizard destination={options.destination} />, {
-        exitOnCtrlC: true,
-        patchConsole: false,
-      });
+    .action((options: { destination: string; filePath?: string }) => {
+      render(
+        <ThresholdAlertsInitWizard
+          destination={options.destination}
+          filePath={options.filePath}
+        />,
+        {
+          exitOnCtrlC: true,
+          patchConsole: false,
+        }
+      );
     });
 
   thresholdAlerts

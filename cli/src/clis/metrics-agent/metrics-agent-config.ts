@@ -56,9 +56,10 @@ export function loadMetricsAgentRemoteWriteUrl(
  */
 export function updateMetricsAgentConfig(
   destination: string,
-  prometheusRemoteWriteUrl: string
+  prometheusRemoteWriteUrl: string,
+  filePath?: string
 ): void {
-  const configPath = resolveConfigPath(destination);
+  const configPath = filePath ?? resolveConfigPath(destination);
   let config: IacToolboxYaml = {};
 
   if (fs.existsSync(configPath)) {

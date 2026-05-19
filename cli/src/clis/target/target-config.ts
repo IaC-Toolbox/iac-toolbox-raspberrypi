@@ -75,9 +75,10 @@ export function loadTargetConfig(destination: string): TargetConfig {
  */
 export function updateTargetConfig(
   destination: string,
-  config: TargetConfig
+  config: TargetConfig,
+  filePath?: string
 ): void {
-  const configPath = resolveConfigPath(destination);
+  const configPath = resolveConfigPath(destination, filePath);
   let existing: IacToolboxYamlWithTarget = {};
 
   if (fs.existsSync(configPath)) {
