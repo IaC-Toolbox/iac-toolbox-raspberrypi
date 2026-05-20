@@ -17,6 +17,7 @@ interface TextInputProps {
 interface NodeMetricsAlertsInitWizardProps {
   destination: string;
   filePath?: string;
+  onComplete?: () => void;
   /** Injectable for testing */
   _onConfirm?: (enabled: boolean, terraformDest: string) => void;
   /** Injectable for testing */
@@ -29,6 +30,7 @@ type Step = 'choose' | 'terraform-dest' | 'done';
 export default function NodeMetricsAlertsInitWizard({
   destination,
   filePath,
+  onComplete,
   _onConfirm,
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
 }: NodeMetricsAlertsInitWizardProps) {
@@ -79,10 +81,25 @@ export default function NodeMetricsAlertsInitWizard({
           );
         }
       }
-      const timer = setTimeout(() => exit(), 100);
+      const timer = setTimeout(() => {
+        if (onComplete) {
+          onComplete();
+        } else {
+          exit();
+        }
+      }, 100);
       return () => clearTimeout(timer);
     }
-  }, [step, selected, terraformDest, destination, filePath, exit, _onConfirm]);
+  }, [
+    step,
+    selected,
+    terraformDest,
+    destination,
+    filePath,
+    exit,
+    onComplete,
+    _onConfirm,
+  ]);
 
   if (step === 'choose') {
     return (
