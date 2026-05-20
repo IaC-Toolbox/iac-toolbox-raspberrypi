@@ -6,7 +6,6 @@ import GrafanaPagerdutyInitWizard from './grafana-pagerduty/grafana-pagerduty-in
 import CloudflareInitWizard from './cloudflare/cloudflare-init-wizard.js';
 import NodeMetricsAlertsInitWizard from './node-metrics-alerts/node-metrics-alerts-init-wizard.js';
 import ContainerMetricsAlertsInitWizard from './container-metrics-alerts/container-metrics-alerts-init-wizard.js';
-import ThresholdAlertsInitWizard from './threshold-alerts/threshold-alerts-init-wizard.js';
 import type { WizardDescriptor, WizardContext } from './run-wizard.js';
 
 export const CLI_WIZARD_MAP: Record<string, WizardDescriptor[]> = {
@@ -102,18 +101,6 @@ export const CLI_WIZARD_MAP: Record<string, WizardDescriptor[]> = {
     {
       fn: (ctx: WizardContext, onComplete) => (
         <ContainerMetricsAlertsInitWizard
-          destination={ctx.destination}
-          filePath={ctx.filePath}
-          onComplete={onComplete}
-        />
-      ),
-    },
-  ],
-
-  'threshold-alerts': [
-    {
-      fn: (ctx: WizardContext, onComplete) => (
-        <ThresholdAlertsInitWizard
           destination={ctx.destination}
           filePath={ctx.filePath}
           onComplete={onComplete}

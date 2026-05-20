@@ -55,4 +55,3 @@ grafana_pagerduty:
   service_name: iac-toolbox
   terraform_dest: ./infrastructure
   pagerduty_token: "{{ pagerduty_token }}"
-
