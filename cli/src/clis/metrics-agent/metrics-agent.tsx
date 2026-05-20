@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { render } from 'ink';
 import { runMetricsAgentInstall } from './metrics-agent-install.js';
-import MetricsAgentInitWizard from './metrics-agent-init-wizard.js';
+import WizardRunner from '../run-wizard.js';
 
 export function registerMetricsAgentCommand(program: Command): void {
   const metricsAgent = program
@@ -19,18 +19,29 @@ export function registerMetricsAgentCommand(program: Command): void {
       'infrastructure'
     )
     .option('--filePath <path>', 'Path to a per-device config file')
-    .action((options: { destination: string; filePath?: string }) => {
-      render(
-        <MetricsAgentInitWizard
-          destination={options.destination}
-          filePath={options.filePath}
-        />,
-        {
-          exitOnCtrlC: true,
-          patchConsole: false,
-        }
-      );
-    });
+    .option('--profile <name>', 'Credential profile to use', 'default')
+    .action(
+      (options: {
+        destination: string;
+        filePath?: string;
+        profile: string;
+      }) => {
+        render(
+          <WizardRunner
+            cliName="metrics-agent"
+            ctx={{
+              destination: options.destination,
+              filePath: options.filePath,
+              profile: options.profile,
+            }}
+          />,
+          {
+            exitOnCtrlC: true,
+            patchConsole: false,
+          }
+        );
+      }
+    );
 
   metricsAgent
     .command('install')

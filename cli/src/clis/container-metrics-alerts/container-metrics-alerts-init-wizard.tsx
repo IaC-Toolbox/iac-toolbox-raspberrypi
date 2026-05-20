@@ -19,6 +19,7 @@ interface TextInputProps {
 interface ContainerMetricsAlertsInitWizardProps {
   destination: string;
   filePath?: string;
+  onComplete?: () => void;
   /** Injectable for testing */
   _onConfirm?: (
     enabled: boolean,
@@ -35,6 +36,7 @@ type Step = 'choose' | 'service-name' | 'terraform-dest' | 'done';
 export default function ContainerMetricsAlertsInitWizard({
   destination,
   filePath,
+  onComplete,
   _onConfirm,
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
 }: ContainerMetricsAlertsInitWizardProps) {
@@ -95,7 +97,13 @@ export default function ContainerMetricsAlertsInitWizard({
           );
         }
       }
-      const timer = setTimeout(() => exit(), 100);
+      const timer = setTimeout(() => {
+        if (onComplete) {
+          onComplete();
+        } else {
+          exit();
+        }
+      }, 100);
       return () => clearTimeout(timer);
     }
   }, [
@@ -106,6 +114,7 @@ export default function ContainerMetricsAlertsInitWizard({
     destination,
     filePath,
     exit,
+    onComplete,
     _onConfirm,
   ]);
 

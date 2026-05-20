@@ -19,6 +19,7 @@ interface TextInputProps {
 interface ThresholdAlertsInitWizardProps {
   destination: string;
   filePath?: string;
+  onComplete?: () => void;
   /** Injectable for testing */
   _onConfirm?: (
     enabled: boolean,
@@ -35,6 +36,7 @@ type Step = 'choose' | 'service-name' | 'terraform-dest' | 'done';
 export default function ThresholdAlertsInitWizard({
   destination,
   filePath,
+  onComplete,
   _onConfirm,
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
 }: ThresholdAlertsInitWizardProps) {
@@ -90,7 +92,13 @@ export default function ThresholdAlertsInitWizard({
           updateThresholdAlertsServiceName(destination, serviceName, filePath);
         }
       }
-      const timer = setTimeout(() => exit(), 100);
+      const timer = setTimeout(() => {
+        if (onComplete) {
+          onComplete();
+        } else {
+          exit();
+        }
+      }, 100);
       return () => clearTimeout(timer);
     }
   }, [
@@ -101,6 +109,7 @@ export default function ThresholdAlertsInitWizard({
     destination,
     filePath,
     exit,
+    onComplete,
     _onConfirm,
   ]);
 
