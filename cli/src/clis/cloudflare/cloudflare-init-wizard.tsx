@@ -32,6 +32,7 @@ interface CloudflareInitWizardProps {
   profile: string;
   destination: string;
   filePath?: string;
+  onComplete?: () => void;
   /** Injectable for testing */
   _TextInput?: (props: TextInputProps) => null;
   /** Injectable for testing */
@@ -147,6 +148,7 @@ export default function CloudflareInitWizard({
   profile,
   destination,
   filePath,
+  onComplete,
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
   _loadCredentials = loadCredentials,
   _saveCredentials = saveCredentials,
@@ -260,7 +262,13 @@ export default function CloudflareInitWizard({
         },
         filePath
       );
-      const timer = setTimeout(() => exit(), 100);
+      const timer = setTimeout(() => {
+        if (onComplete) {
+          onComplete();
+        } else {
+          exit();
+        }
+      }, 100);
       return () => clearTimeout(timer);
     }
   }, [
@@ -275,6 +283,7 @@ export default function CloudflareInitWizard({
     destination,
     filePath,
     exit,
+    onComplete,
     _saveCredentials,
     _updateCloudflareConfig,
   ]);

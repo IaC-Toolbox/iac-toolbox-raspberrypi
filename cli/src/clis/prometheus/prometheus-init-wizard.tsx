@@ -17,6 +17,7 @@ interface TextInputProps {
 interface PrometheusInitWizardProps {
   destination: string;
   filePath?: string;
+  onComplete?: () => void;
   /** Injectable for testing — defaults to the real TextInput from ink-text-input */
   _TextInput?: (props: TextInputProps) => null;
   /** Injectable for testing — defaults to loadPrometheusGrafanaUrl */
@@ -40,6 +41,7 @@ type Step = 'grafana_url' | 'domain' | 'done';
 export default function PrometheusInitWizard({
   destination,
   filePath,
+  onComplete,
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
   _loadGrafanaUrl = loadPrometheusGrafanaUrl,
   _loadDomain = loadPrometheusDomain,
@@ -64,7 +66,13 @@ export default function PrometheusInitWizard({
     if (step === 'done') {
       _updatePrometheusConfig(destination, grafanaUrl, domain, filePath);
       // Give Ink time to render final screen
-      const timer = setTimeout(() => exit(), 100);
+      const timer = setTimeout(() => {
+        if (onComplete) {
+          onComplete();
+        } else {
+          exit();
+        }
+      }, 100);
       return () => clearTimeout(timer);
     }
   }, [
@@ -74,6 +82,7 @@ export default function PrometheusInitWizard({
     destination,
     filePath,
     exit,
+    onComplete,
     _updatePrometheusConfig,
   ]);
 
