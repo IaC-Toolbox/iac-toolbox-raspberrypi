@@ -15,7 +15,6 @@ import {
 import { validateGrafanaPagerduty } from './grafana-pagerduty/grafana-pagerduty.validation.js';
 import { validateNodeMetricsAlerts } from './node-metrics-alerts/node-metrics-alerts.validation.js';
 import { validateContainerMetricsAlerts } from './container-metrics-alerts/container-metrics-alerts.validation.js';
-import { validateThresholdAlerts } from './threshold-alerts/threshold-alerts.validation.js';
 import {
   CliName,
   ConditionKey,
@@ -82,13 +81,6 @@ export const CLI_VALIDATION_MAP: Record<CliName, ValidatorDescriptor[]> = {
     {
       fn: (ctx: ValidationContext) =>
         validateContainerMetricsAlerts(ctx.destination, ctx.filePath),
-    },
-  ],
-
-  [CliName.ThresholdAlerts]: [
-    {
-      fn: (ctx: ValidationContext) =>
-        validateThresholdAlerts(ctx.destination, ctx.filePath),
     },
   ],
 
@@ -166,11 +158,6 @@ export const CLI_VALIDATION_MAP: Record<CliName, ValidatorDescriptor[]> = {
       fn: (ctx: ValidationContext) =>
         validateContainerMetricsAlerts(ctx.destination, ctx.filePath),
       condition: ConditionKey.ContainerMetricsAlerts,
-    },
-    {
-      fn: (ctx: ValidationContext) =>
-        validateThresholdAlerts(ctx.destination, ctx.filePath),
-      condition: ConditionKey.ThresholdAlerts,
     },
   ],
 };

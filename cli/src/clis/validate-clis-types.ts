@@ -6,7 +6,6 @@ export enum CliName {
   GrafanaPagerduty = 'grafana-pagerduty',
   NodeMetricsAlerts = 'node-metrics-alerts',
   ContainerMetricsAlerts = 'container-metrics-alerts',
-  ThresholdAlerts = 'threshold-alerts',
   MetricsAgent = 'metrics-agent',
   Platform = 'platform',
 }
@@ -16,7 +15,6 @@ export enum ConditionKey {
   GrafanaPagerduty = 'grafana_pagerduty',
   NodeMetricsAlerts = 'node_metrics_alerts',
   ContainerMetricsAlerts = 'container_metrics_alerts',
-  ThresholdAlerts = 'threshold_alerts',
 }
 
 export interface ValidationContext {

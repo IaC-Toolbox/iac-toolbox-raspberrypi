@@ -155,11 +155,11 @@ export async function runPlatformApplyInstall(
   const cloudflareEnabled = runInstallSequence(destination, config, tmpFile);
 
   const resolvedConfig = yaml.load(resolvedYaml) as Record<string, unknown>;
-  const alertsConfig = resolvedConfig.threshold_alerts as
+  const nodeMetricsAlertsConfig = resolvedConfig.node_metrics_alerts as
     | { enabled?: boolean }
     | undefined;
 
-  if (alertsConfig?.enabled === true) {
+  if (nodeMetricsAlertsConfig?.enabled === true) {
     runTerraformSequence(destination);
   }
 
