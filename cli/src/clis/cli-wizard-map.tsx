@@ -124,6 +124,24 @@ export const CLI_WIZARD_MAP: Record<string, WizardDescriptor[]> = {
     },
     {
       fn: (ctx: WizardContext, onComplete) => (
+        <NodeMetricsAlertsInitWizard
+          destination={ctx.destination}
+          filePath={ctx.filePath}
+          onComplete={onComplete}
+        />
+      ),
+    },
+    {
+      fn: (ctx: WizardContext, onComplete) => (
+        <ContainerMetricsAlertsInitWizard
+          destination={ctx.destination}
+          filePath={ctx.filePath}
+          onComplete={onComplete}
+        />
+      ),
+    },
+    {
+      fn: (ctx: WizardContext, onComplete) => (
         <MetricsAgentInitWizard
           destination={ctx.destination}
           filePath={ctx.filePath}

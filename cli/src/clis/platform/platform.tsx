@@ -11,10 +11,9 @@ export function registerPlatformCommand(program: Command): void {
   platform
     .command('init')
     .description('Start the observability setup wizard')
-    .option('--profile <name>', 'Credential profile to use', 'default')
-    .option('--output <path>', 'Path to write config file', './iac-toolbox.yml')
-    .action((options: { profile: string; output: string }) => {
-      render(<InitWizard profile={options.profile} output={options.output} />, {
+    .option('--filePath <path>', 'Path to iac-toolbox.yml', './iac-toolbox.yml')
+    .action((options: { filePath: string }) => {
+      render(<InitWizard profile="default" output={options.filePath} />, {
         exitOnCtrlC: true,
         patchConsole: false,
       });
@@ -23,24 +22,8 @@ export function registerPlatformCommand(program: Command): void {
   platform
     .command('apply')
     .description('Install the full observability stack from a config file')
-    .option('--profile <name>', 'Credential profile to use', 'default')
-    .option(
-      '--destination <path>',
-      'Path to infrastructure directory',
-      'infrastructure'
-    )
     .option('--filePath <path>', 'Path to iac-toolbox.yml', './iac-toolbox.yml')
-    .action(
-      async (options: {
-        profile: string;
-        destination: string;
-        filePath: string;
-      }) => {
-        await runPlatformApplyInstall(
-          options.destination,
-          options.profile,
-          options.filePath
-        );
-      }
-    );
+    .action(async (options: { filePath: string }) => {
+      await runPlatformApplyInstall('infrastructure', 'default', options.filePath);
+    });
 }

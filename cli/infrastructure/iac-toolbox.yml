@@ -39,7 +39,7 @@ node_exporter:
   enabled: true
 grafana_alloy:
   enabled: true
-  alloy_remote_write_url: https://grafana.iac-toolbox.com/prometheus/api/v1/write
+  alloy_remote_write_url: https://prometheus.iac-toolbox.com/api/v1/write
 cadvisor:
   enabled: true
 node_metrics_alerts:
