@@ -157,6 +157,7 @@
   debug:
     msg: "Docker and system monitoring dashboard imported at: https://{{ grafana.domain }}{{ docker_system_dashboard_imported.json.importedUrl }}"
   when: docker_system_dashboard_imported is changed
+
 - name: Get OTel FastAPI dashboard JSON from Grafana.com API
   uri:
     url: "https://grafana.com/api/dashboards/23958"
@@ -173,6 +174,7 @@
         | regex_replace('http_server_duration_milliseconds', 'http_server_request_duration_seconds')
         | regex_replace('http_target', 'http_route')
         | regex_replace('http_server_response_size_bytes', 'http_server_response_body_size_bytes')
+        | regex_replace('http_status_code', 'http_response_status_code')
         | from_json
       }}
 
@@ -191,6 +193,14 @@
           type: "datasource"
           pluginId: "prometheus"
           value: "Prometheus"
+        - name: "DS_LOKI"
+          type: "datasource"
+          pluginId: "loki"
+          value: "Loki"
+        - name: "DS_TEMPO"
+          type: "datasource"
+          pluginId: "tempo"
+          value: "Tempo"
     force_basic_auth: true
     status_code: 200
   register: fastapi_otel_dashboard_imported
@@ -273,4 +283,4 @@
       - "Node Exporter Full dashboard imported (ID: 1860)."
       - "cAdvisor dashboard imported (ID: 14282)."
       - "Docker and system monitoring dashboard imported (ID: 16310)."
-      - "FastAPI Observability (OTel) dashboard imported (ID: 17175)."
+      - "FastAPI Observability (OTel) dashboard imported (ID: 23958)."

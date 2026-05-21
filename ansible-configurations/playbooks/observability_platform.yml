@@ -24,8 +24,8 @@
     # - role: grafana-alloy
     #   when: grafana_alloy is defined and grafana_alloy.enabled
 
-    - role: prometheus
-      when: prometheus is defined and prometheus.enabled
+    # - role: prometheus
+    #   when: prometheus is defined and prometheus.enabled
 
     # - role: cadvisor
     #   when: cadvisor is not defined or cadvisor.enabled | default(true)
@@ -42,18 +42,8 @@
     #     - cloudflare.enabled | default(false)
     #     - (cloudflare.mode | default('oauth')) == 'api'
 
-    # - role: grafana
-    #   when: grafana is defined and grafana.enabled
-
-    # - role: threshold_alert_module
-    #   vars:
-    #     threshold_alert_module:
-    #       base: "{{ terraform_base | default('./infrastructure/terraform') }}"
-    #   when: >
-    #     (threshold_alerts is defined and threshold_alerts.enabled | default(false)) or
-    #     (node_metrics_alerts is defined and node_metrics_alerts.enabled | default(false)) or
-    #     (container_metrics_alerts is defined and container_metrics_alerts.enabled | default(false)) or
-    #     (http_status_code_alerts is defined and http_status_code_alerts.enabled | default(false))
+    - role: grafana
+      when: grafana is defined and grafana.enabled
 
     # - role: node_metrics_alerts
     #   when: node_metrics_alerts is defined and node_metrics_alerts.enabled | default(false)
