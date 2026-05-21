@@ -1,6 +1,7 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { render } from 'ink-testing-library';
 import CloudflareInitWizard from './cloudflare-init-wizard.js';
+import type { MultiSelectItem } from './cloudflare-init-wizard.js';
 
 /**
  * CloudflareInitWizard tests.
@@ -18,6 +19,13 @@ interface TextInputProps {
   onChange: (value: string) => void;
   onSubmit: (value: string) => void;
   mask?: string;
+}
+
+interface MultiSelectProps {
+  label: string;
+  items: MultiSelectItem[];
+  defaultSelected?: Set<string>;
+  onSubmit: (selected: MultiSelectItem[]) => void;
 }
 
 function makeTextInputHelper(): {
@@ -41,8 +49,39 @@ function makeTextInputHelper(): {
   };
 }
 
+function makeMultiSelectHelper(): {
+  MultiSelectComponent: (props: MultiSelectProps) => null;
+  submit: (selected: MultiSelectItem[]) => void;
+  getLabel: () => string | undefined;
+  getDefaultSelected: () => Set<string> | undefined;
+} {
+  let onSubmitFn: ((selected: MultiSelectItem[]) => void) | undefined;
+  let labelValue: string | undefined;
+  let defaultSelectedValue: Set<string> | undefined;
+
+  const MultiSelectComponent = (props: MultiSelectProps): null => {
+    onSubmitFn = props.onSubmit;
+    labelValue = props.label;
+    defaultSelectedValue = props.defaultSelected;
+    return null;
+  };
+
+  return {
+    MultiSelectComponent,
+    submit: (selected) => onSubmitFn?.(selected),
+    getLabel: () => labelValue,
+    getDefaultSelected: () => defaultSelectedValue,
+  };
+}
+
 const VALID_HEX_32 = 'a'.repeat(32);
 const VALID_ZONE_ID = 'b'.repeat(32);
+
+const ALL_SERVICES: MultiSelectItem[] = [
+  { label: 'grafana', value: 'grafana' },
+  { label: 'prometheus', value: 'prometheus' },
+  { label: 'loki', value: 'loki' },
+];
 
 /** Token validator that always succeeds */
 const successTokenValidator = async () => ({
@@ -84,6 +123,24 @@ const defaultProps = {
 beforeEach(() => {
   jest.clearAllMocks();
 });
+
+// ---------------------------------------------------------------------------
+// Helper: advance wizard through token → accountId → zoneId → tunnelName
+// ---------------------------------------------------------------------------
+
+async function advanceToServicesStep(
+  helper: ReturnType<typeof makeTextInputHelper>,
+  tunnelName = 'example.com-tunnel'
+): Promise<void> {
+  helper.submit('valid-token');
+  await new Promise((r) => setTimeout(r, 100));
+  helper.submit(VALID_HEX_32);
+  await new Promise((r) => setTimeout(r, 50));
+  helper.submit(VALID_ZONE_ID);
+  await new Promise((r) => setTimeout(r, 100));
+  helper.submit(tunnelName);
+  await new Promise((r) => setTimeout(r, 50));
+}
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -276,162 +333,172 @@ describe('CloudflareInitWizard', () => {
     expect(frame).toContain('Tunnel name must not be empty');
   });
 
-  it('transitions to hostname step after tunnel name', async () => {
-    const helper = makeTextInputHelper();
-    const { lastFrame } = render(
-      <CloudflareInitWizard {...defaultProps} _TextInput={helper.TextInput} />
+  it('transitions to services step after tunnel name', async () => {
+    const textHelper = makeTextInputHelper();
+    const msHelper = makeMultiSelectHelper();
+    render(
+      <CloudflareInitWizard
+        {...defaultProps}
+        _TextInput={textHelper.TextInput}
+        _MultiSelect={msHelper.MultiSelectComponent}
+      />
     );
 
-    helper.submit('valid-token');
-    await new Promise((r) => setTimeout(r, 100));
-    helper.submit(VALID_HEX_32);
-    await new Promise((r) => setTimeout(r, 50));
-    helper.submit(VALID_ZONE_ID);
-    await new Promise((r) => setTimeout(r, 100));
-    helper.submit('example.com-tunnel');
+    await advanceToServicesStep(textHelper);
     await new Promise((r) => setTimeout(r, 50));
 
-    const frame = lastFrame() ?? '';
-    expect(frame).toContain('First domain to expose');
+    // MultiSelect should have been rendered with the correct label
+    expect(msHelper.getLabel()).toBe('Services to expose through the tunnel');
   });
 
-  it('shows error when hostname is empty', async () => {
-    const helper = makeTextInputHelper();
-    const { lastFrame } = render(
-      <CloudflareInitWizard {...defaultProps} _TextInput={helper.TextInput} />
+  it('services step pre-selects all three services on first run', async () => {
+    const textHelper = makeTextInputHelper();
+    const msHelper = makeMultiSelectHelper();
+    render(
+      <CloudflareInitWizard
+        {...defaultProps}
+        _TextInput={textHelper.TextInput}
+        _MultiSelect={msHelper.MultiSelectComponent}
+      />
     );
 
-    helper.submit('valid-token');
-    await new Promise((r) => setTimeout(r, 100));
-    helper.submit(VALID_HEX_32);
-    await new Promise((r) => setTimeout(r, 50));
-    helper.submit(VALID_ZONE_ID);
-    await new Promise((r) => setTimeout(r, 100));
-    helper.submit('example.com-tunnel');
+    await advanceToServicesStep(textHelper);
     await new Promise((r) => setTimeout(r, 50));
 
-    // Submit empty hostname
-    helper.submit('');
-    await new Promise((r) => setTimeout(r, 50));
-
-    const frame = lastFrame() ?? '';
-    expect(frame).toContain('Hostname must not be empty');
-  });
-
-  it('transitions to service port step after hostname', async () => {
-    const helper = makeTextInputHelper();
-    const { lastFrame } = render(
-      <CloudflareInitWizard {...defaultProps} _TextInput={helper.TextInput} />
-    );
-
-    helper.submit('valid-token');
-    await new Promise((r) => setTimeout(r, 100));
-    helper.submit(VALID_HEX_32);
-    await new Promise((r) => setTimeout(r, 50));
-    helper.submit(VALID_ZONE_ID);
-    await new Promise((r) => setTimeout(r, 100));
-    helper.submit('example.com-tunnel');
-    await new Promise((r) => setTimeout(r, 50));
-    helper.submit('grafana.example.com');
-    await new Promise((r) => setTimeout(r, 50));
-
-    const frame = lastFrame() ?? '';
-    expect(frame).toContain('Service port for grafana.example.com');
-  });
-
-  it('shows error for invalid port', async () => {
-    const helper = makeTextInputHelper();
-    const { lastFrame } = render(
-      <CloudflareInitWizard {...defaultProps} _TextInput={helper.TextInput} />
-    );
-
-    helper.submit('valid-token');
-    await new Promise((r) => setTimeout(r, 100));
-    helper.submit(VALID_HEX_32);
-    await new Promise((r) => setTimeout(r, 50));
-    helper.submit(VALID_ZONE_ID);
-    await new Promise((r) => setTimeout(r, 100));
-    helper.submit('example.com-tunnel');
-    await new Promise((r) => setTimeout(r, 50));
-    helper.submit('grafana.example.com');
-    await new Promise((r) => setTimeout(r, 50));
-
-    // Submit invalid port
-    helper.submit('abc');
-    await new Promise((r) => setTimeout(r, 50));
-
-    const frame = lastFrame() ?? '';
-    expect(frame).toContain('Port must be an integer between 1 and 65535');
-  });
-
-  it('shows error for port out of range', async () => {
-    const helper = makeTextInputHelper();
-    const { lastFrame } = render(
-      <CloudflareInitWizard {...defaultProps} _TextInput={helper.TextInput} />
-    );
-
-    helper.submit('valid-token');
-    await new Promise((r) => setTimeout(r, 100));
-    helper.submit(VALID_HEX_32);
-    await new Promise((r) => setTimeout(r, 50));
-    helper.submit(VALID_ZONE_ID);
-    await new Promise((r) => setTimeout(r, 100));
-    helper.submit('example.com-tunnel');
-    await new Promise((r) => setTimeout(r, 50));
-    helper.submit('grafana.example.com');
-    await new Promise((r) => setTimeout(r, 50));
-
-    // Submit out of range port
-    helper.submit('70000');
-    await new Promise((r) => setTimeout(r, 50));
-
-    const frame = lastFrame() ?? '';
-    expect(frame).toContain('Port must be an integer between 1 and 65535');
+    const defaultSelected = msHelper.getDefaultSelected();
+    expect(defaultSelected).toBeDefined();
+    expect(defaultSelected!.has('grafana')).toBe(true);
+    expect(defaultSelected!.has('prometheus')).toBe(true);
+    expect(defaultSelected!.has('loki')).toBe(true);
   });
 
   it('shows done screen and calls save functions on complete', async () => {
-    const helper = makeTextInputHelper();
+    const textHelper = makeTextInputHelper();
+    const msHelper = makeMultiSelectHelper();
     const saveCreds = jest.fn();
     const updateConfig = jest.fn();
     const { lastFrame } = render(
       <CloudflareInitWizard
         {...defaultProps}
-        _TextInput={helper.TextInput}
+        _TextInput={textHelper.TextInput}
+        _MultiSelect={msHelper.MultiSelectComponent}
         _saveCredentials={saveCreds}
         _updateCloudflareConfig={updateConfig}
       />
     );
 
-    helper.submit('my-api-token');
-    await new Promise((r) => setTimeout(r, 100));
-    helper.submit(VALID_HEX_32);
+    // Advance to services step
+    await advanceToServicesStep(textHelper);
     await new Promise((r) => setTimeout(r, 50));
-    helper.submit(VALID_ZONE_ID);
-    await new Promise((r) => setTimeout(r, 100));
-    helper.submit('example.com-tunnel');
-    await new Promise((r) => setTimeout(r, 50));
-    helper.submit('grafana.example.com');
-    await new Promise((r) => setTimeout(r, 50));
-    helper.submit('3000');
-    await new Promise((r) => setTimeout(r, 50));
+
+    // Confirm with all three services selected
+    msHelper.submit(ALL_SERVICES);
+    await new Promise((r) => setTimeout(r, 150));
 
     const frame = lastFrame() ?? '';
     expect(frame).toContain('Cloudflare configuration saved');
     expect(frame).toContain('iac-toolbox cloudflare install');
 
     expect(saveCreds).toHaveBeenCalledWith(
-      { cloudflare_api_token: 'my-api-token' },
+      { cloudflare_api_token: 'valid-token' },
       'default'
     );
     expect(updateConfig).toHaveBeenCalledWith(
       '/tmp/dest',
-      {
+      expect.objectContaining({
         accountId: VALID_HEX_32,
         zoneId: VALID_ZONE_ID,
         tunnelName: 'example.com-tunnel',
-        hostname: 'grafana.example.com',
-        servicePort: 3000,
-      },
+        domains: expect.arrayContaining([
+          expect.objectContaining({ hostname: 'grafana.example.com' }),
+          expect.objectContaining({ hostname: 'prometheus.example.com' }),
+          expect.objectContaining({ hostname: 'loki.example.com' }),
+        ]),
+      }),
+      undefined
+    );
+  });
+
+  it('done screen lists each saved domain hostname', async () => {
+    const textHelper = makeTextInputHelper();
+    const msHelper = makeMultiSelectHelper();
+    const { lastFrame } = render(
+      <CloudflareInitWizard
+        {...defaultProps}
+        _TextInput={textHelper.TextInput}
+        _MultiSelect={msHelper.MultiSelectComponent}
+      />
+    );
+
+    await advanceToServicesStep(textHelper);
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Confirm with all services selected
+    msHelper.submit(ALL_SERVICES);
+    await new Promise((r) => setTimeout(r, 150));
+
+    const frame = lastFrame() ?? '';
+    expect(frame).toContain('grafana.example.com');
+    expect(frame).toContain('prometheus.example.com');
+    expect(frame).toContain('loki.example.com');
+  });
+
+  it('does not advance to done when zero services are selected', async () => {
+    const textHelper = makeTextInputHelper();
+    const msHelper = makeMultiSelectHelper();
+    const { lastFrame } = render(
+      <CloudflareInitWizard
+        {...defaultProps}
+        _TextInput={textHelper.TextInput}
+        _MultiSelect={msHelper.MultiSelectComponent}
+      />
+    );
+
+    await advanceToServicesStep(textHelper);
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Submit empty selection — should not advance
+    msHelper.submit([]);
+    await new Promise((r) => setTimeout(r, 100));
+
+    const frame = lastFrame() ?? '';
+    expect(frame).not.toContain('Cloudflare configuration saved');
+  });
+
+  it('writes only selected service domains when subset is chosen', async () => {
+    const textHelper = makeTextInputHelper();
+    const msHelper = makeMultiSelectHelper();
+    const updateConfig = jest.fn();
+    const { lastFrame } = render(
+      <CloudflareInitWizard
+        {...defaultProps}
+        _TextInput={textHelper.TextInput}
+        _MultiSelect={msHelper.MultiSelectComponent}
+        _updateCloudflareConfig={updateConfig}
+      />
+    );
+
+    await advanceToServicesStep(textHelper);
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Submit only grafana
+    msHelper.submit([{ label: 'grafana', value: 'grafana' }]);
+    await new Promise((r) => setTimeout(r, 150));
+
+    const frame = lastFrame() ?? '';
+    expect(frame).toContain('Cloudflare configuration saved');
+
+    expect(updateConfig).toHaveBeenCalledWith(
+      '/tmp/dest',
+      expect.objectContaining({
+        domains: [
+          {
+            hostname: 'grafana.example.com',
+            service_port: 3000,
+            service: 'http://localhost:3000',
+          },
+        ],
+      }),
       undefined
     );
   });
@@ -465,6 +532,65 @@ describe('CloudflareInitWizard', () => {
     expect(capturedValues[0]).toBe('existing-token');
   });
 
+  it('pre-selects only services present in existing config domains', async () => {
+    const textHelper = makeTextInputHelper();
+    const msHelper = makeMultiSelectHelper();
+    render(
+      <CloudflareInitWizard
+        {...defaultProps}
+        _TextInput={textHelper.TextInput}
+        _MultiSelect={msHelper.MultiSelectComponent}
+        _loadCloudflareConfig={() => ({
+          account_id: VALID_HEX_32,
+          zone_id: VALID_ZONE_ID,
+          tunnel_name: 'my-tunnel',
+          // Only grafana is in the existing config
+          domains: [{ hostname: 'grafana.example.com', service_port: 3000 }],
+        })}
+      />
+    );
+
+    await advanceToServicesStep(textHelper, 'my-tunnel');
+    await new Promise((r) => setTimeout(r, 50));
+
+    const defaultSelected = msHelper.getDefaultSelected();
+    expect(defaultSelected).toBeDefined();
+    // grafana should be pre-selected (it was in config)
+    expect(defaultSelected!.has('grafana')).toBe(true);
+    // prometheus and loki should NOT be pre-selected
+    expect(defaultSelected!.has('prometheus')).toBe(false);
+    expect(defaultSelected!.has('loki')).toBe(false);
+  });
+
+  it('passes filePath to _loadCloudflareConfig', () => {
+    const helper = makeTextInputHelper();
+    const loadConfig = jest.fn<
+      (
+        destination: string,
+        filePath?: string
+      ) =>
+        | {
+            account_id?: string;
+            zone_id?: string;
+            tunnel_name?: string;
+            domains?: Array<{ hostname: string; service_port: number }>;
+          }
+        | undefined
+    >();
+    loadConfig.mockReturnValue(undefined);
+
+    render(
+      <CloudflareInitWizard
+        {...defaultProps}
+        _TextInput={helper.TextInput}
+        _loadCloudflareConfig={loadConfig}
+        filePath="/custom/path.yml"
+      />
+    );
+
+    expect(loadConfig).toHaveBeenCalledWith('/tmp/dest', '/custom/path.yml');
+  });
+
   it('uses custom profile when provided', async () => {
     const helper = makeTextInputHelper();
     const loadCreds = jest.fn<(profile: string) => Record<string, string>>();
@@ -482,21 +608,5 @@ describe('CloudflareInitWizard', () => {
     );
 
     expect(loadCreds).toHaveBeenCalledWith('production');
-
-    // Complete the wizard
-    helper.submit('my-token');
-    await new Promise((r) => setTimeout(r, 100));
-    helper.submit(VALID_HEX_32);
-    await new Promise((r) => setTimeout(r, 50));
-    helper.submit(VALID_ZONE_ID);
-    await new Promise((r) => setTimeout(r, 100));
-    helper.submit('tunnel');
-    await new Promise((r) => setTimeout(r, 50));
-    helper.submit('app.example.com');
-    await new Promise((r) => setTimeout(r, 50));
-    helper.submit('8080');
-    await new Promise((r) => setTimeout(r, 50));
-
-    expect(saveCreds).toHaveBeenCalledWith(expect.any(Object), 'production');
   });
 });

@@ -71,6 +71,29 @@ describe('loadCloudflareConfig', () => {
     expect(result!.domains).toHaveLength(1);
     expect(result!.domains![0].hostname).toBe('app.example.com');
   });
+
+  it('reads from explicit filePath when provided', () => {
+    // Write config to a custom file path inside tmpDir
+    const customPath = path.join(tmpDir, 'custom', 'raspberry-pi.yml');
+    fs.mkdirSync(path.dirname(customPath), { recursive: true });
+    fs.writeFileSync(
+      customPath,
+      yaml.dump({
+        cloudflare: {
+          account_id: 'e'.repeat(32),
+          zone_id: 'f'.repeat(32),
+          tunnel_name: 'custom-tunnel',
+        },
+      })
+    );
+
+    // Pass explicit filePath — should read from customPath, not tmpDir/iac-toolbox.yml
+    const result = loadCloudflareConfig(tmpDir, customPath);
+    expect(result).toBeDefined();
+    expect(result!.account_id).toBe('e'.repeat(32));
+    expect(result!.zone_id).toBe('f'.repeat(32));
+    expect(result!.tunnel_name).toBe('custom-tunnel');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -82,8 +105,13 @@ describe('updateCloudflareConfig', () => {
       accountId: 'a'.repeat(32),
       zoneId: 'b'.repeat(32),
       tunnelName: 'example-tunnel',
-      hostname: 'grafana.example.com',
-      servicePort: 3000,
+      domains: [
+        {
+          hostname: 'grafana.example.com',
+          service_port: 3000,
+          service: 'http://localhost:3000',
+        },
+      ],
     });
 
     const configPath = path.join(tmpDir, 'iac-toolbox.yml');
@@ -112,8 +140,13 @@ describe('updateCloudflareConfig', () => {
       accountId: 'c'.repeat(32),
       zoneId: 'd'.repeat(32),
       tunnelName: 'my-tunnel',
-      hostname: 'app.example.com',
-      servicePort: 8080,
+      domains: [
+        {
+          hostname: 'app.example.com',
+          service_port: 8080,
+          service: 'http://localhost:8080',
+        },
+      ],
     });
 
     const content = fs.readFileSync(configPath, 'utf-8');
@@ -139,8 +172,13 @@ describe('updateCloudflareConfig', () => {
       accountId: 'a'.repeat(32),
       zoneId: 'b'.repeat(32),
       tunnelName: 'test-tunnel',
-      hostname: 'app.example.com',
-      servicePort: 3000,
+      domains: [
+        {
+          hostname: 'app.example.com',
+          service_port: 3000,
+          service: 'http://localhost:3000',
+        },
+      ],
     });
 
     const configPath = path.join(tmpDir, 'iac-toolbox.yml');
@@ -153,8 +191,18 @@ describe('updateCloudflareConfig', () => {
       accountId: 'a'.repeat(32),
       zoneId: 'b'.repeat(32),
       tunnelName: 'test-tunnel',
-      hostname: 'grafana.example.com',
-      servicePort: 3000,
+      domains: [
+        {
+          hostname: 'grafana.example.com',
+          service_port: 3000,
+          service: 'http://localhost:3000',
+        },
+        {
+          hostname: 'prometheus.example.com',
+          service_port: 9090,
+          service: 'http://localhost:9090',
+        },
+      ],
     });
 
     const configPath = path.join(tmpDir, 'iac-toolbox.yml');
@@ -163,10 +211,13 @@ describe('updateCloudflareConfig', () => {
     const cf = parsed.cloudflare as Record<string, unknown>;
     const domains = cf.domains as Array<Record<string, unknown>>;
 
-    expect(domains).toHaveLength(1);
+    expect(domains).toHaveLength(2);
     expect(domains[0].hostname).toBe('grafana.example.com');
     expect(domains[0].service_port).toBe(3000);
     expect(domains[0].service).toBe('http://localhost:3000');
+    expect(domains[1].hostname).toBe('prometheus.example.com');
+    expect(domains[1].service_port).toBe(9090);
+    expect(domains[1].service).toBe('http://localhost:9090');
   });
 
   it('adds header comment to generated config', () => {
@@ -174,8 +225,13 @@ describe('updateCloudflareConfig', () => {
       accountId: 'a'.repeat(32),
       zoneId: 'b'.repeat(32),
       tunnelName: 'test-tunnel',
-      hostname: 'app.example.com',
-      servicePort: 3000,
+      domains: [
+        {
+          hostname: 'app.example.com',
+          service_port: 3000,
+          service: 'http://localhost:3000',
+        },
+      ],
     });
 
     const configPath = path.join(tmpDir, 'iac-toolbox.yml');
