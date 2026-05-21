@@ -110,7 +110,7 @@ discovery.relabel "containers" {
   // Drop infra containers - we don't want Loki logging about itself
   rule {
     source_labels = ["__meta_docker_container_name"]
-    regex         = "/(loki|alloy|grafana|prometheus)$"
+    regex         = "/(loki|alloy|grafana|prometheus|buildx.*)$"
     action        = "drop"
   }
 
