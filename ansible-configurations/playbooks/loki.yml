@@ -2,6 +2,10 @@
 # ============================================
 # IaC Toolbox - Loki Playbook
 # ============================================
+# Deploys Grafana Loki (log store) + Grafana Alloy (log collector).
+# Requires grafana to be already installed and running (creates datasource + dashboard via API).
+
+- import_playbook: common.yml
 
 - name: Deploy Loki
   hosts: all

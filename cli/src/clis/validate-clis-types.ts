@@ -8,6 +8,7 @@ export enum CliName {
   ContainerMetricsAlerts = 'container-metrics-alerts',
   MetricsAgent = 'metrics-agent',
   Platform = 'platform',
+  Loki = 'loki',
 }
 
 export enum ConditionKey {

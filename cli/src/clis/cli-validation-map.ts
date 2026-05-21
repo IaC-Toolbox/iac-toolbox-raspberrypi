@@ -16,6 +16,10 @@ import { validateGrafanaPagerduty } from './grafana-pagerduty/grafana-pagerduty.
 import { validateNodeMetricsAlerts } from './node-metrics-alerts/node-metrics-alerts.validation.js';
 import { validateContainerMetricsAlerts } from './container-metrics-alerts/container-metrics-alerts.validation.js';
 import {
+  validateLoki,
+  type LokiValidationConfig,
+} from './loki/loki.validation.js';
+import {
   CliName,
   ConditionKey,
   type ValidatorDescriptor,
@@ -47,6 +51,17 @@ export const CLI_VALIDATION_MAP: Record<CliName, ValidatorDescriptor[]> = {
           ctx.destination,
           ctx.filePath,
           ctx.config as CadvisorValidationConfig
+        ),
+    },
+  ],
+
+  [CliName.Loki]: [
+    {
+      fn: (ctx: ValidationContext) =>
+        validateLoki(
+          ctx.destination,
+          ctx.filePath,
+          ctx.config as LokiValidationConfig
         ),
     },
   ],
