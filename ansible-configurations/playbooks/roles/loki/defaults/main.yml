@@ -2,8 +2,9 @@
 # Default variables for Loki role
 # These can be overridden in inventory/group_vars/all.yml
 
+loki_version: "latest"
+
 loki_defaults:
-  version: "latest"
   port: 3100
   retention_hours: 168  # 7 days
   base_dir: "~/.iac-toolbox/loki"

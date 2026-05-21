@@ -65,6 +65,38 @@
   delay: 2
   until: grafana_health.status == 200
 
+
+- name: Get Loki Log Dashboard JSON from Grafana.com
+  uri:
+    url: "https://grafana.com/api/dashboards/13639"  # Loki Dashboard - simple log viewer
+    method: GET
+    return_content: yes
+  register: loki_dashboard_json
+
+- name: Import Loki Log Dashboard
+  uri:
+    url: "https://{{ grafana.domain }}/api/dashboards/import"
+    method: POST
+    user: "{{ grafana.admin_user }}"
+    password: "{{ grafana.admin_password }}"
+    body_format: json
+    body:
+      dashboard: "{{ loki_dashboard_json.json.json }}"
+      overwrite: true
+      inputs:
+        - name: "DS_LOKI"
+          type: "datasource"
+          pluginId: "loki"
+          value: "Loki"
+    force_basic_auth: yes
+    status_code: 200
+  register: dashboard_imported
+
+- name: Display dashboard import message
+  debug:
+    msg: "Loki dashboard imported at: https://{{ grafana.domain }}{{ dashboard_imported.json.importedUrl }}"
+  when: dashboard_imported is changed
+
 - name: Get Node Exporter Full dashboard JSON from Grafana.com API
   uri:
     url: "https://grafana.com/api/dashboards/1860"
@@ -284,3 +316,4 @@
       - "cAdvisor dashboard imported (ID: 14282)."
       - "Docker and system monitoring dashboard imported (ID: 16310)."
       - "FastAPI Observability (OTel) dashboard imported (ID: 23958)."
+      - "Loki dashboard imported (ID: 13639)."

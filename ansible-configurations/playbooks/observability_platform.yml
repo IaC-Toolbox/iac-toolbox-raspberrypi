@@ -42,11 +42,11 @@
     #     - cloudflare.enabled | default(false)
     #     - (cloudflare.mode | default('oauth')) == 'api'
 
-    # - role: grafana
-    #   when: grafana is defined and grafana.enabled
+    # - role: loki
+    #   when: loki is defined and loki.enabled | default(false)
 
-    - role: loki
-      when: loki is defined and loki.enabled | default(false)
+    - role: grafana
+      when: grafana is defined and grafana.enabled
 
     # - role: node_metrics_alerts
     #   when: node_metrics_alerts is defined and node_metrics_alerts.enabled | default(false)
