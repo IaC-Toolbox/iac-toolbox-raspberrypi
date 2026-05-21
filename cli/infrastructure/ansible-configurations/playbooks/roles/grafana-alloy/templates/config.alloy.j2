@@ -100,7 +100,7 @@ loki.source.journal "systemd" {
 
 // Discover Docker containers
 discovery.docker "containers" {
-  host = "unix:///var/run/docker.sock"
+  host = "{{ active_docker_socket }}"
 }
 
 // Filter out infrastructure containers
@@ -130,7 +130,7 @@ discovery.relabel "containers" {
 
 // Scrape Docker container logs (only non-infra containers)
 loki.source.docker "containers" {
-  host       = "unix:///var/run/docker.sock"
+  host       = "{{ active_docker_socket }}"
   targets    = discovery.relabel.containers.output
   forward_to = [loki.process.uvicorn.receiver]
   labels = {

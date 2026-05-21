@@ -40,7 +40,7 @@ discovery.relabel "containers" {
 
 // Scrape Docker container logs (only non-infra containers)
 loki.source.docker "containers" {
-  host       = "unix:///var/run/docker.sock"
+  host       = "{{ active_docker_socket }}"
   targets    = discovery.relabel.containers.output
   forward_to = [loki.process.uvicorn.receiver]
   labels = {
@@ -93,6 +93,6 @@ loki.source.file "system_logs" {
 // Send all logs to Loki
 loki.write "local" {
   endpoint {
-    url = "http://loki:{{ loki.port }}/loki/api/v1/push"
+    url = "https://{{ loki.domain }}/loki/api/v1/push"
   }
 }
