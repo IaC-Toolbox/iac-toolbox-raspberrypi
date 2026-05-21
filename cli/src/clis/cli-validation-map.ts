@@ -135,6 +135,14 @@ export const CLI_VALIDATION_MAP: Record<CliName, ValidatorDescriptor[]> = {
     },
     {
       fn: (ctx: ValidationContext) =>
+        validateLoki(
+          ctx.destination,
+          ctx.filePath,
+          ctx.config as LokiValidationConfig
+        ),
+    },
+    {
+      fn: (ctx: ValidationContext) =>
         validateMetricsAgent(
           ctx.destination,
           ctx.filePath,

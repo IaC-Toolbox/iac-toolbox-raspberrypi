@@ -49,7 +49,7 @@ prometheus:
   grafana_url: https://grafana.iac-toolbox.com
   memory_limit: 256m
 loki:
-  enabled: false
+  enabled: true
 node_exporter:
   enabled: true
 cadvisor:
