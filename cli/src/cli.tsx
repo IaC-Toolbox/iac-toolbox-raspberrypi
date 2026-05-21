@@ -10,6 +10,7 @@ import { registerGrafanaPagerdutyCommand } from './clis/grafana-pagerduty/grafan
 import { registerTargetCommand } from './clis/target/target.js';
 import { registerPlatformCommand } from './clis/platform/platform.js';
 import { registerCAdvisorCommand } from './clis/cadvisor/cadvisor.js';
+import { registerLokiCommand } from './clis/loki/loki.js';
 
 const program = new Command();
 
@@ -30,6 +31,7 @@ registerCloudflareCommand(program);
 registerGrafanaCommand(program);
 registerPrometheusCommand(program);
 registerCAdvisorCommand(program);
+registerLokiCommand(program);
 registerNodeMetricsAlertsCommand(program);
 registerContainerMetricsAlertsCommand(program);
 registerGrafanaPagerdutyCommand(program);
