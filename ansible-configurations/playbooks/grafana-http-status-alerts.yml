@@ -1,0 +1,29 @@
+---
+# ============================================
+# IaC Toolbox — Grafana HTTP Status Code Alerts Playbook
+# ============================================
+# Renders Terraform HTTP status code alert templates for a specific service.
+# Prerequisites:
+#   - grafana-alloy must be deployed with OTLP receiver enabled (this feature)
+#   - The target service must be instrumented with the OTel SDK and pushing to Alloy
+# After this playbook completes:
+#   - Alert rules are applied to Grafana via terraform apply (automatic)
+
+- import_playbook: common.yml
+
+- name: Render shared threshold_alert Terraform module
+  hosts: all
+  become: false
+  roles:
+    - role: threshold_alert_module
+      vars:
+        threshold_alert_module:
+          base: "{{ http_status_code_alerts.terraform_dest | dirname }}"
+      when: http_status_code_alerts is defined and http_status_code_alerts.enabled | default(false)
+
+- name: Deploy HTTP Status Code Alert Terraform Templates
+  hosts: all
+  become: false
+  roles:
+    - role: http_status_code_alerts
+      when: http_status_code_alerts is defined and http_status_code_alerts.enabled | default(false)
