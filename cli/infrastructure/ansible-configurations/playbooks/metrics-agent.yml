@@ -10,14 +10,14 @@
   hosts: all
   become: false
   roles:
-    # - role: node_exporter
-    #   when: node_exporter is defined and node_exporter.enabled
+    - role: node_exporter
+      when: node_exporter is defined and node_exporter.enabled
 
     - role: grafana-alloy
       when: grafana_alloy is defined and grafana_alloy.enabled
 
-    # - role: cadvisor
-    #   when: cadvisor is not defined or cadvisor.enabled | default(true)
+    - role: cadvisor
+      when: cadvisor is not defined or cadvisor.enabled | default(true)
 
     # - role: node_metrics_alerts
     #   when: node_metrics_alerts is defined and node_metrics_alerts.enabled | default(false)

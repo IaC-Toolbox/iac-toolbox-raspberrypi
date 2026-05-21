@@ -157,15 +157,26 @@
   debug:
     msg: "Docker and system monitoring dashboard imported at: https://{{ grafana.domain }}{{ docker_system_dashboard_imported.json.importedUrl }}"
   when: docker_system_dashboard_imported is changed
-
-- name: Get FastAPI Observability (OTel) dashboard JSON from Grafana.com API
+- name: Get OTel FastAPI dashboard JSON from Grafana.com API
   uri:
     url: "https://grafana.com/api/dashboards/23958"
     method: GET
     return_content: true
   register: fastapi_otel_dashboard_json
 
-- name: Import FastAPI Observability (OTel) dashboard
+- name: Patch dashboard metric names for OTel Python semantic conventions
+  set_fact:
+    fastapi_otel_dashboard_patched: >-
+      {{
+        fastapi_otel_dashboard_json.json.json
+        | to_json
+        | regex_replace('http_server_duration_milliseconds', 'http_server_request_duration_seconds')
+        | regex_replace('http_target', 'http_route')
+        | regex_replace('http_server_response_size_bytes', 'http_server_response_body_size_bytes')
+        | from_json
+      }}
+
+- name: Import patched FastAPI OTel dashboard
   uri:
     url: "https://{{ grafana.domain }}/api/dashboards/import"
     method: POST
@@ -173,30 +184,22 @@
     password: "{{ grafana.admin_password }}"
     body_format: json
     body:
-      dashboard: "{{ fastapi_otel_dashboard_json.json.json }}"
+      dashboard: "{{ fastapi_otel_dashboard_patched }}"
       overwrite: true
       inputs:
         - name: "DS_PROMETHEUS"
           type: "datasource"
           pluginId: "prometheus"
           value: "Prometheus"
-        - name: "DS_LOKI"
-          type: "datasource"
-          pluginId: "loki"
-          value: "Loki"
-        - name: "DS_TEMPO"
-          type: "datasource"
-          pluginId: "tempo"
-          value: "Tempo"
     force_basic_auth: true
     status_code: 200
   register: fastapi_otel_dashboard_imported
 
-- name: Display FastAPI Observability dashboard import message
+- name: Display FastAPI OTel dashboard import message
   debug:
-    msg: "FastAPI Observability dashboard imported at: https://{{ grafana.domain }}{{ fastapi_otel_dashboard_imported.json.importedUrl }}"
+    msg: "FastAPI OTel dashboard imported at: https://{{ grafana.domain }}{{ fastapi_otel_dashboard_imported.json.importedUrl }}"
   when: fastapi_otel_dashboard_imported is changed
-
+  
 # ── Add container memory gauge panel to cAdvisor dashboard ──────────────────
 
 - name: Get current cAdvisor dashboard from Grafana
@@ -270,4 +273,4 @@
       - "Node Exporter Full dashboard imported (ID: 1860)."
       - "cAdvisor dashboard imported (ID: 14282)."
       - "Docker and system monitoring dashboard imported (ID: 16310)."
-      - "FastAPI Observability (OTel) dashboard imported (ID: 23958)."
+      - "FastAPI Observability (OTel) dashboard imported (ID: 17175)."
