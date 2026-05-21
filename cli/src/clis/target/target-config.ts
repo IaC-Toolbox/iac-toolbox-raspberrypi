@@ -40,7 +40,10 @@ function resolveConfigPath(destination: string, filePath?: string): string {
  * `<destination>/iac-toolbox.yml` path — matching the behaviour of
  * `resolveConfigPath`.
  */
-export function loadTargetConfig(destination: string, filePath?: string): TargetConfig {
+export function loadTargetConfig(
+  destination: string,
+  filePath?: string
+): TargetConfig {
   const configPath = resolveConfigPath(destination, filePath);
 
   if (!fs.existsSync(configPath)) {
