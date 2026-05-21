@@ -35,9 +35,13 @@ function resolveConfigPath(destination: string, filePath?: string): string {
 /**
  * Read the target section from iac-toolbox.yml.
  * Returns local defaults if the file or target section is absent.
+ *
+ * When an explicit `filePath` is provided it takes priority over the default
+ * `<destination>/iac-toolbox.yml` path — matching the behaviour of
+ * `resolveConfigPath`.
  */
-export function loadTargetConfig(destination: string): TargetConfig {
-  const configPath = resolveConfigPath(destination);
+export function loadTargetConfig(destination: string, filePath?: string): TargetConfig {
+  const configPath = resolveConfigPath(destination, filePath);
 
   if (!fs.existsSync(configPath)) {
     return { mode: 'local' };
