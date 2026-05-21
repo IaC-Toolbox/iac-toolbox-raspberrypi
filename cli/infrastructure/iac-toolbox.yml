@@ -4,35 +4,6 @@ device:
   profile: app-server
 docker:
   enabled: true
-github_build_workflow:
-  enabled: true
-  docker_hub_username: vvasylkovskyi1
-  docker_image_name: vvasylkovskyi1/iac-toolbox-cli
-  docker_hub_token: "{{ docker_hub_token }}"
-github_runner:
-  enabled: false
-cloudflare:
-  enabled: true
-  mode: api
-  account_id: 6010b62692a2aa521314ec448f67fb92
-  zone_id: f595ac9a556083288bc7fbe8a6dc2598
-  tunnel_name: mac-test-tunnel
-  cloudflare_api_token: "{{ cloudflare_api_token }}"
-  domains:
-    - hostname: mac.iac-toolbox.com
-      service_port: 9999
-      service: http://localhost:9999
-vault:
-  enabled: false
-grafana:
-  enabled: true
-  admin_user: admin
-  admin_password: "{{ grafana_admin_password }}"
-  url: https://grafana.iac-toolbox.com
-prometheus:
-  enabled: false
-  grafana_url: https://grafana.iac-toolbox.com
-  domain: prometheus.iac-toolbox.com
 target:
   mode: local
 node_exporter:
@@ -42,16 +13,5 @@ grafana_alloy:
   alloy_remote_write_url: https://prometheus.iac-toolbox.com/api/v1/write
 cadvisor:
   enabled: true
-node_metrics_alerts:
-  enabled: true
-  terraform_dest: ./infrastructure/terraform/node-alerts
-container_metrics_alerts:
-  enabled: true
-  service_name: my-service
-  terraform_dest: ./infrastructure/terraform/container-alerts
 grafana_pagerduty:
-  enabled: true
-  service_region: eu
-  service_name: iac-toolbox
-  terraform_dest: ./infrastructure
-  pagerduty_token: "{{ pagerduty_token }}"
+  enabled: false

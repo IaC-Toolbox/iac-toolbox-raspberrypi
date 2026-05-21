@@ -60,3 +60,27 @@ prometheus.relabel "node_exporter_compat" {
   }
 {% endif %}
 }
+
+// ── OTLP receiver: accept telemetry from instrumented services ───────────────
+// Apps push metrics via OTel SDK using:
+//   endpoint = "http://<alloy-host>:4317"  (gRPC)
+//   endpoint = "http://<alloy-host>:4318"  (HTTP)
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:{{ otlp_grpc_port }}"
+  }
+  http {
+    endpoint = "0.0.0.0:{{ otlp_http_port }}"
+  }
+
+  output {
+    // Forward only metrics — no Loki or Tempo configured yet
+    metrics = [otelcol.exporter.prometheus.default.input]
+  }
+}
+
+// Convert OTel metric format to Prometheus and push to the existing remote_write
+otelcol.exporter.prometheus "default" {
+  forward_to                  = [prometheus.remote_write.platform.receiver]
+  resource_to_telemetry_conversion = true
+}
