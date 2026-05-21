@@ -6,6 +6,7 @@ import GrafanaPagerdutyInitWizard from './grafana-pagerduty/grafana-pagerduty-in
 import CloudflareInitWizard from './cloudflare/cloudflare-init-wizard.js';
 import NodeMetricsAlertsInitWizard from './node-metrics-alerts/node-metrics-alerts-init-wizard.js';
 import ContainerMetricsAlertsInitWizard from './container-metrics-alerts/container-metrics-alerts-init-wizard.js';
+import LokiInitWizard from './loki/loki-init-wizard.js';
 import type { WizardDescriptor, WizardContext } from './run-wizard.js';
 
 export const CLI_WIZARD_MAP: Record<string, WizardDescriptor[]> = {
@@ -52,6 +53,18 @@ export const CLI_WIZARD_MAP: Record<string, WizardDescriptor[]> = {
     {
       fn: (ctx: WizardContext, onComplete) => (
         <PrometheusInitWizard
+          destination={ctx.destination}
+          filePath={ctx.filePath}
+          onComplete={onComplete}
+        />
+      ),
+    },
+  ],
+
+  loki: [
+    {
+      fn: (ctx: WizardContext, onComplete) => (
+        <LokiInitWizard
           destination={ctx.destination}
           filePath={ctx.filePath}
           onComplete={onComplete}
