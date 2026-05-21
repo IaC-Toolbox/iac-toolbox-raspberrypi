@@ -1,0 +1,8 @@
+variable "grafana_url"            { type = string }
+variable "grafana_admin_user"     { type = string; default = "admin" }
+variable "grafana_admin_password" { type = string; sensitive = true }
+
+variable "service_name" {
+  type        = string
+  description = "OTel service.name label value. Must match the service_name configured in the OTel SDK."
+}

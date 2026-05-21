@@ -45,11 +45,24 @@
     # - role: grafana
     #   when: grafana is defined and grafana.enabled
 
+    # - role: threshold_alert_module
+    #   vars:
+    #     threshold_alert_module:
+    #       base: "{{ terraform_base | default('./infrastructure/terraform') }}"
+    #   when: >
+    #     (threshold_alerts is defined and threshold_alerts.enabled | default(false)) or
+    #     (node_metrics_alerts is defined and node_metrics_alerts.enabled | default(false)) or
+    #     (container_metrics_alerts is defined and container_metrics_alerts.enabled | default(false)) or
+    #     (http_status_code_alerts is defined and http_status_code_alerts.enabled | default(false))
+
     # - role: node_metrics_alerts
     #   when: node_metrics_alerts is defined and node_metrics_alerts.enabled | default(false)
 
     # - role: container_metrics_alerts
     #   when: container_metrics_alerts is defined and container_metrics_alerts.enabled | default(false)
+
+    # - role: http_status_code_alerts
+    #   when: http_status_code_alerts is defined and http_status_code_alerts.enabled | default(false)
 
     # - role: grafana-pagerduty
     #   when: grafana_pagerduty is defined and grafana_pagerduty.enabled | default(false)

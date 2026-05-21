@@ -1,0 +1,152 @@
+# ── Aggregate 5xx ─────────────────────────────────────────────────────────────
+module "alert_high_5xx_rate" {
+  source         = "../modules/threshold_alert"
+  name           = "High5xxRate"
+  folder_uid     = grafana_folder.http_alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\",service_name=\"${var.service_name}\"}[5m]))"
+  threshold      = 0.05
+  comparator     = "gt"
+  for            = "2m"
+  severity       = "critical"
+  no_data_state  = "OK"
+  service        = var.service_name
+  summary        = "High 5xx rate on ${var.service_name}"
+  description    = "Service is returning more than 0.05 server errors per second. Investigate immediately."
+}
+
+# ── 500 Internal Server Error ─────────────────────────────────────────────────
+module "alert_http_500" {
+  source         = "../modules/threshold_alert"
+  name           = "Http500Rate"
+  folder_uid     = grafana_folder.http_alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=\"500\",service_name=\"${var.service_name}\"}[5m]))"
+  threshold      = 0.02
+  comparator     = "gt"
+  for            = "2m"
+  severity       = "critical"
+  no_data_state  = "OK"
+  service        = var.service_name
+  summary        = "500 Internal Server Errors on ${var.service_name}"
+  description    = "Unhandled exceptions are occurring. Check application logs."
+}
+
+# ── 502 Bad Gateway ───────────────────────────────────────────────────────────
+module "alert_http_502" {
+  source         = "../modules/threshold_alert"
+  name           = "Http502Rate"
+  folder_uid     = grafana_folder.http_alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=\"502\",service_name=\"${var.service_name}\"}[5m]))"
+  threshold      = 0.01
+  comparator     = "gt"
+  for            = "2m"
+  severity       = "critical"
+  no_data_state  = "OK"
+  service        = var.service_name
+  summary        = "502 Bad Gateway on ${var.service_name}"
+  description    = "Upstream service is unreachable or returning invalid responses."
+}
+
+# ── 503 Service Unavailable ───────────────────────────────────────────────────
+module "alert_http_503" {
+  source         = "../modules/threshold_alert"
+  name           = "Http503Rate"
+  folder_uid     = grafana_folder.http_alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=\"503\",service_name=\"${var.service_name}\"}[5m]))"
+  threshold      = 0.01
+  comparator     = "gt"
+  for            = "2m"
+  severity       = "critical"
+  no_data_state  = "OK"
+  service        = var.service_name
+  summary        = "503 Service Unavailable on ${var.service_name}"
+  description    = "Service is unavailable — may be overloaded, shutting down, or under maintenance."
+}
+
+# ── 504 Gateway Timeout ───────────────────────────────────────────────────────
+module "alert_http_504" {
+  source         = "../modules/threshold_alert"
+  name           = "Http504Rate"
+  folder_uid     = grafana_folder.http_alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=\"504\",service_name=\"${var.service_name}\"}[5m]))"
+  threshold      = 0.01
+  comparator     = "gt"
+  for            = "2m"
+  severity       = "critical"
+  no_data_state  = "OK"
+  service        = var.service_name
+  summary        = "504 Gateway Timeout on ${var.service_name}"
+  description    = "Upstream service is not responding in time. Possible cascade failure."
+}
+
+# ── Aggregate 4xx ─────────────────────────────────────────────────────────────
+module "alert_high_4xx_rate" {
+  source         = "../modules/threshold_alert"
+  name           = "High4xxRate"
+  folder_uid     = grafana_folder.http_alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"4..\",service_name=\"${var.service_name}\"}[5m]))"
+  threshold      = 1.0
+  comparator     = "gt"
+  for            = "5m"
+  severity       = "warning"
+  no_data_state  = "OK"
+  service        = var.service_name
+  summary        = "High 4xx rate on ${var.service_name}"
+  description    = "Elevated client error rate. Could indicate a bad client deploy, expired credentials, or scanning."
+}
+
+# ── 401 Unauthorized ──────────────────────────────────────────────────────────
+module "alert_http_401" {
+  source         = "../modules/threshold_alert"
+  name           = "Http401Rate"
+  folder_uid     = grafana_folder.http_alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=\"401\",service_name=\"${var.service_name}\"}[5m]))"
+  threshold      = 0.5
+  comparator     = "gt"
+  for            = "5m"
+  severity       = "warning"
+  no_data_state  = "OK"
+  service        = var.service_name
+  summary        = "High 401 rate on ${var.service_name}"
+  description    = "Elevated authentication failures. Check for expired tokens, brute-force attempts, or auth service outage."
+}
+
+# ── 403 Forbidden ─────────────────────────────────────────────────────────────
+module "alert_http_403" {
+  source         = "../modules/threshold_alert"
+  name           = "Http403Rate"
+  folder_uid     = grafana_folder.http_alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=\"403\",service_name=\"${var.service_name}\"}[5m]))"
+  threshold      = 0.5
+  comparator     = "gt"
+  for            = "5m"
+  severity       = "warning"
+  no_data_state  = "OK"
+  service        = var.service_name
+  summary        = "High 403 rate on ${var.service_name}"
+  description    = "Elevated authorization failures. Check access-control rules or permissions misconfiguration."
+}
+
+# ── 429 Too Many Requests ─────────────────────────────────────────────────────
+module "alert_http_429" {
+  source         = "../modules/threshold_alert"
+  name           = "Http429Rate"
+  folder_uid     = grafana_folder.http_alerts.uid
+  datasource_uid = data.grafana_data_source.prometheus.uid
+  expr           = "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=\"429\",service_name=\"${var.service_name}\"}[5m]))"
+  threshold      = 1.0
+  comparator     = "gt"
+  for            = "5m"
+  severity       = "warning"
+  no_data_state  = "OK"
+  service        = var.service_name
+  summary        = "Rate limiting triggered on ${var.service_name}"
+  description    = "Service is actively rate-limiting clients. Could be legitimate load or abuse. Check rate limit policy."
+}

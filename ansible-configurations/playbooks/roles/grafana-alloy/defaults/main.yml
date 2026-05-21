@@ -10,3 +10,7 @@ alloy_docker_host: "host.docker.internal"
 # Port where node_exporter is running on this host (used by scrape config)
 node_exporter_port: 9100
 cadvisor_port: 8080
+
+# OTLP receiver ports — used by instrumented services to push telemetry
+otlp_grpc_port: 4317   # gRPC endpoint (preferred for performance)
+otlp_http_port: 4318   # HTTP/Protobuf endpoint (easier to test with curl)
