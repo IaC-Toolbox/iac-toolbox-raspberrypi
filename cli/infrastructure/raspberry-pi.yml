@@ -18,6 +18,9 @@ cloudflare:
     - hostname: prometheus.iac-toolbox.com
       service_port: 9090
       service: http://localhost:9090
+    - hostname: loki.iac-toolbox.com
+      service_port: 3100
+      service: http://localhost:3100
 vault:
   enabled: false
 target:
@@ -41,7 +44,7 @@ grafana:
 prometheus:
   enabled: true
   version: latest
-  base_dir: ~/.iac-toolbox/prometheus
+  base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/prometheus"
   domain: prometheus.iac-toolbox.com
   port: 9090
   scrape_interval: 15s
@@ -50,6 +53,10 @@ prometheus:
   memory_limit: 256m
 loki:
   enabled: true
+  port: 3100
+  retention_hours: 168
+  base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/loki"
+  domain: loki.iac-toolbox.com
 node_exporter:
   enabled: true
 cadvisor:

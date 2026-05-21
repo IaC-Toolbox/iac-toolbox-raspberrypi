@@ -36,11 +36,14 @@
     #     - cloudflare.enabled | default(false)
     #     - (cloudflare.mode | default('oauth')) == 'oauth'
 
-    # - role: cloudflare-tunnel-api
-    #   when:
-    #     - cloudflare is defined
-    #     - cloudflare.enabled | default(false)
-    #     - (cloudflare.mode | default('oauth')) == 'api'
+    - role: cloudflare-tunnel-api
+      when:
+        - cloudflare is defined
+        - cloudflare.enabled | default(false)
+        - (cloudflare.mode | default('oauth')) == 'api'
+
+    - role: loki
+      when: loki is defined and loki.enabled | default(false)
 
     - role: grafana
       when: grafana is defined and grafana.enabled
