@@ -13,17 +13,17 @@
     # - role: node_exporter
     #   when: node_exporter is defined and node_exporter.enabled
 
-    # - role: grafana-alloy
-    #   when: grafana_alloy is defined and grafana_alloy.enabled
+    - role: grafana-alloy
+      when: grafana_alloy is defined and grafana_alloy.enabled
 
     # - role: cadvisor
     #   when: cadvisor is not defined or cadvisor.enabled | default(true)
 
-    - role: node_metrics_alerts
-      when: node_metrics_alerts is defined and node_metrics_alerts.enabled | default(false)
+    # - role: node_metrics_alerts
+    #   when: node_metrics_alerts is defined and node_metrics_alerts.enabled | default(false)
 
-    - role: container_metrics_alerts
-      when: container_metrics_alerts is defined and container_metrics_alerts.enabled | default(false)
+    # - role: container_metrics_alerts
+    #   when: container_metrics_alerts is defined and container_metrics_alerts.enabled | default(false)
 
-    - role: grafana-pagerduty
-      when: grafana_pagerduty is defined and grafana_pagerduty.enabled | default(false)
+    # - role: grafana-pagerduty
+    #   when: grafana_pagerduty is defined and grafana_pagerduty.enabled | default(false)

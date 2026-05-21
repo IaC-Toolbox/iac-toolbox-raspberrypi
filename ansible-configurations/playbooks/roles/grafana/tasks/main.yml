@@ -160,7 +160,7 @@
 
 - name: Get FastAPI Observability (OTel) dashboard JSON from Grafana.com API
   uri:
-    url: "https://grafana.com/api/dashboards/17175"
+    url: "https://grafana.com/api/dashboards/22784"
     method: GET
     return_content: true
   register: fastapi_otel_dashboard_json
@@ -262,4 +262,4 @@
       - "Node Exporter Full dashboard imported (ID: 1860)."
       - "cAdvisor dashboard imported (ID: 14282)."
       - "Docker and system monitoring dashboard imported (ID: 16310)."
-      - "FastAPI Observability (OTel) dashboard imported (ID: 17175)."
+      - "FastAPI Observability (OTel) dashboard imported (ID: 22784)."

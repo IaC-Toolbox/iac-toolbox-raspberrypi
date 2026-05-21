@@ -79,7 +79,11 @@ otelcol.receiver.otlp "default" {
   }
 }
 
-// Convert OTel metric format to Prometheus and push to the existing remote_write
+// OTel → Prometheus conversion, via relabel passthrough to remote_write
 otelcol.exporter.prometheus "default" {
+  forward_to = [prometheus.relabel.otel_passthrough.receiver]
+}
+
+prometheus.relabel "otel_passthrough" {
   forward_to = [prometheus.remote_write.platform.receiver]
 }

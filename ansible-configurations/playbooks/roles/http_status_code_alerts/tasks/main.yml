@@ -1,9 +1,16 @@
 ---
+- name: Render shared threshold_alert module
+  ansible.builtin.include_role:
+    name: threshold_alert_module
+  vars:
+    threshold_alert_module:
+      base: "{{ http_status_code_alerts.terraform_dest | dirname }}"
+
 - name: Create Terraform destination directory
   ansible.builtin.file:
     path: "{{ http_status_code_alerts.terraform_dest }}"
     state: directory
-    mode: '0755'
+    mode: "0755"
   delegate_to: localhost
 
 - name: Render providers.tf
@@ -22,7 +29,7 @@
   ansible.builtin.template:
     src: terraform.tfvars.j2
     dest: "{{ http_status_code_alerts.terraform_dest }}/terraform.tfvars"
-    mode: '0600'
+    mode: "0600"
   delegate_to: localhost
 
 - name: Add terraform.tfvars to .gitignore
