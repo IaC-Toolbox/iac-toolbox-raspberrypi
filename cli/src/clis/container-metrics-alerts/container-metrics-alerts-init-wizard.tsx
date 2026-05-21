@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react';
 import {
   updateContainerMetricsAlertsConfig,
   loadContainerMetricsAlertsEnabled,
-  loadContainerMetricsAlertsServiceName,
-  updateContainerMetricsAlertsServiceName,
   loadContainerMetricsAlertsTerraformDest,
   updateContainerMetricsAlertsTerraformDest,
 } from './container-metrics-alerts-config.js';
@@ -21,17 +19,13 @@ interface ContainerMetricsAlertsInitWizardProps {
   filePath?: string;
   onComplete?: () => void;
   /** Injectable for testing */
-  _onConfirm?: (
-    enabled: boolean,
-    serviceName: string,
-    terraformDest: string
-  ) => void;
+  _onConfirm?: (enabled: boolean, terraformDest: string) => void;
   /** Injectable for testing */
   _TextInput?: (props: TextInputProps) => null;
 }
 
 type Choice = 'yes' | 'no';
-type Step = 'choose' | 'service-name' | 'terraform-dest' | 'done';
+type Step = 'choose' | 'terraform-dest' | 'done';
 
 export default function ContainerMetricsAlertsInitWizard({
   destination,
@@ -44,17 +38,12 @@ export default function ContainerMetricsAlertsInitWizard({
 
   const existingEnabled = loadContainerMetricsAlertsEnabled(destination);
   const defaultChoice: Choice = existingEnabled === false ? 'no' : 'yes';
-  const existingServiceName =
-    loadContainerMetricsAlertsServiceName(destination) ?? 'my-service';
   const existingTerraformDest =
     loadContainerMetricsAlertsTerraformDest(destination) ??
     './infrastructure/terraform/container-alerts';
 
   const [step, setStep] = useState<Step>('choose');
   const [selected, setSelected] = useState<Choice>(defaultChoice);
-  const [serviceName, setServiceName] = useState(existingServiceName);
-  const [serviceNameInput, setServiceNameInput] = useState(existingServiceName);
-  const [serviceNameError, setServiceNameError] = useState<string | null>(null);
   const [terraformDest, setTerraformDest] = useState(existingTerraformDest);
   const [inputValue, setInputValue] = useState(existingTerraformDest);
   const [inputError, setInputError] = useState<string | null>(null);
@@ -70,7 +59,7 @@ export default function ContainerMetricsAlertsInitWizard({
       setSelected('no');
     } else if (key.return) {
       if (selected === 'yes') {
-        setStep('service-name');
+        setStep('terraform-dest');
       } else {
         setStep('done');
       }
@@ -81,15 +70,10 @@ export default function ContainerMetricsAlertsInitWizard({
     if (step === 'done') {
       const enabled = selected === 'yes';
       if (_onConfirm) {
-        _onConfirm(enabled, serviceName, terraformDest);
+        _onConfirm(enabled, terraformDest);
       } else {
         updateContainerMetricsAlertsConfig(destination, enabled, filePath);
         if (enabled) {
-          updateContainerMetricsAlertsServiceName(
-            destination,
-            serviceName,
-            filePath
-          );
           updateContainerMetricsAlertsTerraformDest(
             destination,
             terraformDest,
@@ -109,7 +93,6 @@ export default function ContainerMetricsAlertsInitWizard({
   }, [
     step,
     selected,
-    serviceName,
     terraformDest,
     destination,
     filePath,
@@ -147,51 +130,6 @@ export default function ContainerMetricsAlertsInitWizard({
     );
   }
 
-  if (step === 'service-name') {
-    return (
-      <Box flexDirection="column" paddingY={1}>
-        <Text bold color="cyan">
-          {'┌  IaC-Toolbox — Container Metrics Alerts Setup'}
-        </Text>
-        <Text bold>{'│'}</Text>
-        <Text dimColor>{'◇  Enable container metrics alerts: yes'}</Text>
-        <Text bold>{'│'}</Text>
-        <Text bold>{'◆  Service name (container name in cAdvisor)'}</Text>
-        <Text>
-          {'│  Used to scope alert expressions to a single container.'}
-        </Text>
-        {serviceNameError && (
-          <Box paddingLeft={3}>
-            <Text color="red">
-              {'✗ '}
-              {serviceNameError}
-            </Text>
-          </Box>
-        )}
-        <Box paddingLeft={3} marginTop={1}>
-          <Text>{'› '}</Text>
-          <InputComponent
-            value={serviceNameInput}
-            onChange={(val) => {
-              setServiceNameInput(val);
-              setServiceNameError(null);
-            }}
-            onSubmit={(val) => {
-              const trimmed = val.trim();
-              if (!trimmed) {
-                setServiceNameError('Service name must not be empty');
-                return;
-              }
-              setServiceName(trimmed);
-              setServiceNameError(null);
-              setStep('terraform-dest');
-            }}
-          />
-        </Box>
-      </Box>
-    );
-  }
-
   if (step === 'terraform-dest') {
     return (
       <Box flexDirection="column" paddingY={1}>
@@ -200,11 +138,6 @@ export default function ContainerMetricsAlertsInitWizard({
         </Text>
         <Text bold>{'│'}</Text>
         <Text dimColor>{'◇  Enable container metrics alerts: yes'}</Text>
-        <Text bold>{'│'}</Text>
-        <Text dimColor>
-          {'◇  Service name: '}
-          {serviceName}
-        </Text>
         <Text bold>{'│'}</Text>
         <Text bold>{'◆  Terraform destination'}</Text>
         <Text>
@@ -258,18 +191,17 @@ export default function ContainerMetricsAlertsInitWizard({
       </Text>
       {enabled && (
         <Text>
-          {'│  service_name          '}
-          {serviceName}
+          {'│  terraform destination  '}
+          {terraformDest}
           {'    → '}
           {filePath ?? 'iac-toolbox.yml'}
         </Text>
       )}
       {enabled && (
         <Text>
-          {'│  terraform destination  '}
-          {terraformDest}
-          {'    → '}
-          {filePath ?? 'iac-toolbox.yml'}
+          {
+            '│  service_name          derived from top-level service_name at Ansible play time'
+          }
         </Text>
       )}
       <Text bold>{'│'}</Text>

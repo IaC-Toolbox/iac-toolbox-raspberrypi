@@ -5,129 +5,90 @@ import MetricsAgentInitWizard from './metrics-agent-init-wizard.js';
 /**
  * MetricsAgentInitWizard tests.
  *
- * Uses injectable _TextInput prop to avoid TTY dependencies.
+ * The wizard no longer prompts for input — it immediately calls updateMetricsAgentConfig
+ * on mount and shows a success screen. The _updateMetricsAgentConfig prop is injectable
+ * for testing.
  */
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-interface TextInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  onSubmit: (value: string) => void;
-  mask?: string;
-}
-
-/**
- * Returns a fake TextInput component and helpers to simulate typing/submitting.
- */
-function makeTextInputHelper(): {
-  TextInput: (props: TextInputProps) => null;
-  type: (value: string) => void;
-  submit: (value: string) => void;
-} {
-  let onChangeFn: ((value: string) => void) | undefined;
-  let onSubmitFn: ((value: string) => void) | undefined;
-
-  const TextInput = (props: TextInputProps): null => {
-    onChangeFn = props.onChange;
-    onSubmitFn = props.onSubmit;
-    return null;
-  };
-
-  return {
-    TextInput,
-    type: (value) => onChangeFn?.(value),
-    submit: (value) => onSubmitFn?.(value),
-  };
-}
 
 beforeEach(() => {
   jest.clearAllMocks();
 });
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 describe('MetricsAgentInitWizard', () => {
-  it('renders the remote_write URL prompt on initial render', () => {
-    const { TextInput } = makeTextInputHelper();
+  it('renders the success screen immediately', async () => {
     const { lastFrame } = render(
-      <MetricsAgentInitWizard destination="/tmp/dest" _TextInput={TextInput} />
+      <MetricsAgentInitWizard
+        destination="/tmp/dest"
+        _updateMetricsAgentConfig={() => {}}
+      />
+    );
+
+    await new Promise((r) => setTimeout(r, 50));
+
+    const output = lastFrame() ?? '';
+    expect(output).toContain('Metrics agent configuration saved');
+    expect(output).toContain('iac-toolbox metrics-agent install');
+  });
+
+  it('does not prompt for a remote_write URL', () => {
+    const { lastFrame } = render(
+      <MetricsAgentInitWizard
+        destination="/tmp/dest"
+        _updateMetricsAgentConfig={() => {}}
+      />
     );
 
     const output = lastFrame() ?? '';
-    expect(output).toContain('IaC-Toolbox');
-    expect(output).toContain('Metrics Agent Setup');
-    expect(output).toContain('remote_write URL');
+    // The prompt text "metrics will be pushed here" should not appear (it was from the old URL prompt)
+    expect(output).not.toContain('metrics will be pushed here');
+    expect(output).not.toContain('URL must not be empty');
+    expect(output).not.toContain('http:// or https://');
   });
 
-  it('pre-fills URL with the default remote_write URL', () => {
-    let capturedValue = '';
-    const TextInput = (props: TextInputProps): null => {
-      capturedValue = props.value;
-      return null;
-    };
+  it('shows that remote_write URL is derived at Ansible play time', async () => {
+    const { lastFrame } = render(
+      <MetricsAgentInitWizard
+        destination="/tmp/dest"
+        _updateMetricsAgentConfig={() => {}}
+      />
+    );
 
+    await new Promise((r) => setTimeout(r, 50));
+
+    const output = lastFrame() ?? '';
+    expect(output).toContain('prometheus.domain');
+  });
+
+  it('calls _updateMetricsAgentConfig with destination and filePath on mount', async () => {
+    const updateConfig = jest.fn();
     render(
-      <MetricsAgentInitWizard destination="/tmp/dest" _TextInput={TextInput} />
-    );
-
-    // Default value is the hardcoded fallback when no config file exists
-    expect(capturedValue).toContain('prometheus/api/v1/write');
-  });
-
-  it('shows error when empty URL is submitted', async () => {
-    const helper = makeTextInputHelper();
-    const { lastFrame } = render(
       <MetricsAgentInitWizard
         destination="/tmp/dest"
-        _TextInput={helper.TextInput}
+        filePath="/tmp/dest/iac-toolbox.yml"
+        _updateMetricsAgentConfig={updateConfig}
       />
     );
 
-    helper.submit('');
     await new Promise((r) => setTimeout(r, 50));
 
-    const frame = lastFrame() ?? '';
-    expect(frame).toContain('URL must not be empty');
+    expect(updateConfig).toHaveBeenCalledWith(
+      '/tmp/dest',
+      '/tmp/dest/iac-toolbox.yml'
+    );
   });
 
-  it('shows error when URL does not start with http:// or https://', async () => {
-    const helper = makeTextInputHelper();
-    const { lastFrame } = render(
+  it('calls onComplete after a short delay', async () => {
+    const onComplete = jest.fn();
+    render(
       <MetricsAgentInitWizard
         destination="/tmp/dest"
-        _TextInput={helper.TextInput}
+        onComplete={onComplete}
+        _updateMetricsAgentConfig={() => {}}
       />
     );
 
-    helper.submit('ftp://remote-write.example.com/api/v1/write');
-    await new Promise((r) => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 250));
 
-    const frame = lastFrame() ?? '';
-    expect(frame).toContain('URL must start with http:// or https://');
-  });
-
-  it('shows done screen on valid URL submit', async () => {
-    const helper = makeTextInputHelper();
-    const { lastFrame } = render(
-      <MetricsAgentInitWizard
-        destination="/tmp/dest"
-        _TextInput={helper.TextInput}
-      />
-    );
-
-    helper.submit('https://grafana.iac-toolbox.com/prometheus/api/v1/write');
-    await new Promise((r) => setTimeout(r, 50));
-
-    const frame = lastFrame() ?? '';
-    expect(frame).toContain('Metrics agent configuration saved');
-    expect(frame).toContain('iac-toolbox metrics-agent install');
-    expect(frame).toContain(
-      'https://grafana.iac-toolbox.com/prometheus/api/v1/write'
-    );
+    expect(onComplete).toHaveBeenCalled();
   });
 });

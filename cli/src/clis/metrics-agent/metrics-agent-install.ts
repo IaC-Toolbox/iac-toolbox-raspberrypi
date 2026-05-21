@@ -11,6 +11,10 @@ import { validateClis, CliName } from '../validate-clis.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;
+  prometheus?: {
+    domain?: string;
+    [key: string]: unknown;
+  };
   grafana_alloy?: {
     alloy_remote_write_url?: string;
     [key: string]: unknown;
@@ -29,7 +33,14 @@ export async function runMetricsAgentInstall(
   );
   const config = yaml.load(resolvedYaml) as IacToolboxConfig;
 
-  const prometheusRemoteWriteUrl = config.grafana_alloy?.alloy_remote_write_url;
+  // alloy_remote_write_url may not be in the config anymore (derived by Ansible)
+  // Use prometheus.domain to compute the display URL, or fall back to legacy key
+  const prometheusDomain = config.prometheus?.domain;
+  const prometheusRemoteWriteUrl =
+    config.grafana_alloy?.alloy_remote_write_url ??
+    (prometheusDomain
+      ? `https://${prometheusDomain}/api/v1/write`
+      : 'http://localhost:9090/api/v1/write');
 
   let status: number;
   try {

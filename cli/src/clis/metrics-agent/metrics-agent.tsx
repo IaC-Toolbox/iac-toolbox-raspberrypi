@@ -12,7 +12,9 @@ export function registerMetricsAgentCommand(program: Command): void {
 
   metricsAgent
     .command('init')
-    .description('Configure Prometheus remote_write URL for metrics agent')
+    .description(
+      'Enable Grafana Alloy, Node Exporter, and cAdvisor in iac-toolbox.yml'
+    )
     .option(
       '--destination <path>',
       'Path to infrastructure directory',

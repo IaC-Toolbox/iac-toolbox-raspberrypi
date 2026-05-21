@@ -13,6 +13,5 @@ grafana_defaults:
   vault_path: 'kv/observability/grafana'
   domain: 'grafana.iac-toolbox.com'
   provisioning_dir: '{{ ansible_env.HOME }}/.iac-toolbox/grafana/provisioning'
-  # Port of Prometheus instance (used by datasource provisioning)
-  prometheus_port: 9090
+
 
