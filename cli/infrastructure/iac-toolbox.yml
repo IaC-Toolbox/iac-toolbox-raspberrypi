@@ -15,3 +15,5 @@ cadvisor:
   enabled: true
 grafana_pagerduty:
   enabled: false
+loki:
+  domain: loki.iac-toolbox.com
