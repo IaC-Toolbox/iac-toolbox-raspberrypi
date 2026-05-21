@@ -24,6 +24,10 @@ export function registerPlatformCommand(program: Command): void {
     .description('Install the full observability stack from a config file')
     .option('--filePath <path>', 'Path to iac-toolbox.yml', './iac-toolbox.yml')
     .action(async (options: { filePath: string }) => {
-      await runPlatformApplyInstall('infrastructure', 'default', options.filePath);
+      await runPlatformApplyInstall(
+        'infrastructure',
+        'default',
+        options.filePath
+      );
     });
 }

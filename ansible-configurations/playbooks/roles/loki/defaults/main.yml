@@ -6,6 +6,7 @@ loki_defaults:
   version: "latest"
   port: 3100
   retention_hours: 168  # 7 days
+  base_dir: "~/.iac-toolbox/loki"
 
 alloy_defaults:
   version: "latest"
