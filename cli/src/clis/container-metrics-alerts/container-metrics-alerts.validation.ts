@@ -1,7 +1,5 @@
-import {
-  loadContainerMetricsAlertsEnabled,
-  loadContainerMetricsAlertsServiceName,
-} from './container-metrics-alerts-config.js';
+import { loadContainerMetricsAlertsEnabled } from './container-metrics-alerts-config.js';
+import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
 import { print } from '../../design-system/print.js';
 
 export function validateContainerMetricsAlerts(
@@ -20,14 +18,19 @@ export function validateContainerMetricsAlerts(
     process.exit(1);
   }
 
-  const serviceName = loadContainerMetricsAlertsServiceName(
-    destination,
-    filePath
-  );
+  // service_name is now a top-level canonical field (not under container_metrics_alerts)
+  // Check top-level service_name; fall back to container_metrics_alerts.service_name for backward compat
+  const topLevel = loadIacToolboxYaml(destination, filePath) as {
+    service_name?: string;
+    container_metrics_alerts?: { service_name?: string };
+  };
+  const serviceName =
+    topLevel.service_name ?? topLevel.container_metrics_alerts?.service_name;
+
   if (!serviceName) {
-    print.error('container_metrics_alerts.service_name not set');
+    print.error('service_name not set');
     print.pipe(
-      'Run `iac-toolbox container-metrics-alerts init` to configure the service name.'
+      'Add a top-level service_name field to iac-toolbox.yml, or run `iac-toolbox container-metrics-alerts init`.'
     );
     print.pipe(
       'The service name must match the exact container name in cAdvisor metrics.'

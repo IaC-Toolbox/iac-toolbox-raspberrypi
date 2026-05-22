@@ -5,7 +5,6 @@ import {
   generateConfig,
   generatePassword,
   deriveTunnelName,
-  deriveRemoteWriteUrl,
 } from './configGenerator.js';
 import type { WizardConfig, WizardInputs } from './configGenerator.js';
 
@@ -165,24 +164,6 @@ describe('deriveTunnelName', () => {
   });
 });
 
-describe('deriveRemoteWriteUrl', () => {
-  it('returns local URL when no domain provided', () => {
-    expect(deriveRemoteWriteUrl()).toBe('http://localhost:9090/api/v1/write');
-  });
-
-  it('returns local URL when domain is undefined', () => {
-    expect(deriveRemoteWriteUrl(undefined)).toBe(
-      'http://localhost:9090/api/v1/write'
-    );
-  });
-
-  it('returns https prometheus subdomain URL when domain provided', () => {
-    expect(deriveRemoteWriteUrl('iac-toolbox.com')).toBe(
-      'https://prometheus.iac-toolbox.com/api/v1/write'
-    );
-  });
-});
-
 describe('generateConfig', () => {
   const remoteNoCloudflare: WizardInputs = {
     targetMode: 'remote',
@@ -243,11 +224,9 @@ describe('generateConfig', () => {
     expect(result).not.toContain('ssh_key:');
   });
 
-  it('includes local alloy remote_write URL when cloudflare disabled', () => {
+  it('does not include alloy_remote_write_url when cloudflare disabled', () => {
     const result = generateConfig(remoteNoCloudflare);
-    expect(result).toContain(
-      'alloy_remote_write_url: http://localhost:9090/api/v1/write'
-    );
+    expect(result).not.toContain('alloy_remote_write_url:');
   });
 
   it('includes grafana and prometheus sections', () => {
@@ -290,16 +269,35 @@ describe('generateConfig', () => {
     expect(result).toContain('prometheus.iac-toolbox.com');
   });
 
-  it('includes https alloy remote_write URL when cloudflare enabled', () => {
+  it('does not include alloy_remote_write_url when cloudflare enabled', () => {
     const result = generateConfig(remoteWithCloudflare);
-    expect(result).toContain(
-      'alloy_remote_write_url: https://prometheus.iac-toolbox.com/api/v1/write'
-    );
+    expect(result).not.toContain('alloy_remote_write_url:');
   });
 
   it('includes domain-based domains list in cloudflare section', () => {
     const result = generateConfig(remoteWithCloudflare);
     expect(result).toContain('hostname: grafana.iac-toolbox.com');
     expect(result).toContain('hostname: prometheus.iac-toolbox.com');
+  });
+
+  it('emits service_name when provided', () => {
+    const inputs: WizardInputs = {
+      ...remoteNoCloudflare,
+      serviceName: 'my-app',
+    };
+    const result = generateConfig(inputs);
+    expect(result).toContain('service_name: my-app');
+  });
+
+  it('does not emit service_name when not provided', () => {
+    const result = generateConfig(remoteNoCloudflare);
+    expect(result).not.toContain('service_name:');
+  });
+
+  it('does not include prometheus_port, prometheus_domain, or grafana_url', () => {
+    const result = generateConfig(remoteWithCloudflare);
+    expect(result).not.toContain('prometheus_port:');
+    expect(result).not.toContain('prometheus_domain:');
+    expect(result).not.toContain('grafana_url:');
   });
 });

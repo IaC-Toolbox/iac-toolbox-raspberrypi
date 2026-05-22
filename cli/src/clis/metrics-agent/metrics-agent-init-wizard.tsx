@@ -1,113 +1,36 @@
 import { Box, Text, useApp } from 'ink';
-import RealTextInput from 'ink-text-input';
-import { useState, useEffect } from 'react';
-import {
-  updateMetricsAgentConfig,
-  loadMetricsAgentConfig,
-} from './metrics-agent-config.js';
-
-interface TextInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  onSubmit: (value: string) => void;
-  mask?: string;
-}
+import { useEffect } from 'react';
+import { updateMetricsAgentConfig } from './metrics-agent-config.js';
 
 interface MetricsAgentInitWizardProps {
   destination: string;
   filePath?: string;
   onComplete?: () => void;
-  /** Injectable for testing — defaults to the real TextInput from ink-text-input */
-  _TextInput?: (props: TextInputProps) => null;
+  /** Injectable for testing */
+  _updateMetricsAgentConfig?: (destination: string, filePath?: string) => void;
 }
-
-type Step = 'remote_write_url' | 'done';
 
 export default function MetricsAgentInitWizard({
   destination,
   filePath,
   onComplete,
-  _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
+  _updateMetricsAgentConfig = updateMetricsAgentConfig,
 }: MetricsAgentInitWizardProps) {
   const { exit } = useApp();
 
-  const existingUrl =
-    loadMetricsAgentConfig(destination).alloy_remote_write_url;
-
-  const [step, setStep] = useState<Step>('remote_write_url');
-  const [inputValue, setInputValue] = useState(
-    existingUrl || 'https://grafana.iac-toolbox.com/prometheus/api/v1/write'
-  );
-  const [remoteWriteUrl, setRemoteWriteUrl] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  const InputComponent = _TextInput;
-
   useEffect(() => {
-    if (step === 'done') {
-      updateMetricsAgentConfig(destination, remoteWriteUrl, filePath);
-      // Give Ink time to render final screen
-      const timer = setTimeout(() => {
-        if (onComplete) {
-          onComplete();
-        } else {
-          exit();
-        }
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [step, remoteWriteUrl, destination, filePath, exit, onComplete]);
+    _updateMetricsAgentConfig(destination, filePath);
+    // Give Ink time to render final screen
+    const timer = setTimeout(() => {
+      if (onComplete) {
+        onComplete();
+      } else {
+        exit();
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [destination, filePath, exit, onComplete, _updateMetricsAgentConfig]);
 
-  if (step === 'remote_write_url') {
-    return (
-      <Box flexDirection="column" paddingY={1}>
-        <Text bold color="cyan">
-          {'┌  IaC-Toolbox — Metrics Agent Setup'}
-        </Text>
-        <Text bold>{'│'}</Text>
-        <Text bold>
-          {'◆  Prometheus remote_write URL (metrics will be pushed here)'}
-        </Text>
-        {error && (
-          <Box paddingLeft={3}>
-            <Text color="red">
-              {'✗ '}
-              {error}
-            </Text>
-          </Box>
-        )}
-        <Box paddingLeft={3} marginTop={1}>
-          <Text>{'› '}</Text>
-          <InputComponent
-            value={inputValue}
-            onChange={(val) => {
-              setInputValue(val);
-              setError(null);
-            }}
-            onSubmit={(val) => {
-              const trimmed = val.trim();
-              if (!trimmed) {
-                setError('URL must not be empty');
-                return;
-              }
-              if (
-                !trimmed.startsWith('http://') &&
-                !trimmed.startsWith('https://')
-              ) {
-                setError('URL must start with http:// or https://');
-                return;
-              }
-              setRemoteWriteUrl(trimmed);
-              setError(null);
-              setStep('done');
-            }}
-          />
-        </Box>
-      </Box>
-    );
-  }
-
-  // done
   return (
     <Box flexDirection="column" paddingY={1}>
       <Text bold color="green">
@@ -115,10 +38,16 @@ export default function MetricsAgentInitWizard({
       </Text>
       <Text bold>{'│'}</Text>
       <Text>
-        {'│  Remote write URL    '}
-        {remoteWriteUrl}
-        {'    → '}
+        {'│  grafana_alloy.enabled = true    → '}
         {filePath ?? 'iac-toolbox.yml'}
+      </Text>
+      <Text>{'│  node_exporter.enabled = true'}</Text>
+      <Text>{'│  cadvisor.enabled = true'}</Text>
+      <Text bold>{'│'}</Text>
+      <Text>
+        {
+          '│  remote_write URL is derived from prometheus.domain at Ansible play time'
+        }
       </Text>
       <Text bold>{'│'}</Text>
       <Text>{'│  ℹ  To install the metrics agent, run:'}</Text>
@@ -130,4 +59,4 @@ export default function MetricsAgentInitWizard({
   );
 }
 
-export type { MetricsAgentInitWizardProps, TextInputProps };
+export type { MetricsAgentInitWizardProps };

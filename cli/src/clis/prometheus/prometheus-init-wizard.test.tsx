@@ -5,8 +5,11 @@ import PrometheusInitWizard from './prometheus-init-wizard.js';
 /**
  * PrometheusInitWizard tests.
  *
- * Uses injectable _TextInput, _loadGrafanaUrl, and _updatePrometheusConfig
+ * Uses injectable _TextInput, _loadDomain, and _updatePrometheusConfig
  * props to avoid filesystem and TTY dependencies.
+ *
+ * The wizard now has a single step: enter the Prometheus public domain.
+ * grafana_url is no longer prompted — it is derived by Ansible from grafana.domain.
  */
 
 // ---------------------------------------------------------------------------
@@ -53,13 +56,12 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('PrometheusInitWizard', () => {
-  it('renders the Grafana URL prompt on initial render', () => {
+  it('renders the domain prompt on initial render', () => {
     const { TextInput } = makeTextInputHelper();
     const { lastFrame } = render(
       <PrometheusInitWizard
         destination="/tmp/dest"
         _TextInput={TextInput}
-        _loadGrafanaUrl={() => undefined}
         _loadDomain={() => undefined}
         _updatePrometheusConfig={() => {}}
       />
@@ -68,16 +70,30 @@ describe('PrometheusInitWizard', () => {
     const output = lastFrame() ?? '';
     expect(output).toContain('IaC-Toolbox');
     expect(output).toContain('Prometheus Setup');
-    expect(output).toContain('Grafana URL');
+    expect(output).toContain('Prometheus public domain');
   });
 
-  it('shows error when empty URL is submitted', async () => {
+  it('does not show Grafana URL prompt', () => {
+    const { TextInput } = makeTextInputHelper();
+    const { lastFrame } = render(
+      <PrometheusInitWizard
+        destination="/tmp/dest"
+        _TextInput={TextInput}
+        _loadDomain={() => undefined}
+        _updatePrometheusConfig={() => {}}
+      />
+    );
+
+    const output = lastFrame() ?? '';
+    expect(output).not.toContain('Grafana URL');
+  });
+
+  it('shows error when empty domain is submitted', async () => {
     const helper = makeTextInputHelper();
     const { lastFrame } = render(
       <PrometheusInitWizard
         destination="/tmp/dest"
         _TextInput={helper.TextInput}
-        _loadGrafanaUrl={() => undefined}
         _loadDomain={() => undefined}
         _updatePrometheusConfig={() => {}}
       />
@@ -87,91 +103,37 @@ describe('PrometheusInitWizard', () => {
     await new Promise((r) => setTimeout(r, 50));
 
     const frame = lastFrame() ?? '';
-    expect(frame).toContain('URL must not be empty');
+    expect(frame).toContain('Domain must not be empty');
   });
 
-  it('shows error when URL does not start with http:// or https://', async () => {
-    const helper = makeTextInputHelper();
-    const { lastFrame } = render(
-      <PrometheusInitWizard
-        destination="/tmp/dest"
-        _TextInput={helper.TextInput}
-        _loadGrafanaUrl={() => undefined}
-        _loadDomain={() => undefined}
-        _updatePrometheusConfig={() => {}}
-      />
-    );
-
-    helper.submit('ftp://localhost:3000');
-    await new Promise((r) => setTimeout(r, 50));
-
-    const frame = lastFrame() ?? '';
-    expect(frame).toContain('URL must start with http:// or https://');
-  });
-
-  it('shows done screen and calls update config after URL and domain', async () => {
+  it('shows done screen and calls update config after domain submit', async () => {
     const helper = makeTextInputHelper();
     const updateConfig = jest.fn();
     const { lastFrame } = render(
       <PrometheusInitWizard
         destination="/tmp/dest"
         _TextInput={helper.TextInput}
-        _loadGrafanaUrl={() => undefined}
         _loadDomain={() => undefined}
         _updatePrometheusConfig={updateConfig}
       />
     );
 
-    // Submit Grafana URL
-    helper.submit('http://localhost:3000');
-    await new Promise((r) => setTimeout(r, 50));
-
-    // Submit domain
     helper.submit('prometheus.iac-toolbox.com');
     await new Promise((r) => setTimeout(r, 50));
 
     const frame = lastFrame() ?? '';
     expect(frame).toContain('Prometheus configuration saved');
     expect(frame).toContain('iac-toolbox prometheus install');
-    expect(frame).toContain('http://localhost:3000');
+    expect(frame).toContain('prometheus.iac-toolbox.com');
 
     expect(updateConfig).toHaveBeenCalledWith(
       '/tmp/dest',
-      'http://localhost:3000',
       'prometheus.iac-toolbox.com',
       undefined
     );
   });
 
-  it('accepts https URLs', async () => {
-    const helper = makeTextInputHelper();
-    const updateConfig = jest.fn();
-    const { lastFrame } = render(
-      <PrometheusInitWizard
-        destination="/tmp/dest"
-        _TextInput={helper.TextInput}
-        _loadGrafanaUrl={() => undefined}
-        _loadDomain={() => undefined}
-        _updatePrometheusConfig={updateConfig}
-      />
-    );
-
-    helper.submit('https://grafana.example.com');
-    await new Promise((r) => setTimeout(r, 50));
-    helper.submit('prometheus.example.com');
-    await new Promise((r) => setTimeout(r, 50));
-
-    const frame = lastFrame() ?? '';
-    expect(frame).toContain('Prometheus configuration saved');
-    expect(updateConfig).toHaveBeenCalledWith(
-      '/tmp/dest',
-      'https://grafana.example.com',
-      'prometheus.example.com',
-      undefined
-    );
-  });
-
-  it('pre-fills URL from existing config', () => {
+  it('pre-fills domain from existing config', () => {
     let capturedValue = '';
     const TextInput = (props: TextInputProps): null => {
       capturedValue = props.value;
@@ -182,16 +144,15 @@ describe('PrometheusInitWizard', () => {
       <PrometheusInitWizard
         destination="/tmp/dest"
         _TextInput={TextInput}
-        _loadGrafanaUrl={() => 'http://custom-grafana:4000'}
-        _loadDomain={() => undefined}
+        _loadDomain={() => 'prometheus.my-domain.com'}
         _updatePrometheusConfig={() => {}}
       />
     );
 
-    expect(capturedValue).toBe('http://custom-grafana:4000');
+    expect(capturedValue).toBe('prometheus.my-domain.com');
   });
 
-  it('uses default URL when no existing config', () => {
+  it('uses default domain when no existing config', () => {
     let capturedValue = '';
     const TextInput = (props: TextInputProps): null => {
       capturedValue = props.value;
@@ -202,39 +163,33 @@ describe('PrometheusInitWizard', () => {
       <PrometheusInitWizard
         destination="/tmp/dest"
         _TextInput={TextInput}
-        _loadGrafanaUrl={() => undefined}
         _loadDomain={() => undefined}
         _updatePrometheusConfig={() => {}}
       />
     );
 
-    // Default grafana URL when no existing config is 'https://grafana.iac-toolbox.com'
-    expect(capturedValue).toBe('https://grafana.iac-toolbox.com');
+    expect(capturedValue).toBe('prometheus.iac-toolbox.com');
   });
 
-  it('trims whitespace from submitted URL', async () => {
+  it('trims whitespace from submitted domain', async () => {
     const helper = makeTextInputHelper();
     const updateConfig = jest.fn();
     const { lastFrame } = render(
       <PrometheusInitWizard
         destination="/tmp/dest"
         _TextInput={helper.TextInput}
-        _loadGrafanaUrl={() => undefined}
         _loadDomain={() => undefined}
         _updatePrometheusConfig={updateConfig}
       />
     );
 
-    helper.submit('  http://localhost:3000  ');
-    await new Promise((r) => setTimeout(r, 50));
-    helper.submit('prometheus.iac-toolbox.com');
+    helper.submit('  prometheus.iac-toolbox.com  ');
     await new Promise((r) => setTimeout(r, 50));
 
     const frame = lastFrame() ?? '';
     expect(frame).toContain('Prometheus configuration saved');
     expect(updateConfig).toHaveBeenCalledWith(
       '/tmp/dest',
-      'http://localhost:3000',
       'prometheus.iac-toolbox.com',
       undefined
     );

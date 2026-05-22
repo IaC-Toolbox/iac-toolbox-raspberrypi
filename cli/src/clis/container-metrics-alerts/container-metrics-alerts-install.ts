@@ -1,5 +1,6 @@
 import { unlinkSync } from 'fs';
 import { loadContainerMetricsAlertsServiceName } from './container-metrics-alerts-config.js';
+import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
 import { print } from '../../design-system/print.js';
 import {
   runAnsiblePlaybook,
@@ -13,12 +14,14 @@ import { validateClis, CliName } from '../validate-clis.js';
 /**
  * Run `iac-toolbox container-metrics-alerts install`.
  *
- * Reads container_metrics_alerts.enabled and container_metrics_alerts.service_name
- * from iac-toolbox.yml, resolves credential templates, writes a temp config to
- * ~/.iac-toolbox/, then invokes the grafana-container-metrics-alerts.yml playbook.
+ * Reads container_metrics_alerts.enabled from iac-toolbox.yml, resolves
+ * credential templates, writes a temp config to ~/.iac-toolbox/, then invokes
+ * the grafana-container-metrics-alerts.yml playbook.
+ *
+ * service_name is now a top-level field derived by Ansible — the nested
+ * container_metrics_alerts.service_name is kept for backward compatibility.
  *
  * Exits 1 if container_metrics_alerts.enabled is not set — hint to run init first.
- * Exits 1 if container_metrics_alerts.service_name is not set — required for scoping alerts.
  */
 export async function runContainerMetricsAlertsInstall(
   destination: string,
@@ -41,10 +44,14 @@ export async function runContainerMetricsAlertsInstall(
     config,
   });
 
-  const serviceName = loadContainerMetricsAlertsServiceName(
-    destination,
-    filePath
-  );
+  // Prefer top-level service_name; fall back to nested key for backward compat
+  const topLevel = loadIacToolboxYaml(destination, filePath) as {
+    service_name?: string;
+  };
+  const serviceName =
+    topLevel.service_name ??
+    loadContainerMetricsAlertsServiceName(destination, filePath) ??
+    'unknown';
 
   // ── Ansible Invocation ────────────────────────────────────
   print.step('Copying Grafana container metrics alert templates...');

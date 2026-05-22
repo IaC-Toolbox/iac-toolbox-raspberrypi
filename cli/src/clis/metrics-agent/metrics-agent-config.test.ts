@@ -35,7 +35,7 @@ describe('loadMetricsAgentRemoteWriteUrl', () => {
     expect(result).toBeUndefined();
   });
 
-  it('returns correct value when present', () => {
+  it('returns correct value when present (legacy config support)', () => {
     const configPath = path.join(tmpDir, 'iac-toolbox.yml');
     fs.writeFileSync(
       configPath,
@@ -59,19 +59,32 @@ describe('loadMetricsAgentRemoteWriteUrl', () => {
 // ---------------------------------------------------------------------------
 describe('updateMetricsAgentConfig', () => {
   it('creates file if absent', () => {
-    updateMetricsAgentConfig(
-      tmpDir,
-      'https://grafana.iac-toolbox.com/prometheus/api/v1/write'
-    );
+    updateMetricsAgentConfig(tmpDir);
 
     const configPath = path.join(tmpDir, 'iac-toolbox.yml');
     expect(fs.existsSync(configPath)).toBe(true);
+  });
 
-    const content = fs.readFileSync(configPath, 'utf-8');
-    expect(content).toContain('alloy_remote_write_url');
-    expect(content).toContain(
-      'https://grafana.iac-toolbox.com/prometheus/api/v1/write'
+  it('sets grafana_alloy.enabled = true', () => {
+    updateMetricsAgentConfig(tmpDir);
+
+    const configPath = path.join(tmpDir, 'iac-toolbox.yml');
+    const parsed = yaml.load(fs.readFileSync(configPath, 'utf-8')) as Record<
+      string,
+      unknown
+    >;
+
+    expect((parsed.grafana_alloy as Record<string, unknown>).enabled).toBe(
+      true
     );
+  });
+
+  it('does not write alloy_remote_write_url', () => {
+    updateMetricsAgentConfig(tmpDir);
+
+    const configPath = path.join(tmpDir, 'iac-toolbox.yml');
+    const content = fs.readFileSync(configPath, 'utf-8');
+    expect(content).not.toContain('alloy_remote_write_url');
   });
 
   it('preserves other keys in existing config', () => {
@@ -82,10 +95,7 @@ describe('updateMetricsAgentConfig', () => {
     });
     fs.writeFileSync(configPath, existing);
 
-    updateMetricsAgentConfig(
-      tmpDir,
-      'https://grafana.iac-toolbox.com/prometheus/api/v1/write'
-    );
+    updateMetricsAgentConfig(tmpDir);
 
     const content = fs.readFileSync(configPath, 'utf-8');
     const parsed = yaml.load(content) as Record<string, unknown>;
@@ -99,15 +109,14 @@ describe('updateMetricsAgentConfig', () => {
     expect((parsed.prometheus as Record<string, unknown>).port).toBe(9090);
   });
 
-  it('sets correct node_exporter and grafana_alloy values', () => {
-    updateMetricsAgentConfig(
-      tmpDir,
-      'https://grafana.iac-toolbox.com/prometheus/api/v1/write'
-    );
+  it('sets correct node_exporter and cadvisor values', () => {
+    updateMetricsAgentConfig(tmpDir);
 
     const configPath = path.join(tmpDir, 'iac-toolbox.yml');
-    const content = fs.readFileSync(configPath, 'utf-8');
-    const parsed = yaml.load(content) as Record<string, unknown>;
+    const parsed = yaml.load(fs.readFileSync(configPath, 'utf-8')) as Record<
+      string,
+      unknown
+    >;
 
     expect((parsed.node_exporter as Record<string, unknown>).enabled).toBe(
       true
@@ -115,8 +124,5 @@ describe('updateMetricsAgentConfig', () => {
     expect((parsed.grafana_alloy as Record<string, unknown>).enabled).toBe(
       true
     );
-    expect(
-      (parsed.grafana_alloy as Record<string, unknown>).alloy_remote_write_url
-    ).toBe('https://grafana.iac-toolbox.com/prometheus/api/v1/write');
   });
 });

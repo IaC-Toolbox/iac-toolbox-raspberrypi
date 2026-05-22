@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import {
   loadGrafanaPagerdutyConfig,
   updateGrafanaPagerdutyConfig,
+  updateServiceName,
   saveGrafanaPagerdutyToken,
 } from './grafana-pagerduty-config.js';
+import { loadIacToolboxYaml } from 'src/loaders/yaml-loader.js';
 
 interface TextInputProps {
   value: string;
@@ -55,8 +57,13 @@ export default function GrafanaPagerdutyInitWizard({
   const defaultChoice: Choice = existing?.enabled === false ? 'no' : 'yes';
   const existingRegion =
     (existing?.service_region as Region | undefined) ?? 'eu';
+
+  // Load top-level service_name (canonical, not from grafana_pagerduty)
+  const topLevelConfig = loadIacToolboxYaml(destination, filePath) as {
+    service_name?: string;
+  };
   const existingServiceName =
-    existing?.service_name ?? 'Infrastructure-Monitoring';
+    topLevelConfig.service_name ?? 'Infrastructure-Monitoring';
   const existingTerraformDest = existing?.terraform_dest ?? './infrastructure';
 
   const [step, setStep] = useState<Step>('choose');
@@ -97,7 +104,12 @@ export default function GrafanaPagerdutyInitWizard({
       } else if (key.downArrow || input === 'j') {
         setSelectedRegion('us');
       } else if (key.return) {
-        setStep('service-name');
+        // Skip service-name prompt if top-level service_name already set
+        if (topLevelConfig.service_name) {
+          setStep('terraform-dest');
+        } else {
+          setStep('service-name');
+        }
       }
     }
   });
@@ -108,11 +120,14 @@ export default function GrafanaPagerdutyInitWizard({
       if (_onConfirm) {
         _onConfirm(enabled, token, selectedRegion, serviceName, terraformDest);
       } else {
+        // Write service_name at top level (not under grafana_pagerduty)
+        if (enabled && serviceName) {
+          updateServiceName(destination, serviceName, filePath);
+        }
         updateGrafanaPagerdutyConfig(
           destination,
           enabled,
           selectedRegion,
-          serviceName,
           terraformDest,
           filePath
         );
@@ -272,7 +287,9 @@ export default function GrafanaPagerdutyInitWizard({
           {selectedRegion}
         </Text>
         <Text bold>{'│'}</Text>
-        <Text bold>{'◆  PagerDuty service name'}</Text>
+        <Text bold>
+          {'◆  Service name (written to top-level service_name)'}
+        </Text>
         <Text>
           {
             '│  Name of the service to create (no spaces — spaces cause PagerDuty routing issues).'
@@ -329,7 +346,7 @@ export default function GrafanaPagerdutyInitWizard({
         </Text>
         <Text bold>{'│'}</Text>
         <Text dimColor>
-          {'◇  PagerDuty service name: '}
+          {'◇  Service name: '}
           {serviceName}
         </Text>
         <Text bold>{'│'}</Text>
@@ -393,6 +410,7 @@ export default function GrafanaPagerdutyInitWizard({
         <Text>
           {'│  service_name         '}
           {serviceName}
+          {'  → top-level service_name'}
         </Text>
       )}
       {enabled && (
