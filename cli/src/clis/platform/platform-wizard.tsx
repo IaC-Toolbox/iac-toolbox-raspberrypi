@@ -9,6 +9,10 @@ import {
   generatePassword,
   type WizardInputs,
 } from '../../utils/configGenerator.js';
+import {
+  loadTargetConfig,
+  type TargetConfig,
+} from '../target/target-config.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -50,6 +54,8 @@ export interface PlatformWizardProps {
     sshKey: string
   ) => Promise<boolean>;
   _writeFile?: (path: string, content: string) => void;
+  /** Injectable for testing — defaults to loadTargetConfig */
+  _loadTargetConfig?: (destination: string, filePath?: string) => TargetConfig;
 }
 
 type Step =
@@ -133,8 +139,22 @@ export default function PlatformWizard({
   _saveCredentials = saveCredentials,
   _testSshConnection = defaultTestSshConnection,
   _writeFile = defaultWriteFile,
+  _loadTargetConfig = loadTargetConfig,
 }: PlatformWizardProps) {
   const { exit } = useApp();
+
+  // --- derive existing config values for pre-filling ---
+  const existingConfig = _loadTargetConfig('', output);
+  const existingConnectionString =
+    existingConfig.mode === 'remote' &&
+    existingConfig.user &&
+    existingConfig.host
+      ? `${existingConfig.user}@${existingConfig.host}`
+      : '';
+  const existingSshKey =
+    existingConfig.mode === 'remote' && existingConfig.ssh_key
+      ? existingConfig.ssh_key
+      : '~/.ssh/id_ed25519';
 
   // --- state ---
   const [step, setStep] = useState<Step>('target_mode');
@@ -247,7 +267,7 @@ export default function PlatformWizard({
                 setStep('cloudflare_gate');
               } else {
                 setTargetMode('remote');
-                setInputValue('');
+                setInputValue(existingConnectionString);
                 setStep('ssh_string');
               }
             }}
@@ -305,7 +325,7 @@ export default function PlatformWizard({
               setSshHost(parsedHost);
               setConnectionString(trimmed);
               setError(null);
-              setInputValue('~/.ssh/id_ed25519');
+              setInputValue(existingSshKey);
               setStep('ssh_key');
             }}
             placeholder="user@remote_ip"
