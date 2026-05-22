@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { render } from 'ink';
-import InitWizard from './platform-wizard.js';
+import WizardRunner from '../run-wizard.js';
 import { runPlatformApplyInstall } from './platform-apply-install.js';
 
 export function registerPlatformCommand(program: Command): void {
@@ -11,13 +11,35 @@ export function registerPlatformCommand(program: Command): void {
   platform
     .command('init')
     .description('Start the observability setup wizard')
-    .option('--filePath <path>', 'Path to iac-toolbox.yml', './iac-toolbox.yml')
-    .action((options: { filePath: string }) => {
-      render(<InitWizard profile="default" output={options.filePath} />, {
-        exitOnCtrlC: true,
-        patchConsole: false,
-      });
-    });
+    .option(
+      '--destination <path>',
+      'Path to infrastructure directory',
+      'infrastructure'
+    )
+    .option('--filePath <path>', 'Path to a per-device config file')
+    .option('--profile <name>', 'Credential profile to use', 'default')
+    .action(
+      (options: {
+        destination: string;
+        filePath?: string;
+        profile: string;
+      }) => {
+        render(
+          <WizardRunner
+            cliName="platform"
+            ctx={{
+              destination: options.destination,
+              filePath: options.filePath,
+              profile: options.profile,
+            }}
+          />,
+          {
+            exitOnCtrlC: true,
+            patchConsole: false,
+          }
+        );
+      }
+    );
 
   platform
     .command('apply')
