@@ -9,12 +9,8 @@ import {
 interface IacToolboxYaml {
   [key: string]: unknown;
   prometheus?: {
-    grafana_url?: string;
+    // grafana_url was removed — now derived by Ansible from grafana.domain
     domain?: string;
-    [key: string]: unknown;
-  };
-  grafana?: {
-    port?: number;
     [key: string]: unknown;
   };
 }
@@ -22,13 +18,16 @@ interface IacToolboxYaml {
 /**
  * Load the prometheus.grafana_url from iac-toolbox.yml.
  * Returns undefined if the key is not set.
+ * @deprecated grafana_url is no longer stored — it is derived by Ansible from grafana.domain
  */
 export function loadPrometheusGrafanaUrl(
   destination: string,
   filePath?: string
 ): string | undefined {
-  const config = loadIacToolboxYaml(destination, filePath) as IacToolboxYaml;
-  return config.prometheus?.grafana_url as string | undefined;
+  const config = loadIacToolboxYaml(destination, filePath) as IacToolboxYaml & {
+    prometheus?: { grafana_url?: string };
+  };
+  return config.prometheus?.grafana_url;
 }
 
 /**
@@ -44,16 +43,14 @@ export function loadPrometheusDomain(
 }
 
 /**
- * Update the prometheus section of iac-toolbox.yml with grafana_url and domain.
+ * Update the prometheus section of iac-toolbox.yml with domain.
  *
- * Also writes `grafana.port` when the URL uses a non-default port,
- * so the Ansible role picks it up via `@iac-toolbox.yml`.
+ * grafana_url is derived automatically by Ansible from grafana.domain — not stored here.
  *
  * Preserves the rest of the file content.
  */
 export function updatePrometheusConfig(
   destination: string,
-  grafanaUrl: string,
   domain: string,
   filePath?: string
 ): void {
@@ -71,26 +68,11 @@ export function updatePrometheusConfig(
     }
   }
 
-  // Merge prometheus section
+  // Merge prometheus section — grafana_url is derived by Ansible, not stored here
   config.prometheus = {
     ...(config.prometheus || {}),
-    grafana_url: grafanaUrl,
     domain,
   };
-
-  // Parse port from URL and write to grafana.port if non-default
-  try {
-    const parsed = new URL(grafanaUrl);
-    const port = parsed.port;
-    if (port && port !== '3000') {
-      config.grafana = {
-        ...(config.grafana || {}),
-        port: parseInt(port, 10),
-      };
-    }
-  } catch {
-    // Invalid URL — skip port extraction
-  }
 
   // Ensure directory exists
   const dir = path.dirname(configPath);

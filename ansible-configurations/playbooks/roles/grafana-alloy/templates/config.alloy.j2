@@ -24,7 +24,7 @@ prometheus.scrape "cadvisor" {
 // Push metrics to the central Prometheus instance on the platform
 prometheus.remote_write "platform" {
   endpoint {
-    url = "{{ grafana_alloy.alloy_remote_write_url }}"
+    url = "{{ grafana_alloy.alloy_remote_write_url | default('https://' ~ prometheus.domain ~ '/api/v1/write') }}"
   }
 }
 
