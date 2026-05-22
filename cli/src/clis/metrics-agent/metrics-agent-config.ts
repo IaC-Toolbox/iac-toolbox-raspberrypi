@@ -20,6 +20,7 @@ interface IacToolboxYaml {
 /**
  * Load the alloy_remote_write_url from iac-toolbox.yml.
  * Returns an empty object if not set.
+ * @deprecated alloy_remote_write_url is no longer written by the CLI — derived by Ansible from prometheus.domain
  */
 export function loadMetricsAgentConfig(destination: string): {
   alloy_remote_write_url?: string;
@@ -33,6 +34,7 @@ export function loadMetricsAgentConfig(destination: string): {
 /**
  * Load the alloy_remote_write_url value from iac-toolbox.yml.
  * Returns undefined if not set.
+ * @deprecated alloy_remote_write_url is no longer written by the CLI — derived by Ansible from prometheus.domain
  */
 export function loadMetricsAgentRemoteWriteUrl(
   destination: string,
@@ -48,15 +50,16 @@ export function loadMetricsAgentRemoteWriteUrl(
  *
  * Writes:
  *   grafana_alloy.enabled = true
- *   grafana_alloy.alloy_remote_write_url = <prometheusRemoteWriteUrl>
  *   node_exporter.enabled = true
  *   cadvisor.enabled = true
+ *
+ * alloy_remote_write_url is no longer written here — it is derived by Ansible
+ * from prometheus.domain at play time.
  *
  * Preserves the rest of the file content.
  */
 export function updateMetricsAgentConfig(
   destination: string,
-  prometheusRemoteWriteUrl: string,
   filePath?: string
 ): void {
   const configPath = filePath ?? resolveConfigPath(destination);
@@ -75,7 +78,6 @@ export function updateMetricsAgentConfig(
   config.grafana_alloy = {
     ...(config.grafana_alloy || {}),
     enabled: true,
-    alloy_remote_write_url: prometheusRemoteWriteUrl,
   };
 
   config.node_exporter = { ...(config.node_exporter || {}), enabled: true };

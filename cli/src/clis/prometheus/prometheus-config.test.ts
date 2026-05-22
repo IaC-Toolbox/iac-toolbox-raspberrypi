@@ -59,19 +59,22 @@ describe('loadPrometheusGrafanaUrl', () => {
 // updatePrometheusConfig
 // ---------------------------------------------------------------------------
 describe('updatePrometheusConfig', () => {
-  it('creates new config with prometheus section when file does not exist', () => {
-    updatePrometheusConfig(
-      tmpDir,
-      'http://localhost:3000',
-      'prometheus.iac-toolbox.com'
-    );
+  it('creates new config with prometheus.domain when file does not exist', () => {
+    updatePrometheusConfig(tmpDir, 'prometheus.iac-toolbox.com');
 
     const configPath = path.join(tmpDir, 'iac-toolbox.yml');
     expect(fs.existsSync(configPath)).toBe(true);
 
     const content = fs.readFileSync(configPath, 'utf-8');
-    expect(content).toContain('grafana_url');
-    expect(content).toContain('http://localhost:3000');
+    expect(content).toContain('prometheus.iac-toolbox.com');
+  });
+
+  it('does not write grafana_url', () => {
+    updatePrometheusConfig(tmpDir, 'prometheus.iac-toolbox.com');
+
+    const configPath = path.join(tmpDir, 'iac-toolbox.yml');
+    const content = fs.readFileSync(configPath, 'utf-8');
+    expect(content).not.toContain('grafana_url');
   });
 
   it('preserves existing config and merges prometheus section', () => {
@@ -82,11 +85,7 @@ describe('updatePrometheusConfig', () => {
     });
     fs.writeFileSync(configPath, existing);
 
-    updatePrometheusConfig(
-      tmpDir,
-      'http://localhost:3000',
-      'prometheus.iac-toolbox.com'
-    );
+    updatePrometheusConfig(tmpDir, 'prometheus.iac-toolbox.com');
 
     const content = fs.readFileSync(configPath, 'utf-8');
     const parsed = yaml.load(content) as Record<string, unknown>;
@@ -95,47 +94,14 @@ describe('updatePrometheusConfig', () => {
     expect(content).toContain('grafana');
     // Should preserve existing prometheus keys
     expect((parsed.prometheus as Record<string, unknown>).port).toBe(9090);
-    // Should have new grafana_url
-    expect((parsed.prometheus as Record<string, unknown>).grafana_url).toBe(
-      'http://localhost:3000'
-    );
-  });
-
-  it('writes grafana.port when URL has a non-default port', () => {
-    updatePrometheusConfig(
-      tmpDir,
-      'http://grafana.local:4000',
+    // Should have new domain
+    expect((parsed.prometheus as Record<string, unknown>).domain).toBe(
       'prometheus.iac-toolbox.com'
     );
-
-    const configPath = path.join(tmpDir, 'iac-toolbox.yml');
-    const content = fs.readFileSync(configPath, 'utf-8');
-    const parsed = yaml.load(content) as Record<string, unknown>;
-
-    expect((parsed.grafana as Record<string, unknown>).port).toBe(4000);
-  });
-
-  it('does not write grafana.port when URL uses default port 3000', () => {
-    updatePrometheusConfig(
-      tmpDir,
-      'http://localhost:3000',
-      'prometheus.iac-toolbox.com'
-    );
-
-    const configPath = path.join(tmpDir, 'iac-toolbox.yml');
-    const content = fs.readFileSync(configPath, 'utf-8');
-    const parsed = yaml.load(content) as Record<string, unknown>;
-
-    // grafana section should not exist since it wasn't created and port is default
-    expect(parsed.grafana).toBeUndefined();
   });
 
   it('adds header comment to generated config', () => {
-    updatePrometheusConfig(
-      tmpDir,
-      'http://localhost:3000',
-      'prometheus.iac-toolbox.com'
-    );
+    updatePrometheusConfig(tmpDir, 'prometheus.iac-toolbox.com');
 
     const configPath = path.join(tmpDir, 'iac-toolbox.yml');
     const content = fs.readFileSync(configPath, 'utf-8');

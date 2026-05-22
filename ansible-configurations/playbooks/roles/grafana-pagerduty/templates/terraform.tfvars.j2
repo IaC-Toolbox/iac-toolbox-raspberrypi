@@ -1,6 +1,6 @@
-grafana_url              = "{{ grafana.url }}"
+grafana_url              = "https://{{ grafana.domain }}"
 grafana_admin_user       = "{{ grafana.admin_user  }}"
 grafana_admin_password   = "{{ grafana.admin_password }}"
 pagerduty_token          = "{{ grafana_pagerduty.pagerduty_token }}"
 pagerduty_service_region = "{{ grafana_pagerduty.service_region  }}"
-pagerduty_service_name   = "{{ grafana_pagerduty.service_name }}"
+pagerduty_service_name   = "{{ service_name }}"
