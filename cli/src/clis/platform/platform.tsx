@@ -23,11 +23,13 @@ export function registerPlatformCommand(program: Command): void {
     .command('apply')
     .description('Install the full observability stack from a config file')
     .option('--filePath <path>', 'Path to iac-toolbox.yml', './iac-toolbox.yml')
-    .action(async (options: { filePath: string }) => {
+    .option('--debug', 'Stream raw Ansible output instead of the progress bar')
+    .action(async (options: { filePath: string; debug?: boolean }) => {
       await runPlatformApplyInstall(
         'infrastructure',
         'default',
-        options.filePath
+        options.filePath,
+        options.debug
       );
     });
 }

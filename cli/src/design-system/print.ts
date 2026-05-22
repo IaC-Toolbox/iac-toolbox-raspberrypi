@@ -1,6 +1,8 @@
 import chalk from 'chalk';
 import { Colors, Symbols } from './index.js';
 
+let _progressActive = false;
+
 // Map design system color tokens to chalk functions
 const colorFn = (name: string): ((s: string) => string) => {
   const map: Record<string, (s: string) => string> = {
@@ -67,6 +69,39 @@ export const print = {
   /** │  ══...══  Section divider (muted) */
   divider: () =>
     console.log(muted(`${sym.pipe}  ════════════════════════════════════════`)),
+
+  /**
+   * Live progress bar — overwrites the current terminal line using ANSI cursor
+   * control. Safe to call repeatedly; each call replaces the previous bar.
+   * Degrades gracefully when stdout is not a TTY.
+   */
+  progress: (current: number, total: number, label: string) => {
+    const cols = process.stdout.columns ?? 80;
+    const barWidth = Math.min(40, cols - 20);
+    const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+    const filled = total > 0 ? Math.round((current / total) * barWidth) : 0;
+    const bar = '\u2588'.repeat(filled) + '\u2591'.repeat(barWidth - filled);
+    const truncLabel = label.slice(0, cols - barWidth - 16);
+    const line = chalk.gray(
+      `${sym.pipe}  [${bar}] ${String(pct).padStart(3)}%  ${truncLabel}`
+    );
+    if (_progressActive) {
+      process.stdout.write('\x1B[1A\x1B[2K');
+    }
+    process.stdout.write(line + '\n');
+    _progressActive = true;
+  },
+
+  /**
+   * Clear the active progress line. Call once after the operation completes
+   * so the next print.step() / print.success() starts on a clean line.
+   */
+  progressDone: () => {
+    if (_progressActive) {
+      process.stdout.write('\x1B[1A\x1B[2K');
+      _progressActive = false;
+    }
+  },
 
   /**
    * Full failure block for a failed install step.
