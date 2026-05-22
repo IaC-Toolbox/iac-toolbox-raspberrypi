@@ -1,6 +1,7 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { render } from 'ink-testing-library';
 import PlatformWizard from './platform-wizard.js';
+import type { TargetConfig } from '../target/target-config.js';
 
 /**
  * PlatformWizard tests.
@@ -91,6 +92,9 @@ const defaultProps = {
     .fn<(host: string, user: string, key: string) => Promise<boolean>>()
     .mockResolvedValue(true),
   _writeFile: jest.fn<(path: string, content: string) => void>(),
+  _loadTargetConfig: jest
+    .fn<(destination: string, filePath?: string) => TargetConfig>()
+    .mockReturnValue({ mode: 'local' }),
 };
 
 beforeEach(() => {
@@ -912,6 +916,131 @@ describe('PlatformWizard', () => {
         }),
         'default'
       );
+    });
+  });
+
+  describe('SSH pre-fill from existing config', () => {
+    it('pre-fills SSH connection string when config has remote target with user and host', async () => {
+      const selectHelper = makeSelectInputHelper();
+      const textHelper = makeTextInputHelper();
+      const loadTargetConfigFn = jest
+        .fn<(destination: string, filePath?: string) => TargetConfig>()
+        .mockReturnValue({
+          mode: 'remote',
+          host: 'raspberry-4b.local',
+          user: 'vvasylkovskyi',
+          ssh_key: '~/.ssh/raspberrypi-4b',
+        });
+
+      const { lastFrame } = render(
+        <PlatformWizard
+          {...defaultProps}
+          _SelectInput={
+            selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
+          }
+          _TextInput={textHelper.TextInput}
+          _loadTargetConfig={loadTargetConfigFn}
+        />
+      );
+
+      selectHelper.select('remote');
+      await new Promise((r) => setTimeout(r, 50));
+
+      // Submit the pre-filled connection string to advance to ssh_key step
+      textHelper.submit('vvasylkovskyi@raspberry-4b.local');
+      await new Promise((r) => setTimeout(r, 50));
+
+      const frame = lastFrame() ?? '';
+      expect(frame).toContain('SSH private key path');
+      expect(frame).toContain('vvasylkovskyi@raspberry-4b.local');
+    });
+
+    it('shows empty connection string when config has mode local', async () => {
+      const selectHelper = makeSelectInputHelper();
+      const textHelper = makeTextInputHelper();
+      const loadTargetConfigFn = jest
+        .fn<(destination: string, filePath?: string) => TargetConfig>()
+        .mockReturnValue({ mode: 'local' });
+
+      let capturedInputValue: string | undefined;
+      const CapturingTextInput = (props: {
+        value: string;
+        onChange: (v: string) => void;
+        onSubmit: (v: string) => void;
+        placeholder?: string;
+      }): null => {
+        capturedInputValue = props.value;
+        textHelper.TextInput(props);
+        return null;
+      };
+
+      render(
+        <PlatformWizard
+          {...defaultProps}
+          _SelectInput={
+            selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
+          }
+          _TextInput={CapturingTextInput}
+          _loadTargetConfig={loadTargetConfigFn}
+        />
+      );
+
+      selectHelper.select('remote');
+      await new Promise((r) => setTimeout(r, 50));
+
+      // When mode is local in existing config, existingConnectionString is ''
+      expect(capturedInputValue).toBe('');
+    });
+
+    it('pre-fills SSH key path after connection string step when config has ssh_key', async () => {
+      const selectHelper = makeSelectInputHelper();
+      const textHelper = makeTextInputHelper();
+      const loadTargetConfigFn = jest
+        .fn<(destination: string, filePath?: string) => TargetConfig>()
+        .mockReturnValue({
+          mode: 'remote',
+          host: 'raspberry-4b.local',
+          user: 'vvasylkovskyi',
+          ssh_key: '~/.ssh/raspberrypi-4b',
+        });
+
+      let capturedKeyValue: string | undefined;
+      let callCount = 0;
+      const CapturingTextInput = (props: {
+        value: string;
+        onChange: (v: string) => void;
+        onSubmit: (v: string) => void;
+        placeholder?: string;
+      }): null => {
+        callCount += 1;
+        // Track the value on each render; after submitting ssh_string the
+        // component re-renders for ssh_key with the pre-filled key
+        capturedKeyValue = props.value;
+        textHelper.TextInput(props);
+        return null;
+      };
+
+      render(
+        <PlatformWizard
+          {...defaultProps}
+          _SelectInput={
+            selectHelper.SelectInput as unknown as typeof import('ink-select-input').default
+          }
+          _TextInput={CapturingTextInput}
+          _loadTargetConfig={loadTargetConfigFn}
+        />
+      );
+
+      selectHelper.select('remote');
+      await new Promise((r) => setTimeout(r, 50));
+      // Submit a valid connection string to advance to ssh_key step
+      textHelper.submit('vvasylkovskyi@raspberry-4b.local');
+      await new Promise((r) => setTimeout(r, 50));
+
+      // After advancing to ssh_key step, the captured value should be the existing ssh_key
+      expect(capturedKeyValue).toBe('~/.ssh/raspberrypi-4b');
+      // Ensure the CapturingTextInput was rendered at least twice (ssh_string + ssh_key)
+      expect(callCount).toBeGreaterThanOrEqual(2);
     });
   });
 });
