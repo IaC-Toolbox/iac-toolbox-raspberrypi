@@ -25,10 +25,7 @@ cloudflare:
 vault:
   enabled: false
 target:
-  mode: remote
-  host: raspberry-4b.local
-  user: vvasylkovskyi
-  ssh_key: ~/.ssh/raspberrypi-4b
+  mode: local
 grafana:
   enabled: true
   version: latest

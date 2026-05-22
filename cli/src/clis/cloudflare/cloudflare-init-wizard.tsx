@@ -9,12 +9,37 @@ import {
   updateCloudflareConfig,
   loadCloudflareConfig,
 } from './cloudflare-config.js';
+import { MultiSelect } from '../../design-system/components/MultiSelect.js';
+
+const SERVICE_PORTS: Record<string, number> = {
+  grafana: 3000,
+  prometheus: 9090,
+  loki: 3100,
+};
+
+const SERVICE_ITEMS = [
+  { label: 'grafana', value: 'grafana' },
+  { label: 'prometheus', value: 'prometheus' },
+  { label: 'loki', value: 'loki' },
+];
 
 interface TextInputProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit: (value: string) => void;
   mask?: string;
+}
+
+interface MultiSelectItem {
+  label: string;
+  value: string;
+}
+
+interface MultiSelectProps {
+  label: string;
+  items: MultiSelectItem[];
+  defaultSelected?: Set<string>;
+  onSubmit: (selected: MultiSelectItem[]) => void;
 }
 
 interface ValidateTokenFn {
@@ -49,13 +74,19 @@ interface CloudflareInitWizardProps {
       accountId: string;
       zoneId: string;
       tunnelName: string;
-      hostname: string;
-      servicePort: number;
+      domains: Array<{
+        hostname: string;
+        service_port: number;
+        service: string;
+      }>;
     },
     filePath?: string
   ) => void;
   /** Injectable for testing */
-  _loadCloudflareConfig?: (destination: string) =>
+  _loadCloudflareConfig?: (
+    destination: string,
+    filePath?: string
+  ) =>
     | {
         account_id?: string;
         zone_id?: string;
@@ -67,6 +98,8 @@ interface CloudflareInitWizardProps {
   _validateToken?: ValidateTokenFn;
   /** Injectable for testing */
   _validateZone?: ValidateZoneFn;
+  /** Injectable for testing */
+  _MultiSelect?: (props: MultiSelectProps) => null;
 }
 
 type Step =
@@ -74,8 +107,7 @@ type Step =
   | 'accountId'
   | 'zoneId'
   | 'tunnelName'
-  | 'hostname'
-  | 'servicePort'
+  | 'services'
   | 'done';
 
 const HEX_32_REGEX = /^[0-9a-f]{32}$/i;
@@ -156,17 +188,30 @@ export default function CloudflareInitWizard({
   _loadCloudflareConfig = loadCloudflareConfig,
   _validateToken = defaultValidateToken,
   _validateZone = defaultValidateZone,
+  _MultiSelect = MultiSelect as unknown as (props: MultiSelectProps) => null,
 }: CloudflareInitWizardProps) {
   const { exit } = useApp();
   const creds = _loadCredentials(profile);
-  const existingConfig = _loadCloudflareConfig(destination);
+  const existingConfig = _loadCloudflareConfig(destination, filePath);
 
   const existingToken = creds.cloudflare_api_token || '';
   const existingAccountId = existingConfig?.account_id || '';
   const existingZoneId = existingConfig?.zone_id || '';
   const existingTunnelName = existingConfig?.tunnel_name || '';
-  const existingHostname = existingConfig?.domains?.[0]?.hostname || '';
-  const existingPort = existingConfig?.domains?.[0]?.service_port;
+
+  // Derive which services are already in the existing config
+  const existingServiceValues =
+    existingConfig?.domains
+      ?.map((d) => d.hostname.split('.')[0])
+      .filter(
+        (svc): svc is string => svc !== undefined && svc in SERVICE_PORTS
+      ) ?? [];
+
+  const defaultSelectedServices = new Set<string>(
+    existingServiceValues.length > 0
+      ? existingServiceValues
+      : SERVICE_ITEMS.map((i) => i.value)
+  );
 
   const [step, setStep] = useState<Step>('token');
   const [inputValue, setInputValue] = useState(existingToken);
@@ -176,13 +221,15 @@ export default function CloudflareInitWizard({
   const [zoneId, setZoneId] = useState('');
   const [zoneName, setZoneName] = useState('');
   const [tunnelName, setTunnelName] = useState('');
-  const [hostname, setHostname] = useState('');
-  const [servicePort, setServicePort] = useState(0);
+  const [domains, setDomains] = useState<
+    Array<{ hostname: string; service_port: number; service: string }>
+  >([]);
   const [error, setError] = useState<string | null>(null);
   const [validating, setValidating] = useState(false);
   const [validationMsg, setValidationMsg] = useState<string | null>(null);
 
   const InputComponent = _TextInput;
+  const MultiSelectComponent = _MultiSelect;
 
   // Handle async validation using pendingValue (captured at submit time)
   useEffect(() => {
@@ -257,8 +304,7 @@ export default function CloudflareInitWizard({
           accountId,
           zoneId,
           tunnelName,
-          hostname,
-          servicePort,
+          domains,
         },
         filePath
       );
@@ -277,8 +323,7 @@ export default function CloudflareInitWizard({
     accountId,
     zoneId,
     tunnelName,
-    hostname,
-    servicePort,
+    domains,
     profile,
     destination,
     filePath,
@@ -493,8 +538,7 @@ export default function CloudflareInitWizard({
               }
               setTunnelName(trimmed);
               setError(null);
-              setInputValue(existingHostname);
-              setStep('hostname');
+              setStep('services');
             }}
           />
         </Box>
@@ -502,7 +546,7 @@ export default function CloudflareInitWizard({
     );
   }
 
-  if (step === 'hostname') {
+  if (step === 'services') {
     return (
       <Box flexDirection="column" paddingY={1}>
         {header}
@@ -521,97 +565,21 @@ export default function CloudflareInitWizard({
           {tunnelName}
         </Text>
         <Text bold>{'│'}</Text>
-        <Text bold>{'◆  First domain to expose through the tunnel'}</Text>
-        {error && (
-          <Box paddingLeft={3}>
-            <Text color="red">
-              {'✗ '}
-              {error}
-            </Text>
-          </Box>
-        )}
-        <Box paddingLeft={3} marginTop={1}>
-          <Text>{'› '}</Text>
-          <InputComponent
-            value={inputValue}
-            onChange={(val) => {
-              setInputValue(val);
-              setError(null);
-            }}
-            onSubmit={(val) => {
-              const trimmed = val.trim();
-              if (!trimmed) {
-                setError('Hostname must not be empty');
-                return;
-              }
-              setHostname(trimmed);
-              setError(null);
-              setInputValue(existingPort ? String(existingPort) : '');
-              setStep('servicePort');
-            }}
-          />
-        </Box>
-      </Box>
-    );
-  }
-
-  if (step === 'servicePort') {
-    return (
-      <Box flexDirection="column" paddingY={1}>
-        {header}
-        <Text dimColor>{'◇  Cloudflare API token: ********'}</Text>
-        <Text dimColor>
-          {'◇  Account ID: '}
-          {accountId}
-        </Text>
-        <Text dimColor>
-          {'◇  Zone ID: '}
-          {zoneId}
-          {zoneName ? ` (${zoneName})` : ''}
-        </Text>
-        <Text dimColor>
-          {'◇  Tunnel: '}
-          {tunnelName}
-        </Text>
-        <Text dimColor>
-          {'◇  Hostname: '}
-          {hostname}
-        </Text>
-        <Text bold>{'│'}</Text>
-        <Text bold>{`◆  Service port for ${hostname}`}</Text>
-        {error && (
-          <Box paddingLeft={3}>
-            <Text color="red">
-              {'✗ '}
-              {error}
-            </Text>
-          </Box>
-        )}
-        <Box paddingLeft={3} marginTop={1}>
-          <Text>{'› '}</Text>
-          <InputComponent
-            value={inputValue}
-            onChange={(val) => {
-              setInputValue(val);
-              setError(null);
-            }}
-            onSubmit={(val) => {
-              const trimmed = val.trim();
-              if (!trimmed) {
-                setError('Port must not be empty');
-                return;
-              }
-              const port = parseInt(trimmed, 10);
-              if (isNaN(port) || port < 1 || port > 65535) {
-                setError('Port must be an integer between 1 and 65535');
-                return;
-              }
-              setServicePort(port);
-              setError(null);
-              setStep('done');
-            }}
-          />
-        </Box>
+        <MultiSelectComponent
+          label="Services to expose through the tunnel"
+          items={SERVICE_ITEMS}
+          defaultSelected={defaultSelectedServices}
+          onSubmit={(selected) => {
+            if (selected.length === 0) return;
+            const d = selected.map((svc) => ({
+              hostname: `${svc.value}.${zoneName}`,
+              service_port: SERVICE_PORTS[svc.value]!,
+              service: `http://localhost:${SERVICE_PORTS[svc.value]}`,
+            }));
+            setDomains(d);
+            setStep('done');
+          }}
+        />
       </Box>
     );
   }
@@ -649,14 +617,14 @@ export default function CloudflareInitWizard({
         {'               → '}
         {filePath ?? 'iac-toolbox.yml'}
       </Text>
-      <Text>
-        {'│  Domain          '}
-        {hostname}
-        {':'}
-        {servicePort}
-        {'  → '}
-        {filePath ?? 'iac-toolbox.yml'}
-      </Text>
+      {domains.map((d) => (
+        <Text key={d.hostname}>
+          {'│  Domain          '}
+          {d.hostname}
+          {'  → '}
+          {filePath ?? 'iac-toolbox.yml'}
+        </Text>
+      ))}
       <Text bold>{'│'}</Text>
       <Text>{'│  ℹ  To install Cloudflare Tunnel, run:'}</Text>
       <Text bold>{'│'}</Text>
@@ -667,4 +635,9 @@ export default function CloudflareInitWizard({
   );
 }
 
-export type { CloudflareInitWizardProps, TextInputProps };
+export type {
+  CloudflareInitWizardProps,
+  TextInputProps,
+  MultiSelectItem,
+  MultiSelectProps,
+};

@@ -10,12 +10,20 @@ interface MultiSelectItem {
 interface MultiSelectProps {
   label: string;
   items: MultiSelectItem[];
+  defaultSelected?: Set<string>;
   onSubmit: (selected: MultiSelectItem[]) => void;
 }
 
-export function MultiSelect({ label, items, onSubmit }: MultiSelectProps) {
+export function MultiSelect({
+  label,
+  items,
+  defaultSelected,
+  onSubmit,
+}: MultiSelectProps) {
   const [cursor, setCursor] = useState(0);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(
+    defaultSelected ?? new Set()
+  );
 
   useInput((input, key) => {
     if (key.upArrow) {
