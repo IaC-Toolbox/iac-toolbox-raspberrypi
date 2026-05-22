@@ -33,9 +33,10 @@ interface IacToolboxYaml {
  * Returns undefined if the section is not set.
  */
 export function loadCloudflareConfig(
-  destination: string
+  destination: string,
+  filePath?: string
 ): CloudflareSection | undefined {
-  const config = loadIacToolboxYaml(destination) as IacToolboxYaml;
+  const config = loadIacToolboxYaml(destination, filePath) as IacToolboxYaml;
   return config.cloudflare as CloudflareSection | undefined;
 }
 
@@ -51,8 +52,7 @@ export function updateCloudflareConfig(
     accountId: string;
     zoneId: string;
     tunnelName: string;
-    hostname: string;
-    servicePort: number;
+    domains: Array<{ hostname: string; service_port: number; service: string }>;
   },
   filePath?: string
 ): void {
@@ -77,13 +77,7 @@ export function updateCloudflareConfig(
     zone_id: options.zoneId,
     tunnel_name: options.tunnelName,
     cloudflare_api_token: '{{ cloudflare_api_token }}',
-    domains: [
-      {
-        hostname: options.hostname,
-        service_port: options.servicePort,
-        service: `http://localhost:${options.servicePort}`,
-      },
-    ],
+    domains: options.domains,
   };
 
   // Ensure directory exists
