@@ -28,6 +28,7 @@ export function registerArizeCommand(program: Command): void {
         render(
           <ArizeInitWizard
             destination={options.destination}
+            profile={options.profile}
             filePath={options.filePath}
           />,
           { exitOnCtrlC: true, patchConsole: false }

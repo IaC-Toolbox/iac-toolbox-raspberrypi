@@ -13,6 +13,8 @@ services:
       - phoenix_data:/phoenix_storage
     environment:
       PHOENIX_WORKING_DIR: /phoenix_storage
+      PHOENIX_ENABLE_AUTH: True
+      PHOENIX_SECRET: "{{ arize_phoenix_config.secret }}"
 {% if arize_phoenix_config.db == 'postgres' %}
       DATABASE_URL: "postgresql://{{ arize_phoenix_config.db_user }}:{{ arize_phoenix_config.db_password }}@db:5432/{{ arize_phoenix_config.db_name }}"
 {% endif %}

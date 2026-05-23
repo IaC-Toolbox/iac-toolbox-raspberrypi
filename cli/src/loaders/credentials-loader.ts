@@ -16,6 +16,7 @@ export const CREDENTIAL_KEYS = {
   vault_token: 'HashiCorp Vault token',
   grafana_api_key: 'Grafana API key',
   grafana_admin_password: 'Grafana admin password',
+  arize_phoenix_secret: 'Arize Phoenix JWT signing secret',
   pagerduty_key: 'PagerDuty integration key',
 } as const;
 

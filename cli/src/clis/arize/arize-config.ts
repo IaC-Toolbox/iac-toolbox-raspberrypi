@@ -5,6 +5,10 @@ import {
   loadIacToolboxYaml,
   resolveConfigPath,
 } from 'src/loaders/yaml-loader.js';
+import {
+  setCredential,
+  getCredential,
+} from '../../loaders/credentials-loader.js';
 
 const DEFAULT_DOMAIN = 'arize.iac-toolbox.com';
 const DEFAULT_UI_PORT = 6006;
@@ -23,6 +27,7 @@ interface IacToolboxYaml {
     ui_port?: number;
     db?: string;
     domain?: string;
+    secret?: string;
     [key: string]: unknown;
   };
   cloudflare?: {
@@ -48,10 +53,16 @@ export function loadArizeVersion(
   return config.arize_phoenix?.version;
 }
 
+export function loadArizeSecret(profile = 'default'): string | undefined {
+  return getCredential('arize_phoenix_secret', profile);
+}
+
 export function updateArizeConfig(
   destination: string,
   uiPort: number,
   version: string,
+  secret: string,
+  profile = 'default',
   filePath?: string
 ): void {
   const configPath = filePath
@@ -70,6 +81,9 @@ export function updateArizeConfig(
 
   const domain = DEFAULT_DOMAIN;
 
+  // Save the actual secret to credentials — never written to the YAML file.
+  setCredential('arize_phoenix_secret', secret, profile);
+
   config.arize_phoenix = {
     ...(config.arize_phoenix || {}),
     enabled: true,
@@ -77,6 +91,8 @@ export function updateArizeConfig(
     ui_port: uiPort,
     db: 'sqlite',
     domain,
+    // Template reference — resolved at install time via writeResolvedConfig.
+    secret: '{{ arize_phoenix_secret }}',
   };
 
   // Write cloudflare.domains entry when cloudflare is enabled

@@ -15,3 +15,4 @@ arize_phoenix_defaults:
   otlp_grpc_host_port: 14317 # host-side mapping → container 4317  (Alloy owns 4317)
   otlp_http_host_port: 14318 # host-side mapping → container 4318  (Alloy owns 4318)
   db: sqlite # 'sqlite' (default) or 'postgres'
+  secret: "" # PHOENIX_SECRET — required; set via `iac-toolbox arize init`
