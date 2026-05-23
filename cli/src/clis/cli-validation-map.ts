@@ -20,6 +20,10 @@ import {
   type LokiValidationConfig,
 } from './loki/loki.validation.js';
 import {
+  validateArize,
+  type ArizeValidationConfig,
+} from './arize/arize.validation.js';
+import {
   CliName,
   ConditionKey,
   type ValidatorDescriptor,
@@ -62,6 +66,17 @@ export const CLI_VALIDATION_MAP: Record<CliName, ValidatorDescriptor[]> = {
           ctx.destination,
           ctx.filePath,
           ctx.config as LokiValidationConfig
+        ),
+    },
+  ],
+
+  [CliName.Arize]: [
+    {
+      fn: (ctx: ValidationContext) =>
+        validateArize(
+          ctx.destination,
+          ctx.filePath,
+          ctx.config as ArizeValidationConfig
         ),
     },
   ],

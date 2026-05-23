@@ -1,0 +1,19 @@
+---
+# Default variables for arize-phoenix role
+# arize_phoenix_defaults is the canonical set of defaults. It is used both as
+# the fallback value for `arize_phoenix` and as the base dict for the merge
+# task in tasks/main.yml, so that a partial `arize_phoenix:` dict from
+# --extra-vars does not silently drop keys.
+arize_phoenix_defaults:
+  enabled: true
+  version: latest
+  base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/arize-phoenix"
+  ui_port: 6006
+  # IMPORTANT: Phoenix's container internal OTLP ports are 4317 (gRPC)
+  # and 4318 (HTTP). However, Alloy already binds BOTH of those host ports.
+  # The HOST-side mappings below must not conflict with Alloy.
+  otlp_grpc_host_port: 14317   # host-side mapping → container 4317  (Alloy owns 4317)
+  otlp_http_host_port: 14318   # host-side mapping → container 4318  (Alloy owns 4318)
+  prometheus_port: 9090         # optional metrics scrape endpoint
+  db: sqlite                    # 'sqlite' (default) or 'postgres'
+  domain: "arize.iac-toolbox.com"
