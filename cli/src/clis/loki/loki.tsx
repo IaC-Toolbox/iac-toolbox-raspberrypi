@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { render } from 'ink';
 import { runLokiInstall } from './loki-install.js';
+import { runLokiUninstall } from './loki-uninstall.js';
 import LokiInitWizard from './loki-init-wizard.js';
 
 export function registerLokiCommand(program: Command): void {
@@ -39,4 +40,28 @@ export function registerLokiCommand(program: Command): void {
     .action(async (options: { destination: string; filePath?: string }) => {
       await runLokiInstall(options.destination, 'default', options.filePath);
     });
+
+  loki
+    .command('uninstall')
+    .description('Remove Loki log aggregation and all log data')
+    .option('--profile <name>', 'Credential profile to use', 'default')
+    .option(
+      '--destination <path>',
+      'Path to infrastructure directory',
+      'infrastructure'
+    )
+    .option('--filePath <path>', 'Path to a per-device config file')
+    .action(
+      async (options: {
+        profile: string;
+        destination: string;
+        filePath?: string;
+      }) => {
+        await runLokiUninstall(
+          options.destination,
+          options.profile,
+          options.filePath
+        );
+      }
+    );
 }
