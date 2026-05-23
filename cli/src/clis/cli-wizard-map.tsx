@@ -124,6 +124,39 @@ export const CLI_WIZARD_MAP: Record<string, WizardDescriptor[]> = {
 
   // ── Super CLIs ───────────────────────────────────────────────────────────────
 
+  // platform init: configure target → cloudflare → grafana
+  platform: [
+    {
+      fn: (ctx: WizardContext, onComplete) => (
+        <TargetInitWizard
+          destination={ctx.destination}
+          filePath={ctx.filePath}
+          onComplete={onComplete}
+        />
+      ),
+    },
+    {
+      fn: (ctx: WizardContext, onComplete) => (
+        <CloudflareInitWizard
+          destination={ctx.destination}
+          filePath={ctx.filePath}
+          profile={ctx.profile}
+          onComplete={onComplete}
+        />
+      ),
+    },
+    {
+      fn: (ctx: WizardContext, onComplete) => (
+        <GrafanaInitWizard
+          destination={ctx.destination}
+          filePath={ctx.filePath}
+          profile={ctx.profile}
+          onComplete={onComplete}
+        />
+      ),
+    },
+  ],
+
   // metrics-agent init: configure target (host/SSH) then alloy remote write URL
   'metrics-agent': [
     {
