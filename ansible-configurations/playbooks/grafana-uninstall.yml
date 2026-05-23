@@ -1,0 +1,36 @@
+---
+# ============================================
+# IaC Toolbox - Grafana Uninstall Playbook
+# ============================================
+
+- name: Uninstall Grafana
+  hosts: all
+  gather_facts: true
+  tasks:
+
+    - name: Stop and remove Grafana containers
+      command: docker compose down
+      args:
+        chdir: "{{ ansible_env.HOME }}/.iac-toolbox/grafana"
+      become_user: "{{ ansible_user }}"
+      ignore_errors: true
+
+    - name: Remove grafana_data Docker volume
+      community.docker.docker_volume:
+        name: grafana_data
+        state: absent
+        docker_host: "{{ active_docker_socket }}"
+      become_user: "{{ ansible_user }}"
+      ignore_errors: true
+
+    - name: Remove Grafana config directory
+      file:
+        path: "{{ ansible_env.HOME }}/.iac-toolbox/grafana"
+        state: absent
+
+    - name: Display uninstall summary
+      debug:
+        msg:
+          - "Grafana has been removed."
+          - "Volume grafana_data removed."
+          - "Config directory ~/.iac-toolbox/grafana deleted."
