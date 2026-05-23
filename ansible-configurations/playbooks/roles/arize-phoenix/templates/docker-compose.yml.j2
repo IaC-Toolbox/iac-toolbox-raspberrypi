@@ -1,0 +1,39 @@
+# Managed by iac-toolbox. Do not edit manually.
+services:
+  phoenix:
+    image: arizephoenix/phoenix:{{ arize_phoenix_config.version }}
+    restart: unless-stopped
+    ports:
+      - "{{ arize_phoenix_config.ui_port }}:6006"
+      # Alloy already binds host port 4317. Phoenix's internal OTLP port
+      # (4317) is mapped to a different host port to avoid conflict.
+      - "{{ arize_phoenix_config.otlp_grpc_host_port }}:4317"
+      - "{{ arize_phoenix_config.otlp_http_host_port }}:4318"
+{% if arize_phoenix_config.prometheus_port is defined %}
+      - "{{ arize_phoenix_config.prometheus_port }}:9090"
+{% endif %}
+    volumes:
+      - phoenix_data:/phoenix_storage
+    environment:
+      PHOENIX_WORKING_DIR: /phoenix_storage
+{% if arize_phoenix_config.db == 'postgres' %}
+      DATABASE_URL: "postgresql://{{ arize_phoenix_config.db_user }}:{{ arize_phoenix_config.db_password }}@db:5432/{{ arize_phoenix_config.db_name }}"
+{% endif %}
+
+{% if arize_phoenix_config.db == 'postgres' %}
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: "{{ arize_phoenix_config.db_user }}"
+      POSTGRES_PASSWORD: "{{ arize_phoenix_config.db_password }}"
+      POSTGRES_DB: "{{ arize_phoenix_config.db_name }}"
+    volumes:
+      - phoenix_pg_data:/var/lib/postgresql/data
+{% endif %}
+
+volumes:
+  phoenix_data:
+{% if arize_phoenix_config.db == 'postgres' %}
+  phoenix_pg_data:
+{% endif %}

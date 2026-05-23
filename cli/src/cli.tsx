@@ -11,6 +11,7 @@ import { registerTargetCommand } from './clis/target/target.js';
 import { registerPlatformCommand } from './clis/platform/platform.js';
 import { registerCAdvisorCommand } from './clis/cadvisor/cadvisor.js';
 import { registerLokiCommand } from './clis/loki/loki.js';
+import { registerArizeCommand } from './clis/arize/arize.js';
 
 const program = new Command();
 
@@ -32,6 +33,7 @@ registerGrafanaCommand(program);
 registerPrometheusCommand(program);
 registerCAdvisorCommand(program);
 registerLokiCommand(program);
+registerArizeCommand(program);
 registerNodeMetricsAlertsCommand(program);
 registerContainerMetricsAlertsCommand(program);
 registerGrafanaPagerdutyCommand(program);
