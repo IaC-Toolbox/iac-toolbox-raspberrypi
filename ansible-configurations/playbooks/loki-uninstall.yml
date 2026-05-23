@@ -1,0 +1,36 @@
+---
+# ============================================
+# IaC Toolbox - Loki Uninstall Playbook
+# ============================================
+
+- name: Uninstall Loki
+  hosts: all
+  gather_facts: true
+  tasks:
+
+    - name: Stop and remove Loki container
+      command: docker compose down
+      args:
+        chdir: "{{ ansible_env.HOME }}/.iac-toolbox/loki"
+      become_user: "{{ ansible_user }}"
+      ignore_errors: true
+
+    - name: Remove loki_data Docker volume (if present)
+      community.docker.docker_volume:
+        name: loki_data
+        state: absent
+        docker_host: "{{ active_docker_socket }}"
+      become_user: "{{ ansible_user }}"
+      ignore_errors: true
+
+    - name: Remove Loki config directory (includes data/ subdirectory)
+      file:
+        path: "{{ ansible_env.HOME }}/.iac-toolbox/loki"
+        state: absent
+
+    - name: Display uninstall summary
+      debug:
+        msg:
+          - "Loki has been removed."
+          - "All log data deleted."
+          - "Config directory ~/.iac-toolbox/loki deleted."
