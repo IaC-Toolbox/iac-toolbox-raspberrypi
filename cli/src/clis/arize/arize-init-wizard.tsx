@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import {
   loadArizeUiPort,
   loadArizeVersion,
+  loadArizeSecret,
   updateArizeConfig,
 } from './arize-config.js';
 
@@ -16,6 +17,7 @@ interface TextInputProps {
 
 interface ArizeInitWizardProps {
   destination: string;
+  profile?: string;
   filePath?: string;
   onComplete?: () => void;
   _TextInput?: (props: TextInputProps) => null;
@@ -27,23 +29,28 @@ interface ArizeInitWizardProps {
     destination: string,
     filePath?: string
   ) => string | undefined;
+  _loadArizeSecret?: (profile?: string) => string | undefined;
   _updateArizeConfig?: (
     destination: string,
     uiPort: number,
     version: string,
+    secret: string,
+    profile?: string,
     filePath?: string
   ) => void;
 }
 
-type Step = 'version' | 'ui_port' | 'done';
+type Step = 'version' | 'ui_port' | 'secret' | 'done';
 
 export default function ArizeInitWizard({
   destination,
+  profile = 'default',
   filePath,
   onComplete,
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
   _loadArizeUiPort = loadArizeUiPort,
   _loadArizeVersion = loadArizeVersion,
+  _loadArizeSecret = loadArizeSecret,
   _updateArizeConfig = updateArizeConfig,
 }: ArizeInitWizardProps) {
   const { exit } = useApp();
@@ -55,13 +62,21 @@ export default function ArizeInitWizard({
   const [inputValue, setInputValue] = useState(existingVersion ?? 'latest');
   const [version, setVersion] = useState('');
   const [uiPort, setUiPort] = useState(0);
+  const [secret, setSecret] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const InputComponent = _TextInput;
 
   useEffect(() => {
     if (step === 'done') {
-      _updateArizeConfig(destination, uiPort, version, filePath);
+      _updateArizeConfig(
+        destination,
+        uiPort,
+        version,
+        secret,
+        profile,
+        filePath
+      );
       const timer = setTimeout(() => {
         if (onComplete) {
           onComplete();
@@ -75,6 +90,8 @@ export default function ArizeInitWizard({
     step,
     uiPort,
     version,
+    secret,
+    profile,
     destination,
     filePath,
     exit,
@@ -164,6 +181,69 @@ export default function ArizeInitWizard({
                 return;
               }
               setUiPort(parsed);
+              setInputValue(_loadArizeSecret(profile) ?? '');
+              setError(null);
+              setStep('secret');
+            }}
+          />
+        </Box>
+      </Box>
+    );
+  }
+
+  if (step === 'secret') {
+    return (
+      <Box flexDirection="column" paddingY={1}>
+        <Text bold color="cyan">
+          {'┌  IaC-Toolbox — Arize Phoenix Setup'}
+        </Text>
+        <Text bold>{'│'}</Text>
+        <Text dimColor>
+          {'◇  Version: '}
+          {version}
+        </Text>
+        <Text dimColor>
+          {'◇  UI port: '}
+          {uiPort}
+        </Text>
+        <Text bold>{'│'}</Text>
+        <Text bold>{'◆  Phoenix secret (JWT signing key)'}</Text>
+        <Text dimColor>
+          {
+            '│  A long string of mixed characters and numbers used to sign JWTs.'
+          }
+        </Text>
+        <Text dimColor>
+          {'│  Stored in ~/.iac-toolbox/credentials — never committed.'}
+        </Text>
+        {error && (
+          <Box paddingLeft={3}>
+            <Text color="red">
+              {'✗ '}
+              {error}
+            </Text>
+          </Box>
+        )}
+        <Box paddingLeft={3} marginTop={1}>
+          <Text>{'› '}</Text>
+          <InputComponent
+            value={inputValue}
+            mask="*"
+            onChange={(val) => {
+              setInputValue(val);
+              setError(null);
+            }}
+            onSubmit={(val) => {
+              const trimmed = val.trim();
+              if (!trimmed) {
+                setError('Secret must not be empty');
+                return;
+              }
+              if (trimmed.length < 32) {
+                setError('Secret must be at least 32 characters');
+                return;
+              }
+              setSecret(trimmed);
               setInputValue('');
               setError(null);
               setStep('done');
@@ -195,6 +275,9 @@ export default function ArizeInitWizard({
       </Text>
       <Text>{'│  DB                sqlite'}</Text>
       <Text>{'│  Domain            arize.iac-toolbox.com'}</Text>
+      <Text>
+        {'│  Secret            ●●●●●●●●  → ~/.iac-toolbox/credentials'}
+      </Text>
       <Text bold>{'│'}</Text>
       <Text>{'│  ℹ  To install Arize Phoenix, run:'}</Text>
       <Text bold>{'│'}</Text>

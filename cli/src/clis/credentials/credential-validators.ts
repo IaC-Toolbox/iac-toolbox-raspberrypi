@@ -201,6 +201,7 @@ const validators: Record<
   vault_token: validateVaultToken,
   grafana_api_key: validateGrafanaApiKey,
   grafana_admin_password: validateStringValue,
+  arize_phoenix_secret: validateStringValue,
   pagerduty_key: validatePagerDutyKey,
 };
 
