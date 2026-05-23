@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { render } from 'ink';
 import WizardRunner from '../run-wizard.js';
 import { runPlatformApplyInstall } from './platform-apply-install.js';
+import { runPlatformUninstall } from './platform-uninstall.js';
 
 export function registerPlatformCommand(program: Command): void {
   const platform = program
@@ -52,4 +53,28 @@ export function registerPlatformCommand(program: Command): void {
         options.filePath
       );
     });
+
+  platform
+    .command('uninstall')
+    .description('Remove the full observability stack')
+    .option('--filePath <path>', 'Path to iac-toolbox.yml', './iac-toolbox.yml')
+    .option(
+      '--destination <path>',
+      'Path to infrastructure directory',
+      'infrastructure'
+    )
+    .option('--profile <name>', 'Credential profile to use', 'default')
+    .action(
+      async (options: {
+        filePath: string;
+        destination: string;
+        profile: string;
+      }) => {
+        await runPlatformUninstall(
+          options.destination,
+          options.profile,
+          options.filePath
+        );
+      }
+    );
 }
