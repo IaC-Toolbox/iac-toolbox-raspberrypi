@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { render } from 'ink';
 import { runMetricsAgentInstall } from './metrics-agent-install.js';
+import { runMetricsAgentUninstall } from './metrics-agent-uninstall.js';
 import WizardRunner from '../run-wizard.js';
 
 export function registerMetricsAgentCommand(program: Command): void {
@@ -64,6 +65,32 @@ export function registerMetricsAgentCommand(program: Command): void {
         profile: string;
       }) => {
         await runMetricsAgentInstall(
+          options.destination,
+          options.profile,
+          options.filePath
+        );
+      }
+    );
+
+  metricsAgent
+    .command('uninstall')
+    .description(
+      'Remove observability agent (Node Exporter, Grafana Alloy, cAdvisor)'
+    )
+    .option(
+      '--destination <path>',
+      'Path to infrastructure directory',
+      'infrastructure'
+    )
+    .option('--filePath <path>', 'Path to a per-device config file')
+    .option('--profile <name>', 'Credential profile to use', 'default')
+    .action(
+      async (options: {
+        destination: string;
+        filePath?: string;
+        profile: string;
+      }) => {
+        await runMetricsAgentUninstall(
           options.destination,
           options.profile,
           options.filePath
