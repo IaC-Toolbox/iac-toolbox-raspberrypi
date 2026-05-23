@@ -1,0 +1,27 @@
+---
+# ============================================
+# IaC Toolbox - cAdvisor Uninstall Playbook
+# ============================================
+
+- name: Uninstall cAdvisor
+  hosts: all
+  gather_facts: true
+  tasks:
+
+    - name: Stop and remove cAdvisor container
+      command: docker compose down
+      args:
+        chdir: "{{ ansible_env.HOME }}/.iac-toolbox/cadvisor"
+      become_user: "{{ ansible_user }}"
+      ignore_errors: true
+
+    - name: Remove cAdvisor config directory
+      file:
+        path: "{{ ansible_env.HOME }}/.iac-toolbox/cadvisor"
+        state: absent
+
+    - name: Display uninstall summary
+      debug:
+        msg:
+          - "cAdvisor has been removed."
+          - "Config directory ~/.iac-toolbox/cadvisor deleted."
