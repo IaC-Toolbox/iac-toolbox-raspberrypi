@@ -9,6 +9,7 @@ export enum CliName {
   MetricsAgent = 'metrics-agent',
   Platform = 'platform',
   Loki = 'loki',
+  Arize = 'arize',
 }
 
 export enum ConditionKey {
