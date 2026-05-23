@@ -75,8 +75,7 @@ export async function runArizeInstall(
   const uiPort = (config.arize_phoenix?.ui_port as number | undefined) ?? 6006;
   const domain = config.arize_phoenix?.domain as string | undefined;
   const cloudflareEnabled =
-    config.cloudflare &&
-    (config.cloudflare as Record<string, unknown>).enabled;
+    config.cloudflare && (config.cloudflare as Record<string, unknown>).enabled;
   const healthUrl =
     cloudflareEnabled && domain
       ? `https://${domain}/healthz`
@@ -98,7 +97,9 @@ export async function runArizeInstall(
     } else {
       print.pipe(`Local URL    http://localhost:${uiPort}`);
     }
-    print.pipe('OTLP gRPC    via Alloy fan-out (no direct app connection needed)');
+    print.pipe(
+      'OTLP gRPC    via Alloy fan-out (no direct app connection needed)'
+    );
     print.pipe();
     print.warning(
       'Re-run `iac-toolbox metrics-agent install` to activate Alloy → Phoenix trace forwarding'
