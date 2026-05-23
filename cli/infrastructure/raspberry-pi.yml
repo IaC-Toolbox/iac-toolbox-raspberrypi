@@ -22,10 +22,16 @@ cloudflare:
     - hostname: loki.iac-toolbox.com
       service_port: 3100
       service: http://localhost:3100
+    - hostname: arize.iac-toolbox.com
+      service_port: 6006
+      service: http://localhost:6006
 vault:
   enabled: false
 target:
-  mode: local
+  mode: remote
+  host: raspberry-4b.local
+  user: vvasylkovskyi
+  ssh_key: ~/.ssh/raspberrypi-4b
 grafana:
   enabled: true
   version: latest
@@ -70,3 +76,9 @@ grafana_pagerduty:
   service_region: eu
   terraform_dest: /home/vvasylkovskyi/.iac-toolbox/infrastructure
   pagerduty_token: "{{ pagerduty_token }}"
+arize_phoenix:
+  enabled: true
+  version: latest
+  ui_port: 6006
+  db: sqlite
+  domain: arize.iac-toolbox.com

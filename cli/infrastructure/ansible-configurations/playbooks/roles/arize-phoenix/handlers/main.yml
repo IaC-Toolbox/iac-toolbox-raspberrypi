@@ -1,0 +1,8 @@
+---
+- name: Restart arize-phoenix
+  community.docker.docker_compose_v2:
+    project_src: "{{ arize_phoenix_config.base_dir }}"
+    state: present
+    restarted: true
+    docker_host: "{{ active_docker_socket }}"
+  become_user: "{{ ansible_user }}"

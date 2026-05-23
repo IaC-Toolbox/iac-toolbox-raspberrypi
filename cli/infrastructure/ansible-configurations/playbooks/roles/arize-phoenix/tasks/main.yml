@@ -1,0 +1,60 @@
+---
+- name: Merge arize-phoenix config with defaults
+  set_fact:
+    arize_phoenix_config: "{{ arize_phoenix_defaults | combine(arize_phoenix, recursive=True) }}"
+
+- name: Create Arize Phoenix base directory
+  file:
+    path: "{{ arize_phoenix_config.base_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Deploy docker-compose.yml
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ arize_phoenix_config.base_dir }}/docker-compose.yml"
+  notify: Restart arize-phoenix
+
+- name: Pull Arize Phoenix image
+  community.docker.docker_image:
+    name: "arizephoenix/phoenix:{{ arize_phoenix_config.version }}"
+    source: pull
+    docker_host: "{{ active_docker_socket }}"
+  become_user: "{{ ansible_user }}"
+
+- name: Start Arize Phoenix
+  community.docker.docker_compose_v2:
+    project_src: "{{ arize_phoenix_config.base_dir }}"
+    state: present
+    docker_host: "{{ active_docker_socket }}"
+  become_user: "{{ ansible_user }}"
+
+# Health check: prefer the Cloudflare domain when available (proves the
+# tunnel is up too), fall back to localhost.
+- name: Wait for Arize Phoenix UI to become available (via domain)
+  uri:
+    url: "https://{{ arize_phoenix_config.domain }}/healthz"
+    status_code: 200
+  register: health_result
+  retries: 30
+  delay: 2
+  until: health_result.status == 200
+  when: arize_phoenix_config.domain is defined and arize_phoenix_config.domain | length > 0
+
+- name: Wait for Arize Phoenix UI to become available (localhost fallback)
+  uri:
+    url: "http://localhost:{{ arize_phoenix_config.ui_port }}/healthz"
+    status_code: 200
+  register: health_result_local
+  retries: 30
+  delay: 2
+  until: health_result_local.status == 200
+  when: arize_phoenix_config.domain is not defined or arize_phoenix_config.domain | length == 0
+
+- name: Display access information
+  debug:
+    msg:
+      - "Arize Phoenix is running."
+      - "UI: https://{{ arize_phoenix_config.domain }}"
+      - "Re-run `iac-toolbox metrics-agent install` to activate Alloy -> Phoenix trace forwarding."
+  when: arize_phoenix_config.domain is defined and arize_phoenix_config.domain | length > 0

@@ -1,0 +1,13 @@
+---
+# ============================================
+# IaC Toolbox - Arize Phoenix Playbook
+# ============================================
+
+- import_playbook: common.yml
+
+- name: Deploy Arize Phoenix
+  hosts: all
+  become: false
+  roles:
+    - role: arize-phoenix
+      when: arize_phoenix is defined and arize_phoenix.enabled

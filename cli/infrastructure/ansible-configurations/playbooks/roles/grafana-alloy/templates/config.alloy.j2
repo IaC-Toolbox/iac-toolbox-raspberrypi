@@ -24,7 +24,7 @@ prometheus.scrape "cadvisor" {
 // Push metrics to the central Prometheus instance on the platform
 prometheus.remote_write "platform" {
   endpoint {
-    url = "{{ grafana_alloy.alloy_remote_write_url }}"
+    url = "{{ grafana_alloy.alloy_remote_write_url | default('https://' ~ prometheus.domain ~ '/api/v1/write') }}"
   }
 }
 
@@ -76,8 +76,21 @@ otelcol.receiver.otlp "default" {
   output {
     // Forward only metrics — no Loki or Tempo configured yet
     metrics = [otelcol.exporter.prometheus.default.input]
+{% if arize_phoenix is defined and arize_phoenix.enabled %}
+    traces  = [otelcol.exporter.otlp.phoenix.input]
+{% endif %}
   }
 }
+
+{% if arize_phoenix is defined and arize_phoenix.enabled %}
+otelcol.exporter.otlp "phoenix" {
+  client {
+    // Uses the host-mapped port (14317), NOT 4317 — Alloy owns 4317.
+    endpoint = "localhost:{{ arize_phoenix.otlp_grpc_host_port | default(14317) }}"
+    tls { insecure = true }
+  }
+}
+{% endif %}
 
 // Convert OTel metric format to Prometheus and push to the existing remote_write
 otelcol.exporter.prometheus "default" {
