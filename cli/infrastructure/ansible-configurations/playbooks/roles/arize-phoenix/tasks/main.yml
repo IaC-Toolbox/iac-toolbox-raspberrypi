@@ -3,6 +3,13 @@
   set_fact:
     arize_phoenix_config: "{{ arize_phoenix_defaults | combine(arize_phoenix, recursive=True) }}"
 
+- name: Validate PHOENIX_SECRET is set
+  assert:
+    that:
+      - arize_phoenix_config.secret is defined
+      - arize_phoenix_config.secret | length > 0
+    fail_msg: "PHOENIX_SECRET must be provided — run: iac-toolbox arize init"
+
 - name: Create Arize Phoenix base directory
   file:
     path: "{{ arize_phoenix_config.base_dir }}"

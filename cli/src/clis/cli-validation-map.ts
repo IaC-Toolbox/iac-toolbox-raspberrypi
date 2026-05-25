@@ -24,6 +24,10 @@ import {
   type ArizeValidationConfig,
 } from './arize/arize.validation.js';
 import {
+  validateGithubRunner,
+  type GithubRunnerValidationConfig,
+} from './github-runner/github-runner.validation.js';
+import {
   CliName,
   ConditionKey,
   type ValidatorDescriptor,
@@ -77,6 +81,17 @@ export const CLI_VALIDATION_MAP: Record<CliName, ValidatorDescriptor[]> = {
           ctx.destination,
           ctx.filePath,
           ctx.config as ArizeValidationConfig
+        ),
+    },
+  ],
+
+  [CliName.GithubRunner]: [
+    {
+      fn: (ctx: ValidationContext) =>
+        validateGithubRunner(
+          ctx.destination,
+          ctx.filePath,
+          ctx.config as GithubRunnerValidationConfig
         ),
     },
   ],

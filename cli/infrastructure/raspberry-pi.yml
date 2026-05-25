@@ -82,3 +82,4 @@ arize_phoenix:
   ui_port: 6006
   db: sqlite
   domain: arize.iac-toolbox.com
+  secret: "{{ arize_phoenix_secret }}"

@@ -16,3 +16,5 @@ grafana_pagerduty:
   enabled: false
 loki:
   domain: loki.iac-toolbox.com
+arize_phoenix:
+  enabled: true
