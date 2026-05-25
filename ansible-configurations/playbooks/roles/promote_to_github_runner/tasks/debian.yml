@@ -1,4 +1,8 @@
 ---
+- name: Set runner architecture
+  set_fact:
+    runner_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'x64' }}"
+
 - name: Validate GitHub runner repo URL is provided
   fail:
     msg: "Missing required variable: github_runner.repo_url (set via GITHUB_REPO_URL environment variable)"

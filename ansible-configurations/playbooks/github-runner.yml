@@ -1,0 +1,13 @@
+---
+# ============================================
+# IaC Toolbox - GitHub Actions Runner Playbook
+# ============================================
+
+- import_playbook: common.yml
+
+- name: Deploy GitHub Actions Runner
+  hosts: all
+  become: false
+  roles:
+    - role: promote_to_github_runner
+      when: github_runner is defined and github_runner.enabled
