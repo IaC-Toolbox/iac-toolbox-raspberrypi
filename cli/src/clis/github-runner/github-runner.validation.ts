@@ -30,7 +30,9 @@ export function validateGithubRunner(
   if (!repoUrl || repoUrl.trim().length === 0) {
     print.error('github_runner.repo_url is not set');
     print.pipe();
-    print.pipe('Run `iac-toolbox github-runner init` to set the repository URL.');
+    print.pipe(
+      'Run `iac-toolbox github-runner init` to set the repository URL.'
+    );
     print.closeError();
     process.exit(1);
   }

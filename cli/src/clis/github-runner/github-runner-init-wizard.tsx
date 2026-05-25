@@ -50,7 +50,7 @@ export default function GithubRunnerInitWizard({
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
   _loadGithubRunnerRepoUrl = loadGithubRunnerRepoUrl,
   _loadGithubRunnerLabels = loadGithubRunnerLabels,
-  _loadGithubRunnerToken: _loadToken = loadGithubRunnerToken,
+  _loadGithubRunnerToken = loadGithubRunnerToken,
   _updateGithubRunnerConfig = updateGithubRunnerConfig,
 }: GithubRunnerInitWizardProps) {
   const { exit } = useApp();
@@ -106,7 +106,9 @@ export default function GithubRunnerInitWizard({
           {'┌  GitHub Actions Runner — init'}
         </Text>
         <Text bold>{'│'}</Text>
-        <Text bold>{'◆  GitHub repository URL (e.g. https://github.com/org/repo)'}</Text>
+        <Text bold>
+          {'◆  GitHub repository URL (e.g. https://github.com/org/repo)'}
+        </Text>
         {error && (
           <Box paddingLeft={3}>
             <Text color="red">
@@ -134,7 +136,7 @@ export default function GithubRunnerInitWizard({
                 return;
               }
               setRepoUrl(trimmed);
-              setInputValue('');
+              setInputValue(_loadGithubRunnerToken(profile) ?? '');
               setError(null);
               setStep('token');
             }}
@@ -160,12 +162,13 @@ export default function GithubRunnerInitWizard({
         </Text>
         <Text bold>{'│'}</Text>
         <Text dimColor>{'◇  Generate a token at:'}</Text>
-        <Text dimColor>{'│    '}{tokenHintUrl}</Text>
+        <Text dimColor>
+          {'│    '}
+          {tokenHintUrl}
+        </Text>
         <Text color="yellow">{'│  ⚠ Tokens expire after 1 hour.'}</Text>
         <Text bold>{'│'}</Text>
-        <Text bold>
-          {'◆  Runner registration token  (expires in 1 hour)'}
-        </Text>
+        <Text bold>{'◆  Runner registration token  (expires in 1 hour)'}</Text>
         <Text dimColor>
           {'│  Stored in ~/.iac-toolbox/credentials — never committed.'}
         </Text>
@@ -216,7 +219,9 @@ export default function GithubRunnerInitWizard({
         </Text>
         <Text dimColor>{'◇  Token:      ●●●●●●●●'}</Text>
         <Text bold>{'│'}</Text>
-        <Text bold>{'◆  Runner labels (comma-separated, default: self-hosted)'}</Text>
+        <Text bold>
+          {'◆  Runner labels (comma-separated, default: self-hosted)'}
+        </Text>
         {error && (
           <Box paddingLeft={3}>
             <Text color="red">

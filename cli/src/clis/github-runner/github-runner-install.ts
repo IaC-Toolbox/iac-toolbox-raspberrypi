@@ -77,7 +77,8 @@ export async function runGithubRunnerInstall(
   // ── Success Summary ──────────────────────────────────────
   const repoUrl = config.github_runner?.repo_url ?? '';
   const labels = config.github_runner?.labels ?? 'self-hosted';
-  const workDir = config.github_runner?.work_dir ?? '~/.iac-toolbox/github-runner';
+  const workDir =
+    config.github_runner?.work_dir ?? '~/.iac-toolbox/github-runner';
 
   print.blank();
   print.step('GitHub Actions runner installed');
@@ -90,7 +91,7 @@ export async function runGithubRunnerInstall(
   print.pipe();
   print.warning('The registration token expires after 1 hour.');
   print.pipe(
-    "  Re-run `iac-toolbox github-runner init` with a fresh token if install fails."
+    '  Re-run `iac-toolbox github-runner init` with a fresh token if install fails.'
   );
   print.pipe();
   print.close();
