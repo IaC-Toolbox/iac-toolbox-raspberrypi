@@ -10,6 +10,7 @@ export enum CliName {
   Platform = 'platform',
   Loki = 'loki',
   Arize = 'arize',
+  GithubRunner = 'github-runner',
 }
 
 export enum ConditionKey {

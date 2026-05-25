@@ -1,4 +1,8 @@
 ---
+- name: Set runner architecture
+  set_fact:
+    runner_arch: "{{ 'arm64' if ansible_architecture == 'arm64' else 'x64' }}"
+
 - name: Validate GitHub runner repo URL is provided
   fail:
     msg: "Missing required variable: github_runner.repo_url (set via GITHUB_REPO_URL environment variable)"
@@ -17,7 +21,7 @@
 
 - name: Download GitHub Actions runner tarball (macOS)
   get_url:
-    url: "https://github.com/actions/runner/releases/download/v{{ github_runner.version }}/actions-runner-osx-x64-{{ github_runner.version }}.tar.gz"
+    url: "https://github.com/actions/runner/releases/download/v{{ github_runner.version }}/actions-runner-osx-{{ runner_arch }}-{{ github_runner.version }}.tar.gz"
     dest: "{{ github_runner.work_dir }}/actions-runner.tar.gz"
     mode: '0644'
 
