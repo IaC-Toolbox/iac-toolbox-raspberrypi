@@ -1,5 +1,6 @@
 ---
 - name: Restart grafana-alloy
-  shell: docker compose restart grafana-alloy
+  shell: source {{ iac_shell_profile }} 2>/dev/null; docker compose restart grafana-alloy
   args:
+    executable: "{{ iac_shell_executable }}"
     chdir: "{{ alloy_base_dir }}"
