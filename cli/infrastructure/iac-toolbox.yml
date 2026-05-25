@@ -14,6 +14,10 @@ cadvisor:
   enabled: true
 grafana_pagerduty:
   enabled: false
+grafana:
+  domain: grafana.iac-toolbox.com
+prometheus:
+  domain: prometheus.iac-toolbox.com
 loki:
   domain: loki.iac-toolbox.com
 arize_phoenix:
