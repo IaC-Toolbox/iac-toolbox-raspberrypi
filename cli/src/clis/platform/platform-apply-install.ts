@@ -11,7 +11,7 @@ import {
 } from './platform-apply-summary.js';
 import { print } from '../../design-system/print.js';
 import {
-  runAnsiblePlaybook,
+  runAnsiblePlaybookWithProgress,
   resolveAnsibleDir,
   resolveProjectRoot,
 } from '../../utils/ansible.js';
@@ -61,21 +61,26 @@ async function runPreflightChecks(
   return { targetMode, targetHost };
 }
 
-function runInstallSequence(
+async function runInstallSequence(
   destination: string,
   config: ApplySummaryConfig,
-  tmpFile: string
-): boolean {
+  tmpFile: string,
+  debug?: boolean
+): Promise<boolean> {
   const env: NodeJS.ProcessEnv = { ...process.env };
 
   let status: number;
   try {
-    status = runAnsiblePlaybook('observability_platform.yml', {
-      ansibleDir: resolveAnsibleDir(destination),
-      filePath: tmpFile,
-      projectRoot: resolveProjectRoot(),
-      env,
-    });
+    status = await runAnsiblePlaybookWithProgress(
+      'observability_platform.yml',
+      {
+        ansibleDir: resolveAnsibleDir(destination),
+        filePath: tmpFile,
+        projectRoot: resolveProjectRoot(),
+        env,
+        debug,
+      }
+    );
   } finally {
     unlinkSync(tmpFile);
   }
@@ -129,7 +134,8 @@ function runTerraformSequence(destination: string): void {
 export async function runPlatformApplyInstall(
   destination: string,
   profile: string,
-  filePath: string
+  filePath: string,
+  debug?: boolean
 ): Promise<void> {
   print.step('Pre-flight checks');
 
@@ -152,7 +158,12 @@ export async function runPlatformApplyInstall(
     config,
   });
 
-  const cloudflareEnabled = runInstallSequence(destination, config, tmpFile);
+  const cloudflareEnabled = await runInstallSequence(
+    destination,
+    config,
+    tmpFile,
+    debug
+  );
 
   const resolvedConfig = yaml.load(resolvedYaml) as Record<string, unknown>;
   const nodeMetricsAlertsConfig = resolvedConfig.node_metrics_alerts as
