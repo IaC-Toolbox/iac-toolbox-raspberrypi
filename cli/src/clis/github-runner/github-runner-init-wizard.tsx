@@ -5,9 +5,8 @@ import {
   loadGithubRunnerRepoUrl,
   loadGithubRunnerLabels,
   loadGithubRunnerPat,
-  setGithubRunnerPat,
+  validatePatAccess,
   updateGithubRunnerConfig,
-  validateGithubPat,
 } from './github-runner-config.js';
 
 interface TextInputProps {
@@ -32,18 +31,18 @@ interface GithubRunnerInitWizardProps {
     filePath?: string
   ) => string | undefined;
   _loadGithubRunnerPat?: (profile?: string) => string | undefined;
-  _setGithubRunnerPat?: (pat: string, profile?: string) => void;
+  _validatePatAccess?: (repoUrl: string, pat: string) => Promise<void>;
   _updateGithubRunnerConfig?: (
     destination: string,
     repoUrl: string,
+    pat: string,
     labels: string,
     profile?: string,
     filePath?: string
   ) => void;
-  _validateGithubPat?: (repoUrl: string, pat: string) => Promise<void>;
 }
 
-type Step = 'repo_url' | 'pat' | 'pat_validating' | 'labels' | 'done';
+type Step = 'repo_url' | 'pat' | 'validating' | 'labels' | 'done';
 
 export default function GithubRunnerInitWizard({
   destination,
@@ -54,9 +53,8 @@ export default function GithubRunnerInitWizard({
   _loadGithubRunnerRepoUrl = loadGithubRunnerRepoUrl,
   _loadGithubRunnerLabels = loadGithubRunnerLabels,
   _loadGithubRunnerPat = loadGithubRunnerPat,
-  _setGithubRunnerPat = setGithubRunnerPat,
+  _validatePatAccess = validatePatAccess,
   _updateGithubRunnerConfig = updateGithubRunnerConfig,
-  _validateGithubPat = validateGithubPat,
 }: GithubRunnerInitWizardProps) {
   const { exit } = useApp();
 
@@ -69,65 +67,60 @@ export default function GithubRunnerInitWizard({
   const [pat, setPat] = useState('');
   const [labels, setLabels] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [patValidating, setPatValidating] = useState(false);
-  const [patVerified, setPatVerified] = useState(false);
 
   const InputComponent = _TextInput;
 
-  // PAT validation effect — runs when step becomes 'pat_validating'
+  // PAT validation effect — fires when we enter the 'validating' step
   useEffect(() => {
-    if (step !== 'pat_validating') return;
+    if (step !== 'validating') return;
 
     let cancelled = false;
-    setPatValidating(true);
-    setPatVerified(false);
 
-    _validateGithubPat(repoUrl, pat)
-      .then(() => {
-        if (cancelled) return;
-        setPatValidating(false);
-        setPatVerified(true);
-        // Short delay to show the success message before advancing
-        setTimeout(() => {
-          if (cancelled) return;
+    async function validate() {
+      try {
+        await _validatePatAccess(repoUrl, pat);
+        if (!cancelled) {
+          setError(null);
           setInputValue(existingLabels ?? 'self-hosted');
           setStep('labels');
-        }, 800);
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setPatValidating(false);
-        setPatVerified(false);
-        setError(err instanceof Error ? err.message : 'PAT validation failed');
-        setInputValue('');
-        setStep('pat');
-      });
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error ? err.message : 'PAT validation failed'
+          );
+          setInputValue('');
+          setStep('pat');
+        }
+      }
+    }
 
+    validate();
     return () => {
       cancelled = true;
     };
-  }, [step, repoUrl, pat, existingLabels, _validateGithubPat]);
+  }, [step, repoUrl, pat, existingLabels, _validatePatAccess]);
 
-  // Done effect — saves config and exits
+  // Save config and exit when done
   useEffect(() => {
-    if (step === 'done') {
-      _setGithubRunnerPat(pat, profile);
-      _updateGithubRunnerConfig(
-        destination,
-        repoUrl,
-        labels,
-        profile,
-        filePath
-      );
-      const timer = setTimeout(() => {
-        if (onComplete) {
-          onComplete();
-        } else {
-          exit();
-        }
-      }, 100);
-      return () => clearTimeout(timer);
-    }
+    if (step !== 'done') return;
+
+    _updateGithubRunnerConfig(
+      destination,
+      repoUrl,
+      pat,
+      labels,
+      profile,
+      filePath
+    );
+    const timer = setTimeout(() => {
+      if (onComplete) {
+        onComplete();
+      } else {
+        exit();
+      }
+    }, 100);
+    return () => clearTimeout(timer);
   }, [
     step,
     repoUrl,
@@ -138,7 +131,6 @@ export default function GithubRunnerInitWizard({
     filePath,
     exit,
     onComplete,
-    _setGithubRunnerPat,
     _updateGithubRunnerConfig,
   ]);
 
@@ -179,9 +171,7 @@ export default function GithubRunnerInitWizard({
                 return;
               }
               setRepoUrl(trimmed);
-              setInputValue(
-                _loadGithubRunnerPat(profile) ? '(existing PAT)' : ''
-              );
+              setInputValue(_loadGithubRunnerPat(profile) ? '' : '');
               setError(null);
               setStep('pat');
             }}
@@ -191,7 +181,7 @@ export default function GithubRunnerInitWizard({
     );
   }
 
-  if (step === 'pat' || step === 'pat_validating') {
+  if (step === 'pat') {
     return (
       <Box flexDirection="column" paddingY={1}>
         <Text bold color="cyan">
@@ -223,46 +213,45 @@ export default function GithubRunnerInitWizard({
             </Text>
           </Box>
         )}
-        {step === 'pat_validating' && patValidating && (
-          <Box paddingLeft={3}>
-            <Text color="yellow">
-              {'◜ Verifying PAT against GitHub API...'}
-            </Text>
-          </Box>
-        )}
-        {step === 'pat_validating' && patVerified && (
-          <Box paddingLeft={3}>
-            <Text color="green">
-              {
-                '✔ PAT verified — token will be generated automatically at install time.'
+        <Box paddingLeft={3} marginTop={1}>
+          <Text>{'› '}</Text>
+          <InputComponent
+            value={inputValue}
+            mask="*"
+            onChange={(val) => {
+              setInputValue(val);
+              setError(null);
+            }}
+            onSubmit={(val) => {
+              const trimmed = val.trim();
+              if (!trimmed) {
+                setError('PAT must not be empty');
+                return;
               }
-            </Text>
-          </Box>
-        )}
-        {step === 'pat' && (
-          <Box paddingLeft={3} marginTop={1}>
-            <Text>{'› '}</Text>
-            <InputComponent
-              value={inputValue}
-              mask="*"
-              onChange={(val) => {
-                setInputValue(val);
-                setError(null);
-              }}
-              onSubmit={(val) => {
-                const trimmed = val.trim();
-                if (!trimmed) {
-                  setError('PAT must not be empty');
-                  return;
-                }
-                setPat(trimmed);
-                setInputValue('');
-                setError(null);
-                setStep('pat_validating');
-              }}
-            />
-          </Box>
-        )}
+              setPat(trimmed);
+              setInputValue('');
+              setError(null);
+              setStep('validating');
+            }}
+          />
+        </Box>
+      </Box>
+    );
+  }
+
+  if (step === 'validating') {
+    return (
+      <Box flexDirection="column" paddingY={1}>
+        <Text bold color="cyan">
+          {'┌  GitHub Actions Runner — init'}
+        </Text>
+        <Text bold>{'│'}</Text>
+        <Text dimColor>
+          {'◇  Repository: '}
+          {repoUrl}
+        </Text>
+        <Text bold>{'│'}</Text>
+        <Text>{'│  ◜ Verifying PAT against GitHub API...'}</Text>
       </Box>
     );
   }
@@ -278,7 +267,12 @@ export default function GithubRunnerInitWizard({
           {'◇  Repository: '}
           {repoUrl}
         </Text>
-        <Text dimColor>{'◇  PAT:        ●●●●●●●●  (verified)'}</Text>
+        <Text dimColor>{'◇  PAT:        ●●●●●●●●'}</Text>
+        <Text color="green">
+          {
+            '│  ✔ PAT verified — token will be generated automatically at install time.'
+          }
+        </Text>
         <Text bold>{'│'}</Text>
         <Text bold>
           {'◆  Runner labels (comma-separated, default: self-hosted)'}
@@ -334,13 +328,14 @@ export default function GithubRunnerInitWizard({
       <Text>{'│  PAT           ●●●●●●●●  → ~/.iac-toolbox/credentials'}</Text>
       <Text bold>{'│'}</Text>
       <Text>
-        {'└  Config saved. Run `iac-toolbox github-runner install` —'}
-      </Text>
-      <Text>
         {
-          '   a fresh registration token will be generated automatically each time.'
+          '│  ℹ  A fresh registration token will be generated automatically at install time.'
         }
       </Text>
+      <Text bold>{'│'}</Text>
+      <Text bold>{'│     iac-toolbox github-runner install'}</Text>
+      <Text bold>{'│'}</Text>
+      <Text bold>{'└'}</Text>
     </Box>
   );
 }

@@ -10,8 +10,7 @@ export const CREDENTIAL_KEYS = {
   docker_hub_username: 'Docker Hub username',
   github_pat: 'GitHub personal access token',
   github_runner_token: 'GitHub Actions runner registration token',
-  github_runner_pat:
-    'GitHub Personal Access Token for self-hosted runner management',
+  github_runner_pat: 'GitHub Personal Access Token for runner management',
   github_runner_repo_url: 'GitHub repository URL for the self-hosted runner',
   cloudflare_tunnel_token: 'Cloudflare Tunnel token',
   cloudflare_api_token: 'Cloudflare API token',

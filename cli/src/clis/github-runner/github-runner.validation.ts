@@ -1,5 +1,5 @@
 import { print } from '../../design-system/print.js';
-import { loadGithubRunnerPat } from './github-runner-config.js';
+import { getCredential } from '../../loaders/credentials-loader.js';
 
 export interface GithubRunnerValidationConfig {
   github_runner?: {
@@ -38,12 +38,15 @@ export function validateGithubRunner(
     process.exit(1);
   }
 
-  const pat = loadGithubRunnerPat(profile);
+  const pat = getCredential('github_runner_pat', profile);
   if (!pat || pat.trim().length === 0) {
-    print.error('GitHub PAT not found. Run: iac-toolbox github-runner init');
+    print.error('GitHub PAT not configured');
     print.pipe();
     print.pipe(
-      'Run `iac-toolbox github-runner init` to configure the GitHub PAT.'
+      'Run `iac-toolbox github-runner init` to configure your GitHub Personal Access Token.'
+    );
+    print.pipe(
+      'Required scopes: repo (classic) or Administration read/write (fine-grained).'
     );
     print.closeError();
     process.exit(1);

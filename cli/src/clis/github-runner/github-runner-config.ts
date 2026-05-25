@@ -26,6 +26,15 @@ interface IacToolboxYaml {
   };
 }
 
+export function parseGithubRepo(repoUrl: string): {
+  owner: string;
+  repo: string;
+} {
+  const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?$/);
+  if (!match) throw new Error(`Invalid GitHub URL: ${repoUrl}`);
+  return { owner: match[1], repo: match[2] };
+}
+
 export function loadGithubRunnerRepoUrl(
   destination: string,
   filePath?: string
@@ -42,10 +51,7 @@ export function loadGithubRunnerLabels(
   return config.github_runner?.labels;
 }
 
-/**
- * @deprecated Use loadGithubRunnerPat instead.
- * Kept for backward compatibility only — no longer used in wizard or validation.
- */
+/** @deprecated Use loadGithubRunnerPat instead. Kept for backward compatibility. */
 export function loadGithubRunnerToken(profile = 'default'): string | undefined {
   return getCredential('github_runner_token', profile);
 }
@@ -54,33 +60,11 @@ export function loadGithubRunnerPat(profile = 'default'): string | undefined {
   return getCredential('github_runner_pat', profile);
 }
 
-export function setGithubRunnerPat(pat: string, profile = 'default'): void {
-  setCredential('github_runner_pat', pat, profile);
-}
-
 /**
- * Parse a GitHub repository URL into owner and repo name.
- * Accepts https://github.com/owner/repo, https://github.com/owner/repo.git,
- * and https://github.com/owner/repo/tree/main (with trailing path segments).
+ * Validate that a PAT has access to the given GitHub repository.
+ * Makes a GET request to the repo endpoint. Throws on 401, 403, or 404.
  */
-export function parseGithubRepo(repoUrl: string): {
-  owner: string;
-  repo: string;
-} {
-  const match = repoUrl.match(
-    /github\.com\/([^/]+)\/([^/]+?)(?:\.git)?(?:\/.*)?$/
-  );
-  if (!match) throw new Error(`Invalid GitHub URL: ${repoUrl}`);
-  return { owner: match[1], repo: match[2] };
-}
-
-/**
- * Validate that the PAT has access to the given repository.
- * Uses a read-only GET request — no mutations.
- * Throws a descriptive error on 401 (invalid PAT), 403 (insufficient scope),
- * or 404 (repo not found / inaccessible).
- */
-export async function validateGithubPat(
+export async function validatePatAccess(
   repoUrl: string,
   pat: string
 ): Promise<void> {
@@ -93,37 +77,28 @@ export async function validateGithubPat(
         Authorization: `Bearer ${pat}`,
         Accept: 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28',
-        'User-Agent': 'iac-toolbox',
       },
     }
   );
-
   if (!response.ok) {
+    const body = await response.text().catch(() => '');
     if (response.status === 401) {
-      throw new Error(
-        'PAT is invalid or expired (HTTP 401). Generate a new token at https://github.com/settings/tokens'
-      );
+      throw new Error('PAT is invalid or expired (401)');
     }
     if (response.status === 403) {
-      throw new Error(
-        'PAT lacks required permissions (HTTP 403). Ensure the PAT has "repo" scope (classic) or "Administration: Read and Write" (fine-grained).'
-      );
+      throw new Error('PAT lacks required permissions (403)');
     }
     if (response.status === 404) {
-      throw new Error(
-        `Repository not found or PAT cannot access it (HTTP 404). Check the URL: ${repoUrl}`
-      );
+      throw new Error('Repository not found or PAT cannot access it (404)');
     }
-    throw new Error(
-      `GitHub API error ${response.status}: ${await response.text()}`
-    );
+    throw new Error(`GitHub API error ${response.status}: ${body}`);
   }
 }
 
 /**
- * Generate a fresh runner registration token using the GitHub API.
- * The returned token is valid for 1 hour — it should be passed directly
- * to Ansible and never stored on disk.
+ * Generate a runner registration token via the GitHub API.
+ * The returned token is valid for 1 hour.
+ * Never stored to disk — caller passes it directly to Ansible.
  */
 export async function generateRunnerRegistrationToken(
   repoUrl: string,
@@ -138,39 +113,34 @@ export async function generateRunnerRegistrationToken(
         Authorization: `Bearer ${pat}`,
         Accept: 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28',
-        'User-Agent': 'iac-toolbox',
       },
     }
   );
-
   if (!response.ok) {
+    const body = await response.text().catch(() => '');
     if (response.status === 401) {
       throw new Error(
-        'PAT is invalid or expired (HTTP 401). Re-run `iac-toolbox github-runner init` with a new PAT.'
+        'PAT is invalid or expired — re-run `iac-toolbox github-runner init` with a new PAT (401)'
       );
     }
     if (response.status === 403) {
       throw new Error(
-        'PAT lacks required permissions (HTTP 403). Ensure the PAT has "repo" scope (classic) or "Administration: Read and Write" (fine-grained).'
+        'PAT lacks required permissions — ensure it has repo (classic) or Administration read/write (fine-grained) scope (403)'
       );
     }
     if (response.status === 404) {
-      throw new Error(
-        `Repository not found or PAT cannot access it (HTTP 404). Check that the repo URL is correct: ${repoUrl}`
-      );
+      throw new Error('Repository not found or PAT cannot access it (404)');
     }
-    throw new Error(
-      `GitHub API error ${response.status}: ${await response.text()}`
-    );
+    throw new Error(`GitHub API error ${response.status}: ${body}`);
   }
-
-  const body = (await response.json()) as { token: string; expires_at: string };
-  return body.token;
+  const data = (await response.json()) as { token: string; expires_at: string };
+  return data.token;
 }
 
 export function updateGithubRunnerConfig(
   destination: string,
   repoUrl: string,
+  pat: string,
   labels: string,
   profile = 'default',
   filePath?: string
@@ -189,9 +159,8 @@ export function updateGithubRunnerConfig(
     }
   }
 
-  // PAT is stored separately in credentials — never written to YAML.
-  // (profile parameter kept for future multi-profile support)
-  void profile;
+  // Save PAT to credentials store — never written to YAML.
+  setCredential('github_runner_pat', pat, profile);
 
   config.github_runner = {
     ...(config.github_runner || {}),
