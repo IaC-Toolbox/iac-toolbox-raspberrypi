@@ -8,6 +8,7 @@ import NodeMetricsAlertsInitWizard from './node-metrics-alerts/node-metrics-aler
 import ContainerMetricsAlertsInitWizard from './container-metrics-alerts/container-metrics-alerts-init-wizard.js';
 import LokiInitWizard from './loki/loki-init-wizard.js';
 import ArizeInitWizard from './arize/arize-init-wizard.js';
+import GithubRunnerInitWizard from './github-runner/github-runner-init-wizard.js';
 import type { WizardDescriptor, WizardContext } from './run-wizard.js';
 
 export const CLI_WIZARD_MAP: Record<string, WizardDescriptor[]> = {
@@ -80,6 +81,19 @@ export const CLI_WIZARD_MAP: Record<string, WizardDescriptor[]> = {
         <ArizeInitWizard
           destination={ctx.destination}
           filePath={ctx.filePath}
+          onComplete={onComplete}
+        />
+      ),
+    },
+  ],
+
+  'github-runner': [
+    {
+      fn: (ctx: WizardContext, onComplete) => (
+        <GithubRunnerInitWizard
+          destination={ctx.destination}
+          filePath={ctx.filePath}
+          profile={ctx.profile}
           onComplete={onComplete}
         />
       ),
