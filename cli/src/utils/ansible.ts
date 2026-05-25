@@ -34,6 +34,8 @@ export interface AnsibleOptions {
   filePath?: string;
   projectRoot?: string;
   env?: NodeJS.ProcessEnv;
+  /** Additional key=value pairs passed as --extra-vars (JSON object). */
+  extraVars?: Record<string, string>;
 }
 
 export function runAnsiblePlaybook(
@@ -45,6 +47,9 @@ export function runAnsiblePlaybook(
   if (options.filePath) args.push('--extra-vars', `@${options.filePath}`);
   if (options.projectRoot)
     args.push('--extra-vars', `project_root=${options.projectRoot}`);
+  if (options.extraVars && Object.keys(options.extraVars).length > 0) {
+    args.push('--extra-vars', JSON.stringify(options.extraVars));
+  }
   const result = spawnSync('ansible-playbook', args, {
     cwd: options.ansibleDir,
     env: options.env ?? process.env,
