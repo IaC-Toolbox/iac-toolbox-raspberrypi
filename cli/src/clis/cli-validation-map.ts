@@ -91,7 +91,8 @@ export const CLI_VALIDATION_MAP: Record<CliName, ValidatorDescriptor[]> = {
         validateGithubRunner(
           ctx.destination,
           ctx.filePath,
-          ctx.config as GithubRunnerValidationConfig
+          ctx.config as GithubRunnerValidationConfig,
+          ctx.profile
         ),
     },
   ],

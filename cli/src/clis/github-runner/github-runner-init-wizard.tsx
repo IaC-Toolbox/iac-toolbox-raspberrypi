@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import {
   loadGithubRunnerRepoUrl,
   loadGithubRunnerLabels,
-  loadGithubRunnerToken,
+  loadGithubRunnerPat,
+  validatePatAccess,
   updateGithubRunnerConfig,
 } from './github-runner-config.js';
 
@@ -29,18 +30,19 @@ interface GithubRunnerInitWizardProps {
     destination: string,
     filePath?: string
   ) => string | undefined;
-  _loadGithubRunnerToken?: (profile?: string) => string | undefined;
+  _loadGithubRunnerPat?: (profile?: string) => string | undefined;
+  _validatePatAccess?: (repoUrl: string, pat: string) => Promise<void>;
   _updateGithubRunnerConfig?: (
     destination: string,
     repoUrl: string,
-    token: string,
+    pat: string,
     labels: string,
     profile?: string,
     filePath?: string
   ) => void;
 }
 
-type Step = 'repo_url' | 'token' | 'labels' | 'done';
+type Step = 'repo_url' | 'pat' | 'validating' | 'labels' | 'done';
 
 export default function GithubRunnerInitWizard({
   destination,
@@ -50,7 +52,8 @@ export default function GithubRunnerInitWizard({
   _TextInput = RealTextInput as unknown as (props: TextInputProps) => null,
   _loadGithubRunnerRepoUrl = loadGithubRunnerRepoUrl,
   _loadGithubRunnerLabels = loadGithubRunnerLabels,
-  _loadGithubRunnerToken = loadGithubRunnerToken,
+  _loadGithubRunnerPat = loadGithubRunnerPat,
+  _validatePatAccess = validatePatAccess,
   _updateGithubRunnerConfig = updateGithubRunnerConfig,
 }: GithubRunnerInitWizardProps) {
   const { exit } = useApp();
@@ -61,35 +64,67 @@ export default function GithubRunnerInitWizard({
   const [step, setStep] = useState<Step>('repo_url');
   const [inputValue, setInputValue] = useState(existingRepoUrl ?? '');
   const [repoUrl, setRepoUrl] = useState('');
-  const [token, setToken] = useState('');
+  const [pat, setPat] = useState('');
   const [labels, setLabels] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const InputComponent = _TextInput;
 
+  // PAT validation effect — fires when we enter the 'validating' step
   useEffect(() => {
-    if (step === 'done') {
-      _updateGithubRunnerConfig(
-        destination,
-        repoUrl,
-        token,
-        labels,
-        profile,
-        filePath
-      );
-      const timer = setTimeout(() => {
-        if (onComplete) {
-          onComplete();
-        } else {
-          exit();
+    if (step !== 'validating') return;
+
+    let cancelled = false;
+
+    async function validate() {
+      try {
+        await _validatePatAccess(repoUrl, pat);
+        if (!cancelled) {
+          setError(null);
+          setInputValue(existingLabels ?? 'self-hosted');
+          setStep('labels');
         }
-      }, 100);
-      return () => clearTimeout(timer);
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error ? err.message : 'PAT validation failed'
+          );
+          setInputValue('');
+          setStep('pat');
+        }
+      }
     }
+
+    validate();
+    return () => {
+      cancelled = true;
+    };
+  }, [step, repoUrl, pat, existingLabels, _validatePatAccess]);
+
+  // Save config and exit when done
+  useEffect(() => {
+    if (step !== 'done') return;
+
+    _updateGithubRunnerConfig(
+      destination,
+      repoUrl,
+      pat,
+      labels,
+      profile,
+      filePath
+    );
+    const timer = setTimeout(() => {
+      if (onComplete) {
+        onComplete();
+      } else {
+        exit();
+      }
+    }, 100);
+    return () => clearTimeout(timer);
   }, [
     step,
     repoUrl,
-    token,
+    pat,
     labels,
     profile,
     destination,
@@ -136,9 +171,9 @@ export default function GithubRunnerInitWizard({
                 return;
               }
               setRepoUrl(trimmed);
-              setInputValue(_loadGithubRunnerToken(profile) ?? '');
+              setInputValue(_loadGithubRunnerPat(profile) ? '' : '');
               setError(null);
-              setStep('token');
+              setStep('pat');
             }}
           />
         </Box>
@@ -146,10 +181,7 @@ export default function GithubRunnerInitWizard({
     );
   }
 
-  if (step === 'token') {
-    const tokenHintUrl = repoUrl
-      ? `${repoUrl}/settings/actions/runners/new`
-      : 'https://github.com/<org>/<repo>/settings/actions/runners/new';
+  if (step === 'pat') {
     return (
       <Box flexDirection="column" paddingY={1}>
         <Text bold color="cyan">
@@ -161,14 +193,15 @@ export default function GithubRunnerInitWizard({
           {repoUrl}
         </Text>
         <Text bold>{'│'}</Text>
-        <Text dimColor>{'◇  Generate a token at:'}</Text>
+        <Text bold>{'◆  GitHub Personal Access Token'}</Text>
         <Text dimColor>
-          {'│    '}
-          {tokenHintUrl}
+          {
+            '│    Required scopes: repo (classic) or Administration read/write (fine-grained)'
+          }
         </Text>
-        <Text color="yellow">{'│  ⚠ Tokens expire after 1 hour.'}</Text>
-        <Text bold>{'│'}</Text>
-        <Text bold>{'◆  Runner registration token  (expires in 1 hour)'}</Text>
+        <Text dimColor>
+          {'│    Generate at: https://github.com/settings/tokens'}
+        </Text>
         <Text dimColor>
           {'│  Stored in ~/.iac-toolbox/credentials — never committed.'}
         </Text>
@@ -192,16 +225,33 @@ export default function GithubRunnerInitWizard({
             onSubmit={(val) => {
               const trimmed = val.trim();
               if (!trimmed) {
-                setError('Token must not be empty');
+                setError('PAT must not be empty');
                 return;
               }
-              setToken(trimmed);
-              setInputValue(existingLabels ?? 'self-hosted');
+              setPat(trimmed);
+              setInputValue('');
               setError(null);
-              setStep('labels');
+              setStep('validating');
             }}
           />
         </Box>
+      </Box>
+    );
+  }
+
+  if (step === 'validating') {
+    return (
+      <Box flexDirection="column" paddingY={1}>
+        <Text bold color="cyan">
+          {'┌  GitHub Actions Runner — init'}
+        </Text>
+        <Text bold>{'│'}</Text>
+        <Text dimColor>
+          {'◇  Repository: '}
+          {repoUrl}
+        </Text>
+        <Text bold>{'│'}</Text>
+        <Text>{'│  ◜ Verifying PAT against GitHub API...'}</Text>
       </Box>
     );
   }
@@ -217,7 +267,12 @@ export default function GithubRunnerInitWizard({
           {'◇  Repository: '}
           {repoUrl}
         </Text>
-        <Text dimColor>{'◇  Token:      ●●●●●●●●'}</Text>
+        <Text dimColor>{'◇  PAT:        ●●●●●●●●'}</Text>
+        <Text color="green">
+          {
+            '│  ✔ PAT verified — token will be generated automatically at install time.'
+          }
+        </Text>
         <Text bold>{'│'}</Text>
         <Text bold>
           {'◆  Runner labels (comma-separated, default: self-hosted)'}
@@ -270,9 +325,13 @@ export default function GithubRunnerInitWizard({
         {'  → '}
         {filePath ?? 'iac-toolbox.yml'}
       </Text>
-      <Text>{'│  Token         ●●●●●●●●  → ~/.iac-toolbox/credentials'}</Text>
+      <Text>{'│  PAT           ●●●●●●●●  → ~/.iac-toolbox/credentials'}</Text>
       <Text bold>{'│'}</Text>
-      <Text>{'│  ℹ  To install the runner, run:'}</Text>
+      <Text>
+        {
+          '│  ℹ  A fresh registration token will be generated automatically at install time.'
+        }
+      </Text>
       <Text bold>{'│'}</Text>
       <Text bold>{'│     iac-toolbox github-runner install'}</Text>
       <Text bold>{'│'}</Text>

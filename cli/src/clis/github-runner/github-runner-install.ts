@@ -8,6 +8,11 @@ import {
 } from '../../utils/ansible.js';
 import { writeResolvedConfig } from '../../loaders/resolved-config.js';
 import { validateClis, CliName } from '../validate-clis.js';
+import {
+  loadGithubRunnerPat,
+  loadGithubRunnerRepoUrl,
+  generateRunnerRegistrationToken,
+} from './github-runner-config.js';
 
 interface IacToolboxConfig {
   [key: string]: unknown;
@@ -45,6 +50,52 @@ export async function runGithubRunnerInstall(
     print.success('Configuration loaded');
     print.pipe();
 
+    // ── Generate registration token from PAT ────────────────────────────
+    const pat = loadGithubRunnerPat(profile);
+    if (!pat) {
+      print.error('GitHub PAT not configured');
+      print.pipe();
+      print.pipe(
+        'Run `iac-toolbox github-runner init` to configure your GitHub PAT.'
+      );
+      print.closeError();
+      process.exit(1);
+    }
+
+    const repoUrl =
+      loadGithubRunnerRepoUrl(destination, filePath) ??
+      config.github_runner?.repo_url;
+    if (!repoUrl) {
+      print.error('github_runner.repo_url is not set');
+      print.pipe();
+      print.pipe(
+        'Run `iac-toolbox github-runner init` to set the repository URL.'
+      );
+      print.closeError();
+      process.exit(1);
+    }
+
+    print.step('Generating runner registration token...');
+    let registrationToken: string;
+    try {
+      registrationToken = await generateRunnerRegistrationToken(repoUrl, pat);
+    } catch (err) {
+      print.blank();
+      print.error(
+        err instanceof Error
+          ? err.message
+          : 'Failed to generate registration token'
+      );
+      print.pipe();
+      print.pipe(
+        'Re-run `iac-toolbox github-runner init` with a fresh PAT to fix this.'
+      );
+      print.closeError();
+      process.exit(1);
+    }
+    print.success('Registration token generated (valid for 1 hour)');
+    print.pipe();
+
     // ── Ansible Invocation ────────────────────────────────────
     print.step('Installing GitHub Actions runner...');
     print.divider();
@@ -54,6 +105,7 @@ export async function runGithubRunnerInstall(
       filePath: tmpFile,
       projectRoot: resolveProjectRoot(),
       env: { ...process.env },
+      extraVars: { github_runner_token: registrationToken },
     });
   } finally {
     unlinkSync(tmpFile);
@@ -67,7 +119,7 @@ export async function runGithubRunnerInstall(
     print.pipe('Check output above for details');
     print.pipe();
     print.pipe(
-      'If the token expired, re-run `iac-toolbox github-runner init` with a fresh token.'
+      'If the PAT expired, re-run `iac-toolbox github-runner init` with a fresh PAT.'
     );
     print.pipe('To retry: iac-toolbox github-runner install');
     print.closeError();
@@ -88,11 +140,6 @@ export async function runGithubRunnerInstall(
   print.pipe();
   print.pipe(`Labels    ${labels}`);
   print.pipe(`Work dir  ${workDir}`);
-  print.pipe();
-  print.warning('The registration token expires after 1 hour.');
-  print.pipe(
-    '  Re-run `iac-toolbox github-runner init` with a fresh token if install fails.'
-  );
   print.pipe();
   print.close();
 }

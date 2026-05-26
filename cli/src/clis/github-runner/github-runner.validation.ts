@@ -1,10 +1,10 @@
 import { print } from '../../design-system/print.js';
+import { getCredential } from '../../loaders/credentials-loader.js';
 
 export interface GithubRunnerValidationConfig {
   github_runner?: {
     enabled?: boolean;
     repo_url?: string;
-    token?: string;
     [key: string]: unknown;
   };
   [key: string]: unknown;
@@ -13,7 +13,8 @@ export interface GithubRunnerValidationConfig {
 export function validateGithubRunner(
   _destination: string,
   _filePath: string,
-  config: GithubRunnerValidationConfig
+  config: GithubRunnerValidationConfig,
+  profile = 'default'
 ): void {
   if (config.github_runner?.enabled !== true) {
     print.error('GitHub Actions runner not enabled');
@@ -37,15 +38,16 @@ export function validateGithubRunner(
     process.exit(1);
   }
 
-  const token = config.github_runner?.token;
-  if (
-    !token ||
-    token.trim().length === 0 ||
-    token === '{{ github_runner_token }}'
-  ) {
-    print.error('GitHub runner registration token is not set');
+  const pat = getCredential('github_runner_pat', profile);
+  if (!pat || pat.trim().length === 0) {
+    print.error('GitHub PAT not configured');
     print.pipe();
-    print.pipe('Run `iac-toolbox github-runner init` to set the token.');
+    print.pipe(
+      'Run `iac-toolbox github-runner init` to configure your GitHub Personal Access Token.'
+    );
+    print.pipe(
+      'Required scopes: repo (classic) or Administration read/write (fine-grained).'
+    );
     print.closeError();
     process.exit(1);
   }

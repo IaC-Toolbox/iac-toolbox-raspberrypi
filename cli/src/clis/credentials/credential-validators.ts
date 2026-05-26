@@ -195,6 +195,7 @@ const validators: Record<
   docker_hub_username: validateStringValue,
   github_pat: validateGitHubPat,
   github_runner_token: validateStringValue,
+  github_runner_pat: validateStringValue,
   github_runner_repo_url: validateStringValue,
   cloudflare_tunnel_token: validateCloudflareToken,
   cloudflare_api_token: validateCloudflareToken,
