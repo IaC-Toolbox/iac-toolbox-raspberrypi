@@ -32,6 +32,22 @@
   args:
     creates: "{{ github_runner.work_dir }}/config.sh"
 
+- name: Configure Docker credential store (macOS runner)
+  # docker/login-action calls docker-credential-osxkeychain to save credentials.
+  # launchd services run non-interactively, so macOS blocks Keychain access with
+  # "User interaction is not allowed." Setting credsStore to "" stores credentials
+  # as base64 in ~/.docker/config.json instead, which works in any context.
+  shell: |
+    mkdir -p ~/.docker
+    python3 -c "
+import json, os
+p = os.path.expanduser('~/.docker/config.json')
+cfg = json.load(open(p)) if os.path.exists(p) else {}
+cfg['credsStore'] = ''
+json.dump(cfg, open(p, 'w'), indent=2)
+"
+  changed_when: false
+
 - name: Write runner .env with full login-shell PATH (macOS)
   # launchd services start with a minimal PATH that excludes /opt/homebrew/bin.
   # The Actions runner reads .env at startup and injects it into every job, so
