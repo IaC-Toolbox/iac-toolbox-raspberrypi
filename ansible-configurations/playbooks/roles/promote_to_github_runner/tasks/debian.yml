@@ -11,7 +11,9 @@
 - name: Validate GitHub runner token is provided
   fail:
     msg: "Missing required variable: github_runner.token (set via GITHUB_RUNNER_TOKEN environment variable)"
-  when: github_runner.token is not defined or github_runner.token == ''
+  when: >-
+    (github_runner_token is not defined or github_runner_token == '') and
+    (github_runner.token is not defined or github_runner.token == '')
 
 - name: Install curl for GitHub runner
   include_role:
@@ -63,7 +65,7 @@
   shell: |
     ./config.sh --unattended \
       --url {{ github_runner.repo_url }} \
-      --token {{ github_runner.token }} \
+      --token {{ github_runner_token | default(github_runner.token) }} \
       --labels {{ github_runner.labels }} \
       --work _work
   args:
