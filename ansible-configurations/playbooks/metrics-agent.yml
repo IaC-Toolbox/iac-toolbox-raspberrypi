@@ -9,8 +9,7 @@
 - name: Deploy Metrics Agents
   hosts: all
   become: false
-  environment:
-    PATH: "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+  # No environment: PATH: block — shell profile is sourced per-task where needed
   roles:
     - role: node_exporter
       when: node_exporter is defined and node_exporter.enabled

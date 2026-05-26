@@ -8,8 +8,7 @@
 - name: Setup IaC Toolbox Base
   hosts: all
   become: false
-  environment:
-    PATH: "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+  # No environment: PATH: block — shell profile is sourced per-task where needed
 
   pre_tasks:
     - name: Validate connection to target host
@@ -41,6 +40,22 @@
           User: {{ ansible_user }}
           OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
           Architecture: {{ ansible_architecture }}
+
+    - name: Set shell executable and profile (macOS)
+      # /bin/zsh is the macOS default since Catalina. ~/.zshrc is where Homebrew,
+      # NVM, and other tool managers register themselves on macOS.
+      set_fact:
+        iac_shell_executable: "/bin/zsh"
+        iac_shell_profile: "~/.zshrc"
+      when: ansible_os_family == "Darwin"
+
+    - name: Set shell executable and profile (Linux)
+      # /bin/bash covers Raspberry Pi OS and most Debian-based distros.
+      # ~/.profile is the POSIX-standard login profile sourced by bash login shells.
+      set_fact:
+        iac_shell_executable: "/bin/bash"
+        iac_shell_profile: "~/.profile"
+      when: ansible_os_family != "Darwin"
 
     - name: Set active Docker socket fact
       set_fact:
