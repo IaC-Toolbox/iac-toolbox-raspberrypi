@@ -28,10 +28,8 @@
     mode: '0644'
 
 - name: Extract GitHub Actions runner
-  unarchive:
-    src: "{{ github_runner.work_dir }}/actions-runner.tar.gz"
-    dest: "{{ github_runner.work_dir }}"
-    remote_src: yes
+  shell: tar xzf "{{ github_runner.work_dir }}/actions-runner.tar.gz" -C "{{ github_runner.work_dir }}"
+  args:
     creates: "{{ github_runner.work_dir }}/config.sh"
 
 - name: Check if runner is already configured
