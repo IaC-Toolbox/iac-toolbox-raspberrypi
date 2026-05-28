@@ -62,7 +62,9 @@
   become_user: "{{ ansible_user }}"
 
 - name: Wait for vault health check
-  shell: docker inspect --format='{% raw %}{{.State.Health.Status}}{% endraw %}' vault
+  shell: source {{ iac_shell_profile }} 2>/dev/null; docker inspect --format='{% raw %}{{.State.Health.Status}}{% endraw %}' vault
+  args:
+    executable: "{{ iac_shell_executable }}"
   register: vault_health
   retries: 30
   delay: 2
@@ -71,8 +73,11 @@
 
 - name: Run vault initialization helper
   shell: |
+    source {{ iac_shell_profile }} 2>/dev/null
     cd {{ vault.base_dir }}
     docker compose --profile unseal run --rm vault-unsealer
+  args:
+    executable: "{{ iac_shell_executable }}"
   become_user: "{{ ansible_user }}"
   register: vault_init_helper
   failed_when: vault_init_helper.rc != 0 and vault_init_helper.rc != 2
@@ -124,7 +129,9 @@
       - "Vault initialization details saved to: {{ vault.base_dir }}/data/vault-init.json"
 
 - name: Check current Vault status as JSON
-  shell: docker exec vault vault status -format=json
+  shell: source {{ iac_shell_profile }} 2>/dev/null; docker exec vault vault status -format=json
+  args:
+    executable: "{{ iac_shell_executable }}"
   register: vault_status_check
   failed_when: vault_status_check.rc not in [0, 2]
   changed_when: false
@@ -135,13 +142,17 @@
     vault_is_sealed: "{{ (vault_status_check.stdout | from_json).sealed }}"
 
 - name: Unseal Vault if sealed
-  shell: docker exec vault vault operator unseal "{{ vault_unseal_key }}"
+  shell: source {{ iac_shell_profile }} 2>/dev/null; docker exec vault vault operator unseal "{{ vault_unseal_key }}"
+  args:
+    executable: "{{ iac_shell_executable }}"
   register: unseal_result
   changed_when: false
   when: vault_is_sealed | bool
 
 - name: Wait until Vault is unsealed
-  shell: docker exec vault vault status -format=json
+  shell: source {{ iac_shell_profile }} 2>/dev/null; docker exec vault vault status -format=json
+  args:
+    executable: "{{ iac_shell_executable }}"
   register: vault_status_after_unseal
   retries: 10
   delay: 2
@@ -154,8 +165,11 @@
 
 - name: Enable KV secrets engine
   shell: |
+    source {{ iac_shell_profile }} 2>/dev/null
     docker exec -e VAULT_TOKEN={{ vault_root_token }} vault \
       vault secrets enable -version=2 -path=kv kv
+  args:
+    executable: "{{ iac_shell_executable }}"
   register: kv_enable
   failed_when:
     - kv_enable.rc != 0
@@ -165,8 +179,11 @@
 
 - name: Enable audit logging
   shell: |
+    source {{ iac_shell_profile }} 2>/dev/null
     docker exec -e VAULT_TOKEN={{ vault_root_token }} vault \
       vault audit enable file file_path=/vault/logs/audit.log
+  args:
+    executable: "{{ iac_shell_executable }}"
   register: audit_enable
   failed_when:
     - audit_enable.rc != 0

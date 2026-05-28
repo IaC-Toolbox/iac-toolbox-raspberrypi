@@ -9,6 +9,8 @@
 - name: Deploy Cloudflare Tunnel
   hosts: all
   become: false
+  environment:
+    PATH: "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
   roles:
     - role: cloudflare-tunnel
       when:

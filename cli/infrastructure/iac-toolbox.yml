@@ -22,3 +22,4 @@ loki:
   domain: loki.iac-toolbox.com
 arize_phoenix:
   enabled: true
+  domain: arize.iac-toolbox.com

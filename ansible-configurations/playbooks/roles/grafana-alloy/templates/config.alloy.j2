@@ -77,17 +77,16 @@ otelcol.receiver.otlp "default" {
     // Forward only metrics — no Loki or Tempo configured yet
     metrics = [otelcol.exporter.prometheus.default.input]
 {% if arize_phoenix is defined and arize_phoenix.enabled %}
-    traces  = [otelcol.exporter.otlp.phoenix.input]
+    traces  = [otelcol.exporter.otlphttp.phoenix.input]
 {% endif %}
   }
 }
 
 {% if arize_phoenix is defined and arize_phoenix.enabled %}
-otelcol.exporter.otlp "phoenix" {
+otelcol.exporter.otlphttp "phoenix" {
   client {
     // Uses the host-mapped port (14317), NOT 4317 — Alloy owns 4317.
-    endpoint = "localhost:{{ arize_phoenix.otlp_grpc_host_port | default(14317) }}"
-    tls { insecure = true }
+    endpoint = "https://{{ arize_phoenix.domain }}"
   }
 }
 {% endif %}

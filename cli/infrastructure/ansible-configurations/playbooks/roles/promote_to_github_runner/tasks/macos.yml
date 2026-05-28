@@ -28,9 +28,22 @@
     mode: '0644'
 
 - name: Extract GitHub Actions runner
-  shell: tar xzf "{{ github_runner.work_dir }}/actions-runner.tar.gz" -C "{{ github_runner.work_dir }}"
+  shell: tar xzf {{ github_runner.work_dir }}/actions-runner.tar.gz -C {{ github_runner.work_dir }}
   args:
+    executable: /bin/bash
     creates: "{{ github_runner.work_dir }}/config.sh"
+
+- name: Write runner .env with full login-shell PATH (macOS)
+  # launchd services start with a minimal PATH that excludes /opt/homebrew/bin.
+  # The Actions runner reads .env at startup and injects it into every job, so
+  # writing PATH here makes docker and other Homebrew binaries visible to workflows.
+  # Runs unconditionally so re-running the playbook keeps .env in sync.
+  shell: |
+    source {{ iac_shell_profile }} 2>/dev/null
+    echo "PATH=$PATH" > {{ github_runner.work_dir }}/.env
+  args:
+    executable: "{{ iac_shell_executable }}"
+  notify: Restart runner service
 
 - name: Check if runner is already configured
   stat:
