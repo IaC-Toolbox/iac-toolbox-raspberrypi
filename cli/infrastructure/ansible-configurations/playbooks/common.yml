@@ -10,7 +10,7 @@
   become: false
   environment:
     PATH: "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-
+    
   pre_tasks:
     - name: Validate connection to target host
       ping:
@@ -42,6 +42,22 @@
           OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
           Architecture: {{ ansible_architecture }}
 
+    - name: Set shell executable and profile (macOS)
+      # /bin/zsh is the macOS default since Catalina. ~/.zshrc is where Homebrew,
+      # NVM, and other tool managers register themselves on macOS.
+      set_fact:
+        iac_shell_executable: "/bin/zsh"
+        iac_shell_profile: "~/.zshrc"
+      when: ansible_os_family == "Darwin"
+
+    - name: Set shell executable and profile (Linux)
+      # /bin/bash covers Raspberry Pi OS and most Debian-based distros.
+      # ~/.profile is the POSIX-standard login profile sourced by bash login shells.
+      set_fact:
+        iac_shell_executable: "/bin/bash"
+        iac_shell_profile: "~/.profile"
+      when: ansible_os_family != "Darwin"
+
     - name: Set active Docker socket fact
       set_fact:
         active_docker_socket: "unix:///var/run/docker.sock"
@@ -52,7 +68,7 @@
     #     - (setup is not defined or setup)
     #     - ansible_os_family != "Darwin"
 
-    - role: docker
-      when: docker is not defined or docker.enabled | default(true)
+    # - role: docker
+    #   when: docker is not defined or docker.enabled | default(true)
 
     # - role: terraform

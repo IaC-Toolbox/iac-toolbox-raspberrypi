@@ -1,0 +1,6 @@
+---
+- name: Restart runner service
+  shell: ./svc.sh stop && ./svc.sh start
+  args:
+    chdir: "{{ github_runner.work_dir }}"
+    executable: "{{ iac_shell_executable }}"

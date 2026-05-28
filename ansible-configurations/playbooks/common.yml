@@ -8,8 +8,9 @@
 - name: Setup IaC Toolbox Base
   hosts: all
   become: false
-  # No environment: PATH: block — shell profile is sourced per-task where needed
-
+  environment:
+    PATH: "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    
   pre_tasks:
     - name: Validate connection to target host
       ping:
@@ -67,7 +68,7 @@
     #     - (setup is not defined or setup)
     #     - ansible_os_family != "Darwin"
 
-    - role: docker
-      when: docker is not defined or docker.enabled | default(true)
+    # - role: docker
+    #   when: docker is not defined or docker.enabled | default(true)
 
     # - role: terraform

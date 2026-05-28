@@ -20,12 +20,15 @@
   notify: Restart grafana-alloy
 
 - name: Start Grafana Alloy via docker compose
-  shell: docker compose up -d
+  shell: source {{ iac_shell_profile }} 2>/dev/null; docker compose up -d
   args:
+    executable: "{{ iac_shell_executable }}"
     chdir: "{{ alloy_base_dir }}"
 
 - name: Wait for grafana-alloy container to be running
-  shell: docker inspect --format="{{ '{{' }}.State.Running{{ '}}' }}" grafana-alloy
+  shell: source {{ iac_shell_profile }} 2>/dev/null; docker inspect --format="{{ '{{' }}.State.Running{{ '}}' }}" grafana-alloy
+  args:
+    executable: "{{ iac_shell_executable }}"
   register: alloy_container_state
   retries: 15
   delay: 2

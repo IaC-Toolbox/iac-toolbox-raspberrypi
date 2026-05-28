@@ -28,23 +28,10 @@
     mode: '0644'
 
 - name: Extract GitHub Actions runner
-  shell: tar xzf "{{ github_runner.work_dir }}/actions-runner.tar.gz" -C "{{ github_runner.work_dir }}"
+  shell: tar xzf {{ github_runner.work_dir }}/actions-runner.tar.gz -C {{ github_runner.work_dir }}
   args:
+    executable: /bin/bash
     creates: "{{ github_runner.work_dir }}/config.sh"
-
-- name: Configure Docker credentials file (macOS runner)
-  # OrbStack and Docker Desktop reset credsStore to osxkeychain/desktop on startup,
-  # which fails with "User interaction is not allowed" in launchd context.
-  # Writing a minimal config without credsStore forces file-based auth storage.
-  copy:
-    dest: "~/.docker/config.json"
-    content: |
-      {
-        "auths": {
-          "https://index.docker.io/v1/": {}
-        }
-      }
-    mode: '0600'
 
 - name: Write runner .env with full login-shell PATH (macOS)
   # launchd services start with a minimal PATH that excludes /opt/homebrew/bin.

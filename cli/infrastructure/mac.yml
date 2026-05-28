@@ -9,8 +9,17 @@ target:
   host: vvasylkovskyi-mac.local
   user: viktorvasylkovskyi
   ssh_key: ~/.ssh/viktor-mac
-  ansible_env:
-    PATH: "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+cloudflare:
+  enabled: true
+  mode: api
+  account_id: 6010b62692a2aa521314ec448f67fb92
+  zone_id: f595ac9a556083288bc7fbe8a6dc2598
+  tunnel_name: viktor-mac-tunnel
+  cloudflare_api_token: "{{ cloudflare_api_token }}"
+  domains:
+    - hostname: llm-api.iac-toolbox.com
+      service_port: 10000
+      service: http://localhost:10000
 grafana:
   domain: grafana.iac-toolbox.com
 prometheus:
@@ -28,4 +37,9 @@ cadvisor:
   enabled: true
 grafana_pagerduty:
   enabled: false
-
+github_runner:
+  enabled: true
+  version: 2.323.0
+  repo_url: https://github.com/vvasylkovskyi/llm-api
+  labels: self-hosted,mac
+  work_dir: ~/.iac-toolbox/github-runner

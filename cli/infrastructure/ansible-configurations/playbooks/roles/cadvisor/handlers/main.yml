@@ -1,5 +1,6 @@
 ---
 - name: Restart cadvisor
-  shell: docker compose restart cadvisor
+  shell: source {{ iac_shell_profile }} 2>/dev/null; docker compose restart cadvisor
   args:
+    executable: "{{ iac_shell_executable }}"
     chdir: "{{ cadvisor_base_dir }}"
