@@ -28,6 +28,10 @@ import {
   type GithubRunnerValidationConfig,
 } from './github-runner/github-runner.validation.js';
 import {
+  validatePostgresql,
+  type PostgresqlValidationConfig,
+} from './postgresql/postgresql.validation.js';
+import {
   CliName,
   ConditionKey,
   type ValidatorDescriptor,
@@ -127,6 +131,18 @@ export const CLI_VALIDATION_MAP: Record<CliName, ValidatorDescriptor[]> = {
     {
       fn: (ctx: ValidationContext) =>
         validateContainerMetricsAlerts(ctx.destination, ctx.filePath),
+    },
+  ],
+
+  [CliName.Postgresql]: [
+    {
+      fn: (ctx: ValidationContext) =>
+        validatePostgresql(
+          ctx.destination,
+          ctx.filePath,
+          ctx.config as PostgresqlValidationConfig,
+          ctx.profile
+        ),
     },
   ],
 

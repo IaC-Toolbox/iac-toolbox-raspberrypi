@@ -19,6 +19,7 @@ export const CREDENTIAL_KEYS = {
   grafana_admin_password: 'Grafana admin password',
   arize_phoenix_secret: 'Arize Phoenix JWT signing secret',
   pagerduty_key: 'PagerDuty integration key',
+  postgres_password: 'PostgreSQL superuser password',
 } as const;
 
 export type CredentialKey = keyof typeof CREDENTIAL_KEYS;

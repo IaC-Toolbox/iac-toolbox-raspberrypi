@@ -1,0 +1,14 @@
+---
+# Default variables for postgresql role
+postgresql_version: "16"
+postgresql_port: 5432
+postgresql_database: "postgres"
+postgresql_base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/postgresql"
+
+postgresql_defaults:
+  enabled: true
+  port: 5432
+  database: "postgres"
+  version: "16"
+
+postgresql: "{{ postgresql_defaults }}"

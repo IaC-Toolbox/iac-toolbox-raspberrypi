@@ -11,6 +11,7 @@ export enum CliName {
   Loki = 'loki',
   Arize = 'arize',
   GithubRunner = 'github-runner',
+  Postgresql = 'postgresql',
 }
 
 export enum ConditionKey {
