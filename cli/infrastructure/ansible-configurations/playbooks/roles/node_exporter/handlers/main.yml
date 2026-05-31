@@ -1,8 +1,6 @@
 ---
 - name: Restart node_exporter macOS
-  shell: |
-    launchctl unload {{ ansible_env.HOME }}/Library/LaunchAgents/com.node-exporter.plist
-    launchctl load -w {{ ansible_env.HOME }}/Library/LaunchAgents/com.node-exporter.plist
+  command: brew services restart node_exporter
   when: ansible_facts['system'] == 'Darwin'
   listen: Restart node_exporter
 
