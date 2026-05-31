@@ -43,3 +43,6 @@ github_runner:
   repo_url: https://github.com/vvasylkovskyi/llm-api
   labels: self-hosted,mac
   work_dir: ~/.iac-toolbox/github-runner
+tailscale:
+  enabled: true
+  hostname: ""
