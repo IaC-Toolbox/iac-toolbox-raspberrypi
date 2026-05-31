@@ -6,6 +6,8 @@
 
 - name: Start node_exporter via Homebrew services
   command: brew services start node_exporter
+  environment:
+    PATH: "/opt/homebrew/bin:/usr/local/bin:{{ ansible_env.PATH }}"
   register: brew_services_start
   changed_when: "'successfully started' in brew_services_start.stdout"
 

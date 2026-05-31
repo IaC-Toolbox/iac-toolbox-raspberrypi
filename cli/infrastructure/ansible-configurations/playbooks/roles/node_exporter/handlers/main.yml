@@ -1,6 +1,8 @@
 ---
 - name: Restart node_exporter macOS
   command: brew services restart node_exporter
+  environment:
+    PATH: "/opt/homebrew/bin:/usr/local/bin:{{ ansible_env.PATH }}"
   when: ansible_facts['system'] == 'Darwin'
   listen: Restart node_exporter
 
