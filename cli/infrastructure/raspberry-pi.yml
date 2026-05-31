@@ -86,3 +86,8 @@ arize_phoenix:
 tailscale:
   enabled: true
   hostname: ""
+postgresql:
+  enabled: true
+  port: 5432
+  database: postgres
+  version: "16"
