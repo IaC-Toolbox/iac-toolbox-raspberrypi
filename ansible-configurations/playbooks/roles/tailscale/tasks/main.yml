@@ -1,0 +1,25 @@
+---
+- name: Merge tailscale config with defaults
+  set_fact:
+    tailscale: "{{ tailscale_defaults | combine(tailscale | default({}), recursive=True) }}"
+
+- name: Validate tailscale_auth_key is provided
+  fail:
+    msg: "Missing required variable: tailscale_auth_key. Run `iac-toolbox tailscale init` to configure."
+  when: tailscale_auth_key is not defined or tailscale_auth_key == ''
+
+- include_tasks: debian.yml
+  when: ansible_os_family == "Debian"
+
+- include_tasks: macos.yml
+  when: ansible_os_family == "Darwin"
+
+- name: Verify Tailscale is connected
+  shell: |
+    source {{ iac_shell_profile }} 2>/dev/null
+    tailscale status
+  args:
+    executable: "{{ iac_shell_executable }}"
+  register: ts_status
+  changed_when: false
+  failed_when: "'Running' not in ts_status.stdout"

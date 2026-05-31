@@ -204,6 +204,7 @@ const validators: Record<
   grafana_admin_password: validateStringValue,
   arize_phoenix_secret: validateStringValue,
   pagerduty_key: validatePagerDutyKey,
+  tailscale_auth_key: validateStringValue,
 };
 
 /**

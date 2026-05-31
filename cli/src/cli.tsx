@@ -13,6 +13,7 @@ import { registerCAdvisorCommand } from './clis/cadvisor/cadvisor.js';
 import { registerLokiCommand } from './clis/loki/loki.js';
 import { registerArizeCommand } from './clis/arize/arize.js';
 import { registerGithubRunnerCommand } from './clis/github-runner/github-runner.js';
+import { registerTailscaleCommand } from './clis/tailscale/tailscale.js';
 
 const program = new Command();
 
@@ -36,6 +37,7 @@ registerCAdvisorCommand(program);
 registerLokiCommand(program);
 registerArizeCommand(program);
 registerGithubRunnerCommand(program);
+registerTailscaleCommand(program);
 registerNodeMetricsAlertsCommand(program);
 registerContainerMetricsAlertsCommand(program);
 registerGrafanaPagerdutyCommand(program);
