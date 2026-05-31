@@ -32,6 +32,10 @@ import {
   type PostgresqlValidationConfig,
 } from './postgresql/postgresql.validation.js';
 import {
+  validateTailscale,
+  type TailscaleValidationConfig,
+} from './tailscale/tailscale.validation.js';
+import {
   CliName,
   ConditionKey,
   type ValidatorDescriptor,
@@ -96,6 +100,17 @@ export const CLI_VALIDATION_MAP: Record<CliName, ValidatorDescriptor[]> = {
           ctx.destination,
           ctx.filePath,
           ctx.config as GithubRunnerValidationConfig,
+          ctx.profile
+        ),
+    },
+  ],
+  [CliName.Tailscale]: [
+    {
+      fn: (ctx: ValidationContext) =>
+        validateTailscale(
+          ctx.destination,
+          ctx.filePath,
+          ctx.config as TailscaleValidationConfig,
           ctx.profile
         ),
     },

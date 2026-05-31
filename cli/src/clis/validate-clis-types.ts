@@ -12,6 +12,7 @@ export enum CliName {
   Arize = 'arize',
   GithubRunner = 'github-runner',
   Postgresql = 'postgresql',
+  Tailscale = 'tailscale',
 }
 
 export enum ConditionKey {

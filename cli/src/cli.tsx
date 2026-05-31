@@ -14,6 +14,7 @@ import { registerLokiCommand } from './clis/loki/loki.js';
 import { registerArizeCommand } from './clis/arize/arize.js';
 import { registerGithubRunnerCommand } from './clis/github-runner/github-runner.js';
 import { registerPostgresqlCommand } from './clis/postgresql/postgresql.js';
+import { registerTailscaleCommand } from './clis/tailscale/tailscale.js';
 
 const program = new Command();
 
@@ -38,6 +39,7 @@ registerLokiCommand(program);
 registerArizeCommand(program);
 registerGithubRunnerCommand(program);
 registerPostgresqlCommand(program);
+registerTailscaleCommand(program);
 registerNodeMetricsAlertsCommand(program);
 registerContainerMetricsAlertsCommand(program);
 registerGrafanaPagerdutyCommand(program);
