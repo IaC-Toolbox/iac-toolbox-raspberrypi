@@ -1,0 +1,24 @@
+---
+- name: Install Tailscale via Homebrew
+  shell: |
+    source {{ iac_shell_profile }} 2>/dev/null
+    brew install tailscale
+  args:
+    executable: "{{ iac_shell_executable }}"
+
+- name: Start tailscaled via brew services
+  shell: |
+    source {{ iac_shell_profile }} 2>/dev/null
+    brew services start tailscale
+  args:
+    executable: "{{ iac_shell_executable }}"
+
+- name: Authenticate device to tailnet
+  shell: |
+    source {{ iac_shell_profile }} 2>/dev/null
+    tailscale up \
+      --authkey {{ tailscale_auth_key }} \
+      {% if tailscale.hostname | length > 0 %}--hostname {{ tailscale.hostname }}{% endif %}
+  args:
+    executable: "{{ iac_shell_executable }}"
+  no_log: true
