@@ -83,3 +83,6 @@ arize_phoenix:
   db: sqlite
   domain: arize.iac-toolbox.com
   secret: "{{ arize_phoenix_secret }}"
+tailscale:
+  enabled: true
+  hostname: ""

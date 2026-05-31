@@ -1,0 +1,14 @@
+---
+# ============================================
+# IaC Toolbox - Tailscale Playbook
+# ============================================
+# Installs Tailscale on the target device and authenticates it to the tailnet.
+
+- import_playbook: common.yml
+
+- name: Deploy Tailscale
+  hosts: all
+  become: false
+  roles:
+    - role: tailscale
+      when: tailscale is defined and tailscale.enabled

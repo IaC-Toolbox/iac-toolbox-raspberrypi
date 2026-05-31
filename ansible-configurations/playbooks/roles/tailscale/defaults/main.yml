@@ -1,0 +1,5 @@
+---
+# Tailscale role defaults
+tailscale_defaults:
+  enabled: true
+  hostname: ""   # empty → Tailscale uses ansible_hostname
