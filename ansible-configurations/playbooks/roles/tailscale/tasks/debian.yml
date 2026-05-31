@@ -1,0 +1,14 @@
+---
+- name: Install Tailscale via official install script
+  shell: curl -fsSL https://tailscale.com/install.sh | sh
+  args:
+    executable: /bin/bash
+  become: true
+
+- name: Authenticate device to tailnet
+  shell: >
+    tailscale up
+    --authkey {{ tailscale_auth_key }}
+    {% if tailscale.hostname | length > 0 %}--hostname {{ tailscale.hostname }}{% endif %}
+  become: true
+  no_log: true
