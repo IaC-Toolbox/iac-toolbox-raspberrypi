@@ -94,23 +94,24 @@ export async function runTailscaleInstall(
   print.success('Tailscale package installed');
   print.success('tailscaled service enabled and running');
   print.success('Device authenticated to tailnet');
+  print.pipe(
+    'Tailscale IP: see Ansible output above (or run `tailscale ip` on the device)'
+  );
   print.pipe();
   if (hostname) {
     print.pipe(`Hostname        ${hostname}`);
   }
-  print.pipe('');
-  print.pipe('Mac setup (run once on your Mac):');
-  print.pipe('  brew install tailscale');
-  print.pipe('  sudo tailscaled &');
-  print.pipe('  tailscale up');
+  print.pipe('To connect from your Mac:');
+  print.pipe('  SSH:         ssh pi@<device-tailscale-ip>');
   print.pipe(
-    '  # or install the Tailscale Mac app from tailscale.com/download'
+    '  PostgreSQL:  postgresql://user@<device-tailscale-ip>:5432/mydb'
   );
   print.pipe();
-  print.pipe(
-    'After Mac joins the same tailnet, connect to any device service:'
-  );
-  print.pipe('  ssh pi@<tailscale-ip>');
-  print.pipe('  postgresql://user@<tailscale-ip>:5432/mydb');
+  print.pipe('Mac setup (run once on your Mac):');
+  print.pipe('  brew install tailscale && sudo tailscaled &');
+  print.pipe('  tailscale up');
+  print.pipe('  # or download the Mac app: https://tailscale.com/download');
+  print.pipe();
+  print.pipe('Admin console: https://login.tailscale.com/admin/machines');
   print.close();
 }

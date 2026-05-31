@@ -23,3 +23,12 @@
   register: ts_status
   changed_when: false
   failed_when: "'Running' not in ts_status.stdout"
+
+- name: Get Tailscale IP
+  command: tailscale ip -4
+  register: ts_ip
+  changed_when: false
+
+- name: Print Tailscale IP
+  debug:
+    msg: "Tailscale IP: {{ ts_ip.stdout }}"
