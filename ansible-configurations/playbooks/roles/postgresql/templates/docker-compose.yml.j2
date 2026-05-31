@@ -1,0 +1,13 @@
+services:
+  db:
+    container_name: postgresql-db
+    image: postgres:{{ postgresql.version }}
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: "{{ postgres_password }}"
+      POSTGRES_DB: "{{ postgresql.database }}"
+      POSTGRES_USER: postgres
+    ports:
+      - "127.0.0.1:{{ postgresql.port }}:5432"
+    volumes:
+      - {{ postgresql_base_dir }}/data:/var/lib/postgresql/data
