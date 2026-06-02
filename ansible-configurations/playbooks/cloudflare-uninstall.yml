@@ -1,0 +1,74 @@
+---
+# ============================================
+# IaC Toolbox - Cloudflare Tunnel Uninstall Playbook
+# ============================================
+
+- name: Uninstall Cloudflare Tunnel
+  hosts: all
+  gather_facts: true
+
+  tasks:
+
+    # ── Stop and disable service (Linux) ─────────────────────
+    - name: Stop cloudflared service (Linux)
+      systemd:
+        name: cloudflared
+        state: stopped
+        enabled: false
+      become: true
+      ignore_errors: true
+      when: ansible_facts['system'] == 'Linux'
+
+    - name: Remove cloudflared systemd service file (Linux)
+      file:
+        path: /etc/systemd/system/cloudflared.service
+        state: absent
+      become: true
+      when: ansible_facts['system'] == 'Linux'
+
+    - name: Reload systemd daemon (Linux)
+      systemd:
+        daemon_reload: true
+      become: true
+      when: ansible_facts['system'] == 'Linux'
+
+    # ── API mode: remove token environment file ───────────────
+    - name: Remove cloudflared token environment file (API mode)
+      file:
+        path: /etc/default/cloudflared
+        state: absent
+      become: true
+      ignore_errors: true
+
+    # ── OAuth mode: delete tunnel via CLI ─────────────────────
+    - name: Delete Cloudflare tunnel (OAuth mode)
+      command: cloudflared tunnel delete {{ cloudflare.tunnel_name }}
+      args:
+        chdir: "{{ ansible_env.HOME }}/.iac-toolbox/cloudflared"
+      become_user: "{{ ansible_user }}"
+      ignore_errors: true
+      when:
+        - cloudflare is defined
+        - cloudflare.tunnel_name is defined
+        - cloudflare.auth_mode | default('oauth') == 'oauth'
+
+    # ── Remove binary and config directory ────────────────────
+    - name: Remove cloudflared binary
+      file:
+        path: /usr/local/bin/cloudflared
+        state: absent
+      become: true
+      ignore_errors: true
+
+    - name: Remove cloudflared config directory
+      file:
+        path: "{{ ansible_env.HOME }}/.iac-toolbox/cloudflared"
+        state: absent
+
+    - name: Display uninstall summary
+      debug:
+        msg:
+          - "Cloudflare Tunnel has been removed."
+          - "cloudflared service stopped and disabled."
+          - "Binary /usr/local/bin/cloudflared removed."
+          - "Config directory ~/.iac-toolbox/cloudflared deleted."

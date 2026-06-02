@@ -1,0 +1,36 @@
+---
+# ============================================
+# IaC Toolbox - Prometheus Uninstall Playbook
+# ============================================
+
+- name: Uninstall Prometheus
+  hosts: all
+  gather_facts: true
+  tasks:
+
+    - name: Stop and remove Prometheus containers
+      command: docker compose down
+      args:
+        chdir: "{{ ansible_env.HOME }}/.iac-toolbox/prometheus"
+      become_user: "{{ ansible_user }}"
+      ignore_errors: true
+
+    - name: Remove prometheus_data Docker volume
+      community.docker.docker_volume:
+        name: prometheus_data
+        state: absent
+        docker_host: "{{ active_docker_socket }}"
+      become_user: "{{ ansible_user }}"
+      ignore_errors: true
+
+    - name: Remove Prometheus config directory
+      file:
+        path: "{{ ansible_env.HOME }}/.iac-toolbox/prometheus"
+        state: absent
+
+    - name: Display uninstall summary
+      debug:
+        msg:
+          - "Prometheus has been removed."
+          - "Volume prometheus_data removed (all metric history deleted)."
+          - "Config directory ~/.iac-toolbox/prometheus deleted."

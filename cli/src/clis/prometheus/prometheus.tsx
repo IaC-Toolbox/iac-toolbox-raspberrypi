@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { render } from 'ink';
 import { runPrometheusInstall } from './prometheus-install.js';
+import { runPrometheusUninstall } from './prometheus-uninstall.js';
 import PrometheusInitWizard from './prometheus-init-wizard.js';
 
 export function registerPrometheusCommand(program: Command): void {
@@ -44,6 +45,30 @@ export function registerPrometheusCommand(program: Command): void {
         filePath?: string;
       }) => {
         await runPrometheusInstall(
+          options.destination,
+          options.profile,
+          options.filePath
+        );
+      }
+    );
+
+  prometheus
+    .command('uninstall')
+    .description('Remove Prometheus and all metric data')
+    .option('--profile <name>', 'Credential profile to use', 'default')
+    .option(
+      '--destination <path>',
+      'Path to infrastructure directory',
+      'infrastructure'
+    )
+    .option('--filePath <path>', 'Path to a per-device config file')
+    .action(
+      async (options: {
+        profile: string;
+        destination: string;
+        filePath?: string;
+      }) => {
+        await runPrometheusUninstall(
           options.destination,
           options.profile,
           options.filePath

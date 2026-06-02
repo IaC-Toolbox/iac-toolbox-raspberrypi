@@ -1,0 +1,27 @@
+---
+# ================================================
+# IaC Toolbox - Grafana Alloy Uninstall Playbook
+# ================================================
+
+- name: Uninstall Grafana Alloy
+  hosts: all
+  gather_facts: true
+  tasks:
+
+    - name: Stop and remove Grafana Alloy container
+      command: docker compose down
+      args:
+        chdir: "{{ ansible_env.HOME }}/.iac-toolbox/grafana-alloy"
+      become_user: "{{ ansible_user }}"
+      ignore_errors: true
+
+    - name: Remove Grafana Alloy config directory
+      file:
+        path: "{{ ansible_env.HOME }}/.iac-toolbox/grafana-alloy"
+        state: absent
+
+    - name: Display uninstall summary
+      debug:
+        msg:
+          - "Grafana Alloy has been removed."
+          - "Config directory ~/.iac-toolbox/grafana-alloy deleted."

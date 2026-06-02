@@ -1,7 +1,7 @@
-import { spawnSync } from 'child_process';
 import { Command } from 'commander';
 import { render } from 'ink';
 import { runGrafanaInstall } from './grafana-install.js';
+import { runGrafanaUninstall } from './grafana-uninstall.js';
 import GrafanaInitWizard from './grafana-init-wizard.js';
 
 export function registerGrafanaCommand(program: Command): void {
@@ -63,12 +63,24 @@ export function registerGrafanaCommand(program: Command): void {
   grafana
     .command('uninstall')
     .description('Remove Grafana and all observability data')
-    .action(() => {
-      const result = spawnSync(
-        'bash',
-        ['infrastructure/scripts/uninstall-loki.sh', '--local'],
-        { stdio: 'inherit' }
-      );
-      process.exit(result.status ?? 1);
-    });
+    .option('--profile <name>', 'Credential profile to use', 'default')
+    .option(
+      '--destination <path>',
+      'Path to infrastructure directory',
+      'infrastructure'
+    )
+    .option('--filePath <path>', 'Path to a per-device config file')
+    .action(
+      async (options: {
+        profile: string;
+        destination: string;
+        filePath?: string;
+      }) => {
+        await runGrafanaUninstall(
+          options.destination,
+          options.profile,
+          options.filePath
+        );
+      }
+    );
 }
