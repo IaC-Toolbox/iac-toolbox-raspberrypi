@@ -32,6 +32,10 @@ import {
   type PostgresqlValidationConfig,
 } from './postgresql/postgresql.validation.js';
 import {
+  validatePgVector,
+  type PgVectorValidationConfig,
+} from './pg-vector/pg-vector.validation.js';
+import {
   validateTailscale,
   type TailscaleValidationConfig,
 } from './tailscale/tailscale.validation.js';
@@ -156,6 +160,18 @@ export const CLI_VALIDATION_MAP: Record<CliName, ValidatorDescriptor[]> = {
           ctx.destination,
           ctx.filePath,
           ctx.config as PostgresqlValidationConfig,
+          ctx.profile
+        ),
+    },
+  ],
+
+  [CliName.PgVector]: [
+    {
+      fn: (ctx: ValidationContext) =>
+        validatePgVector(
+          ctx.destination,
+          ctx.filePath,
+          ctx.config as PgVectorValidationConfig,
           ctx.profile
         ),
     },
