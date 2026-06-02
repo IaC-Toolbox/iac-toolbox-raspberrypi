@@ -1,0 +1,14 @@
+---
+# ============================================
+# IaC Toolbox - pgvector Playbook
+# ============================================
+# Deploys PostgreSQL with pgvector extension in a Docker container.
+
+- import_playbook: common.yml
+
+- name: Deploy pgvector
+  hosts: all
+  become: false
+  roles:
+    - role: pgvector
+      when: pg_vector is not defined or pg_vector.enabled | default(true)

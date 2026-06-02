@@ -23,3 +23,8 @@ loki:
 arize_phoenix:
   enabled: true
   domain: arize.iac-toolbox.com
+pg_vector:
+  enabled: true
+  port: 5433
+  database: pgvector
+  version: "16"

@@ -91,3 +91,8 @@ postgresql:
   port: 5432
   database: postgres
   version: "16"
+pg_vector:
+  enabled: true
+  port: 5433
+  database: pgvector
+  version: "16"

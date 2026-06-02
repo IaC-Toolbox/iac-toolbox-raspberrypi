@@ -7,9 +7,6 @@
   file:
     path: "{{ postgresql_base_dir }}/data"
     state: directory
-    mode: "0755"
-    owner: "{{ ansible_facts['env']['USER'] }}"
-    group: "{{ ansible_facts['env']['USER'] }}"
 
 - name: Deploy docker-compose.yml
   template:
