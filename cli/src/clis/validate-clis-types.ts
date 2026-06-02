@@ -12,6 +12,7 @@ export enum CliName {
   Arize = 'arize',
   GithubRunner = 'github-runner',
   Postgresql = 'postgresql',
+  PgVector = 'pg-vector',
   Tailscale = 'tailscale',
 }
 
