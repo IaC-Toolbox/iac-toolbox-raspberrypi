@@ -20,6 +20,7 @@ export const CREDENTIAL_KEYS = {
   arize_phoenix_secret: 'Arize Phoenix JWT signing secret',
   pagerduty_key: 'PagerDuty integration key',
   postgres_password: 'PostgreSQL superuser password',
+  pgvector_password: 'pgvector PostgreSQL superuser password',
   tailscale_auth_key: 'Tailscale auth key (tskey-auth-...)',
 } as const;
 

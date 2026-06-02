@@ -205,6 +205,7 @@ const validators: Record<
   arize_phoenix_secret: validateStringValue,
   pagerduty_key: validatePagerDutyKey,
   postgres_password: validateStringValue,
+  pgvector_password: validateStringValue,
   tailscale_auth_key: validateStringValue,
 };
 

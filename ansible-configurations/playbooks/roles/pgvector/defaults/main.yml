@@ -1,0 +1,14 @@
+---
+# Default variables for pgvector role
+pgvector_version: "16"
+pgvector_port: 5433
+pgvector_database: "pgvector"
+pgvector_base_dir: "{{ ansible_env.HOME }}/.iac-toolbox/pgvector"
+
+pgvector_defaults:
+  enabled: true
+  port: 5433
+  database: "pgvector"
+  version: "16"
+
+pg_vector: "{{ pgvector_defaults }}"
